@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
-from django.config import settings 
+
+from django.conf import settings
 
 # This is python engine that connects with url of database
  
