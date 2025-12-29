@@ -11,6 +11,26 @@ from core_db.user_ops import register_user
 from core_db.auction_ops import create_auction
 from core_db.bid_ops import place_bid
 
+
+
+from sqlalchemy import insert
+from core_db.schemas import categories
+from core_db.engine import engine
+
+
+def seed_categories():
+    with engine.connect() as conn:
+        items = [
+            {"name": "Electronics"},
+            {"name": "Home & Garden"},
+            {"name": "Fashion"},
+            {"name": "Collectibles"}
+        ]
+        conn.execute(insert(categories), items)
+        conn.commit()
+        print("Categories added!")
+        
+        
 def run_day3_test():
     print("--- STARTING DAY 3: BIDDING SYSTEM TEST ---")
 
@@ -32,6 +52,7 @@ def run_day3_test():
         seller_id=seller_id,
         title="iPhone 15 Pro",
         description="Brand new, sealed.",
+        category_id= 1 ,
         starting_price=Decimal("700.00"),
         end_time=expiry
     )
@@ -52,5 +73,7 @@ def run_day3_test():
     result3 = place_bid(bidder_two_id, auction_id, Decimal("800.00"))
     print(f"Result: {result3}")
     
-    
+  
+  
+seed_categories()  
 run_day3_test()

@@ -3,13 +3,14 @@ from datetime import datetime
 from .engine import engine
 from .schemas import auctions
 
-def create_auction(seller_id , title , description, starting_price , end_time):
+def create_auction(seller_id , title , description, category_id, starting_price , end_time):
     # saves a new auction to the database
     with engine.connect() as conn:
         stmt = insert(auctions).values(
             seller_id = seller_id,
             title = title,
             description = description,
+            category_id = category_id,
             starting_price = starting_price,
             end_time = end_time,
             current_highest_bid = starting_price

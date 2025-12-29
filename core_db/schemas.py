@@ -18,12 +18,21 @@ users= Table(
     Column("balance", Numeric(10,2), server_default="0.00")
 )
 
+
+categories = Table(
+    "categories", metadata,
+    Column("id", Integer, primary_key=True),
+    Column("name", String(100), unique=True, nullable=False),
+)
+
+
 auctions = Table(
     "auctions", metadata,
     Column("id", Integer, primary_key=True),
     Column("seller_id", ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
     Column("title", String(255), nullable=False),
     Column("description", String(500)),
+    Column("category_id", ForeignKey('categories.id', ondelete='SET NULL'), nullable=True),
     Column("starting_price", Numeric(12, 2), nullable=False),
     Column("current_highest_bid", Numeric(12, 2)), # Helps track price easily
     Column("end_time", DateTime, nullable=False),
