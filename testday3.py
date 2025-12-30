@@ -47,10 +47,10 @@ def run_day3_test():
 
     # STEP 2: Create an Auction
     # We set this to end in 1 hour
-    expiry = datetime.now() + timedelta(hours=1)
+    expiry = datetime.now() + timedelta(hours = 30)
     auction_id = create_auction(
         seller_id=seller_id,
-        title="iPhone 15 Pro",
+        title="iPhone 17 Pro",
         description="Brand new, sealed.",
         category_id= 1 ,
         starting_price=Decimal("700.00"),
@@ -75,5 +75,24 @@ def run_day3_test():
     
   
   
-seed_categories()  
-run_day3_test()
+def run_day_4():
+    print("--- STARTING DAY 3: BIDDING SYSTEM TEST ---")
+
+    # STEP 2: Create an Auction
+    # We set this to 30 days
+    expiry = datetime.now() + timedelta(days = 30)
+    auction_id = create_auction(
+        seller_id= 1,
+        title="iPhone 7 Pro",
+        description="Old But used by obama.",
+        category_id= 1 ,
+        starting_price=Decimal("70.00"),
+        end_time=expiry
+    )
+    print(f"✅ Auction created with ID: {auction_id}. Starting price: $70")
+    
+  
+# seed_categories()  
+# run_day3_test()
+
+run_day_4()
