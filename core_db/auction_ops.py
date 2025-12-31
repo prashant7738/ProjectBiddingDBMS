@@ -35,3 +35,11 @@ def get_active_auctions():
         )
         result = conn.execute(query)
         return [dict(row._mapping) for row in result]
+    
+    
+
+def get_auctions_by_seller(seller_id):
+    with engine.connect() as conn:
+        query = select(auctions).where(auctions.c.seller_id == seller_id)
+        result = conn.execute(query)
+        return [dict(row._mapping) for row in result]

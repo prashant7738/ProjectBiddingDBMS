@@ -22,7 +22,7 @@ def place_bid(bidder_id , auction_id , bid_amount):
             # Check if bid is high enough
             
             if bid_amount <= (auction.current_highest_bid or 0):
-                return f"Error : bid amount should be higher than{auction.current_highest_bid}"
+                return f"Error : bid amount should be higher than {auction.current_highest_bid}"
             
             # Finally Insert this bid into record
             conn.execute(insert(bids).values(
@@ -38,3 +38,13 @@ def place_bid(bidder_id , auction_id , bid_amount):
             ))
             
             return "Success : Bid Placed!"
+        
+        
+def get_user_bidding_history(user_id):
+    with engine.connect() as conn:
+        
+        j = auctions.join(bids , auctions.c.id == bids.c.auction_id)
+        query = select(auctions).select_from(j).where(bids.c.bidder_id == user_id)
+        
+        result = conn.execute(query)
+        return [dict(row._mapping) for row in result]
