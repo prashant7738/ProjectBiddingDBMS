@@ -8,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'project_main.settings')
 django.setup()
 
 from core_db.user_ops import register_user
-from core_db.auction_ops import create_auction
+from core_db.auction_ops import create_auction , close_expired_auctions
 from core_db.bid_ops import place_bid
 
 
@@ -91,8 +91,13 @@ def run_day_4():
     )
     print(f"✅ Auction created with ID: {auction_id}. Starting price: $70")
     
+    
+
   
 # seed_categories()  
 # run_day3_test()
 
-run_day_4()
+# run_day_4()
+
+close_expired_auctions()
+

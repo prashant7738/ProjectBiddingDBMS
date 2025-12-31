@@ -1,4 +1,4 @@
-from sqlalchemy import insert , select, and_
+from sqlalchemy import insert , select, and_, update
 from datetime import datetime
 from .engine import engine
 from .schemas import auctions
@@ -43,3 +43,19 @@ def get_auctions_by_seller(seller_id):
         query = select(auctions).where(auctions.c.seller_id == seller_id)
         result = conn.execute(query)
         return [dict(row._mapping) for row in result]
+    
+    
+# This fuction is a maintiance type function which set is_active to false if the time is finished for the auciton 
+def close_expired_auctions():
+    with engine.connect() as conn:
+        now = datetime.now()
+        stmt = update(auctions).where(
+            and_(auctions.c.end_time < now,
+                 auctions.c.is_active == True
+                 )
+        ).values(is_active = False)
+        
+        result = conn.execute(stmt)
+        conn.commit()
+        # TO return how many auctions has been closed out
+        return result.rowcount 
