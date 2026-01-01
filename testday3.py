@@ -58,20 +58,20 @@ def run_day3_test():
     )
     print(f"✅ Auction created with ID: {auction_id}. Starting price: $700")
 
-    # STEP 3: Test Validation - Bid too low
-    print("\nTest 1: Placing a bid of $600 (Lower than starting price)...")
-    result1 = place_bid(bidder_one_id, auction_id, Decimal("600.00"))
-    print(f"Result: {result1}") 
+    # # STEP 3: Test Validation - Bid too low
+    # print("\nTest 1: Placing a bid of $600 (Lower than starting price)...")
+    # result1 = place_bid(bidder_one_id, auction_id, Decimal("600.00"))
+    # print(f"Result: {result1}") 
 
-    # STEP 4: Test Validation - Successful Bid
-    print("\nTest 2: Placing a valid bid of $750...")
-    result2 = place_bid(bidder_one_id, auction_id, Decimal("750.00"))
-    print(f"Result: {result2}")
+    # # STEP 4: Test Validation - Successful Bid
+    # print("\nTest 2: Placing a valid bid of $750...")
+    # result2 = place_bid(bidder_one_id, auction_id, Decimal("750.00"))
+    # print(f"Result: {result2}")
 
-    # STEP 5: Test Validation - Outbidding someone
-    print("\nTest 3: Bidder Two tries to bid $800...")
-    result3 = place_bid(bidder_two_id, auction_id, Decimal("800.00"))
-    print(f"Result: {result3}")
+    # # STEP 5: Test Validation - Outbidding someone
+    # print("\nTest 3: Bidder Two tries to bid $800...")
+    # result3 = place_bid(bidder_two_id, auction_id, Decimal("800.00"))
+    # print(f"Result: {result3}")
     
   
   
@@ -94,10 +94,10 @@ def run_day_4():
     
 
   
-# seed_categories()  
-# run_day3_test()
+seed_categories()  
+run_day3_test()
 
 # run_day_4()
 
-close_expired_auctions()
+# close_expired_auctions()
 

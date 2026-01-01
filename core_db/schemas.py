@@ -1,6 +1,6 @@
 # this is where all database table are created
 
-from sqlalchemy import MetaData , Table , Column, Integer, String, Numeric, ForeignKey, DateTime, Boolean
+from sqlalchemy import MetaData , Table , Column, Integer, String, Numeric, ForeignKey, DateTime, Boolean, CheckConstraint
 from sqlalchemy.sql import func
 
 
@@ -15,7 +15,9 @@ users= Table(
     Column("name", String(50), unique=True , nullable = False),
     Column("email", String(100), unique=True),
     Column("password", String(200), nullable= False),
-    Column("balance", Numeric(10,2), server_default="0.00")
+    Column("balance", Numeric(10,2), server_default="0.00"),
+    
+    CheckConstraint("balance >=0", name="positive_balance")
 )
 
 

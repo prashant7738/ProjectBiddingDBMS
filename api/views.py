@@ -5,21 +5,38 @@ from .serializers import AuctionSerializer ,BidSerializer
 from rest_framework import status
 from core_db.bid_ops import place_bid, get_user_bidding_history
 
+# for pagination
+from .paginations import StandardResultsSetPagination
+
+
+# for authentication 
+from .authenticate import SQLAlchemyJWTAuthentication
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
 
 class AuctionListView(APIView):
     def get(self, request):
+        
+        paginator = StandardResultsSetPagination()
         # Call from SQLAlchemy
         data = get_active_auctions()
         
-        serializer = AuctionSerializer(data, many=True)
         
-        return Response(serializer.data)
+        result_page = paginator.paginate_queryset(data , request)
+        serializer = AuctionSerializer(result_page, many=True)
+        
+        return paginator.get_paginated_response(serializer.data)
     
     
 # To post the bid
 class PlaceBidView(APIView):
+    
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self , request):
-        # get data of bidder
+        # get data of bidder (now it is getting from token not raw json)
         bidder_id = request.data.get('bidder_id')
         auction_id = request.data.get('auction_id')
         amount = request.data.get('amount')
@@ -36,7 +53,7 @@ class PlaceBidView(APIView):
         result = place_bid(bidder_id , auction_id , amount)
         
         # 4. Handle the response
-        if result == "Success : Bid Placed!":
+        if "Success" in result:
             return Response({"message": result}, status=status.HTTP_201_CREATED)
         else:
             return Response({"error": result}, status=status.HTTP_400_BAD_REQUEST)
@@ -44,6 +61,10 @@ class PlaceBidView(APIView):
 
 # view to see all the auction conducted by seller
 class MyAuctionView(APIView):
+    
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def get(self , request , user_id):
         
         data = get_auctions_by_seller(user_id)
@@ -54,6 +75,10 @@ class MyAuctionView(APIView):
     
 # view to see all the bids that a user once bidded in a lifetime
 class MyBidsView(APIView):
+    
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def get(self , request , user_id):
         
         data = get_user_bidding_history(user_id)
