@@ -10,11 +10,11 @@ from core_db.user_ops import authenticate_user, register_user
 
 class LoginView(APIView):
     def post(self ,request):
-        username = request.data.get("name")
+        email = request.data.get("email")
         password = request.data.get("password")
         
         # verify the password
-        user = authenticate_user(username, password)
+        user = authenticate_user(email, password)
         
         if user:
             # if valid generate jwt token
@@ -24,13 +24,32 @@ class LoginView(APIView):
             
             # Attach your SQLAlchemy data to the token payload
             refresh['user_id'] = user['id']
-            refresh['name'] = user['name']
+            refresh['email'] = user['email']
             
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'user' : {'id':user['id'] , 'name':user['name']}
+            response = Response({
+                'user' : {'id':user['id'] , 'email':user['email']}
             })
+            
+            # Set tokens in cookies (HttpOnly for security)
+            response.set_cookie(
+                key='access_token',
+                value=str(refresh.access_token),
+                max_age=3600,  # 1 hour
+                httponly=True,
+                secure=False,  # Set to True in production with HTTPS
+                samesite='Lax'
+            )
+            
+            response.set_cookie(
+                key='refresh_token',
+                value=str(refresh),
+                max_age=86400 * 7,  # 7 days
+                httponly=True,
+                secure=False,  # Set to True in production with HTTPS
+                samesite='Lax'
+            )
+            
+            return response
             
         return Response({"error":"Invalid Credentials"},status=status.HTTP_401_UNAUTHORIZED)
 
@@ -65,3 +84,17 @@ class RegisterView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class LogoutView(APIView):
+    def post(self, request):
+        response = Response(
+            {"message": "Logged out successfully"},
+            status=status.HTTP_200_OK
+        )
+        
+        # Delete tokens from cookies
+        response.delete_cookie('access_token', httponly=True, samesite='Lax')
+        response.delete_cookie('refresh_token', httponly=True, samesite='Lax')
+        
+        return response
