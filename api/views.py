@@ -14,7 +14,7 @@ from .authenticate import SQLAlchemyJWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-
+# to see all the auctions
 class AuctionListView(APIView):
     def get(self, request):
         

@@ -29,10 +29,10 @@ def register_user(name , email , raw_password , initial_balance = 0.0):
         return result.inserted_primary_key[0]
 
 
-def authenticate_user(name , typed_pass):
+def authenticate_user(email , typed_pass):
     
     with engine.connect() as conn:
-        query = select(users).where(users.c.name == name)
+        query = select(users).where(users.c.email == email)
         result = conn.execute(query).first()
         
         if result and verify_password(typed_pass , result.password):

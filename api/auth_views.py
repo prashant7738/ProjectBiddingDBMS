@@ -34,7 +34,7 @@ class LoginView(APIView):
             response.set_cookie(
                 key='access_token',
                 value=str(refresh.access_token),
-                max_age=3600,  # 1 hour
+                max_age=360000,  # 1 hour
                 httponly=True,
                 secure=False,  # Set to True in production with HTTPS
                 samesite='Lax'
@@ -43,7 +43,7 @@ class LoginView(APIView):
             response.set_cookie(
                 key='refresh_token',
                 value=str(refresh),
-                max_age=86400 * 7,  # 7 days
+                max_age=864000 * 7,  # 7 days
                 httponly=True,
                 secure=False,  # Set to True in production with HTTPS
                 samesite='Lax'
