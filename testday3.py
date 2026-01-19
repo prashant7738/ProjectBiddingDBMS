@@ -94,10 +94,10 @@ def run_day_4():
     
 
   
-seed_categories()  
-run_day3_test()
+# seed_categories()  
+# run_day3_test()
 
 # run_day_4()
 
-# close_expired_auctions()
+close_expired_auctions()
 

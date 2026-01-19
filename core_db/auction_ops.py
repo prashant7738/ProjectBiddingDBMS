@@ -17,7 +17,7 @@ def create_auction(seller_id , title , description, category_id, starting_price 
         )
         result = conn.execute(stmt)
         conn.commit()
-        return result.inserted_primary_key[0]
+        return f"Sucess! Auction id: {result.inserted_primary_key[0]}"
     
     
     
