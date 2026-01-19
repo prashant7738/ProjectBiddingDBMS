@@ -27,7 +27,9 @@ class LoginView(APIView):
             refresh['email'] = user['email']
             
             response = Response({
-                'user' : {'id':user['id'] , 'email':user['email']}
+                'user' : {'id':user['id'] , 'email':user['email']},
+                'access_token': str(refresh.access_token),
+                'refresh_token': str(refresh)
             })
             
             # Set tokens in cookies (HttpOnly for security)
