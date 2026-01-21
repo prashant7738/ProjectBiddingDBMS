@@ -18,29 +18,34 @@ const Header = () => {
         notifications, setNotifications,
         unreadCount
     } = useContext(AppContext)
-    const { tokenState, setTokenState } = useContext(AuthContext)
+    const { user,setUser } = useContext(AuthContext)
     const [userData, setUserData] = useState(null)
     const [showOptions, setShowOptions] = useState(false)
 
-    useEffect(() => {
-        if (!tokenState) return;
+   useEffect(() => {
+    const fetchProfile = async () => {
+        try {
+            const response = await getProfile();
+            console.log(response);
 
-        const fetchProfile = async () => {
-            try {
-                const response = await getProfile(tokenState)
-                setUserData(response)
-                console.log(response)
-            } catch (err) {
-                console.error("Error fetching profile:", err)
+            if (response.data.userId) {
+                setUser(response.data); // authenticated
+            } else {
+                setUser(null);
             }
+        } catch (err) {
+            setUser(null); // 401 / not logged in
+            console.error("Error fetching profile:", err);
+        } finally {
+            setLoading(false);
         }
+    };
 
-        fetchProfile()
-    }, [tokenState])
+    fetchProfile();
+}, []);
+
     const handlelogOut = () => {
-        setToken('')
-        setTokenState('')
-        navigate('/')
+      
     }
 
 

@@ -1,21 +1,24 @@
 import { createContext, useState, useEffect } from 'react';
-import { getToken, removeToken } from '../utils/auth.js';
-
+import axios from 'axios';
 export const AuthContext = createContext();
 
 export default function AuthProvider({ children }) {
-  const [tokenState, setTokenState] = useState( localStorage.getItem('token') || getToken());
-   const [message, setMessage] = useState('');
-  useEffect(() => {
-    if (tokenState) {
-      localStorage.setItem('token', tokenState);
-    } else {
-      localStorage.removeItem('token');
-    }
-  }, [tokenState]);
-
+  const [user,setUser] = useState()
+  const [loading, setLoading] = useState(true);
+    useEffect(() => {
+    axios
+      .get("/api/login")
+      .then(res => {
+        if(res.data.user){
+        setUser(res.data.user);
+      }})
+      .catch(() => {
+        setUser(null);
+      })
+      .finally(() => setLoading(false));
+  }, []);
   return (
-    <AuthContext.Provider value={{ tokenState, setTokenState,message,setMessage }}>
+    <AuthContext.Provider value={{ user,setUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -20,12 +20,12 @@ import MyItems from './pages/MyItems'
 
 
 function App() {
-  const {setTokenState,tokenState} = useContext(AuthContext)
+  const {user,setUser} = useContext(AuthContext)
   return (
     <>
       {/* Show header, navigation, footer only if logged in */}
-      {tokenState && <Header />}
-      {tokenState && <NavigationTabs />}
+      {user && <Header />}
+      {user && <NavigationTabs />}
 
       <Routes>
         {/* Protected Home */}
@@ -48,7 +48,7 @@ function App() {
 
         <Route
           path="/login"
-         element={tokenState? <Navigate to={'/'}/> :<Login/>}
+         element={user? <Navigate to={'/'}/> :<Login/>}
         />
         <Route
           path="/register"
@@ -56,11 +56,11 @@ function App() {
         />
 
         {/* Catch all unknown routes */}
-        <Route path="*" element={<Navigate to={tokenState ? "/" : "/login"} />} />
+        <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
       </Routes>
 
       {/* Footer only if logged in */}
-      {tokenState && <Footer />}
+      {user && <Footer />}
     </>
   );
 }

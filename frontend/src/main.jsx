@@ -5,7 +5,7 @@ import App from './App.jsx'
 import { AppProvider } from './context/AppContext.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import AuthProvider from './context/AuthContext.jsx'
-
+import axios from 'axios'
 createRoot(document.getElementById('root')).render(
 <BrowserRouter>
 <AuthProvider>
