@@ -22,21 +22,21 @@ const Header = () => {
     const [userData, setUserData] = useState(null)
     const [showOptions, setShowOptions] = useState(false)
 
-    // useEffect(() => {
-    //     if (!tokenState) return;
+    useEffect(() => {
+        if (!tokenState) return;
 
-    //     const fetchProfile = async () => {
-    //         try {
-    //             const response = await getProfile(tokenState)
-    //             setUserData(response)
-    //             console.log(response)
-    //         } catch (err) {
-    //             console.error("Error fetching profile:", err)
-    //         }
-    //     }
+        const fetchProfile = async () => {
+            try {
+                const response = await getProfile(tokenState)
+                setUserData(response)
+                console.log(response)
+            } catch (err) {
+                console.error("Error fetching profile:", err)
+            }
+        }
 
-    //     fetchProfile()
-    // }, [tokenState])
+        fetchProfile()
+    }, [tokenState])
     const handlelogOut = () => {
         setToken('')
         setTokenState('')
@@ -56,7 +56,7 @@ const Header = () => {
 
                     <div className="flex items-center cursor-pointer">
                         <Link to={'/'} onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }) }}>
-                            <img src={assets.logo} className='min-w-40 w-45' alt="" />
+                            <img src={assets.logo} className='min-w-[160px] w-[180px]' alt="" />
                         </Link>
 
                     </div>

@@ -15,7 +15,6 @@ export default function Login() {
     e.preventDefault();
     try {
       const res = await loginUser(form);
-      console.log(res.data)
       setToken(res.data.token); // save JWT
       setTokenState(res.data.token)
       navigate('/')
@@ -25,14 +24,18 @@ export default function Login() {
   };
 
   return (
-
-    <form onSubmit={handleSubmit}>
-      <input name="email" type="email" placeholder="Email" onChange={handleChange} required />
-      <input name="password" type="password" placeholder="Password" onChange={handleChange} required />
-      <button type="submit">Login</button>
+    <div className=' h-[100vh] flex items-center justify-center'>
+      <div className='w-75 h-100 bg-red-400 rounded-2xl p-4 flex '>
+    <form onSubmit={handleSubmit} className='flex flex-col gap-10'>
+      <h1 className='text-center font-bold text-2xl '>Login</h1>
+      <div className='flex flex-col gap-6'>
+      <input name="email" type="email" placeholder="Email" onChange={handleChange} required className='outline-none px-2 bg-blue-200 rounded-[5px] h-10  w-full ' />
+      <input name="password" type="password" placeholder="Password" onChange={handleChange} required className='outline-none px-2 bg-blue-200 rounded-[5px] h-10  w-full' /></div>
+      <button type="submit" className='w-14 h-10 bg-amber-400 rounded-[5px] mx-auto font-medium hover:bg-black hover:text-white'>Login</button>
       <p>{error}</p>
-      <p>Don't have an account? <span onClick={() => navigate('/register')} style={{color:'blue', cursor:'pointer'}}>Register here</span></p>
+      <p className=''>Don't have an account? <span onClick={() => navigate('/register')} style={{color:'blue', cursor:'pointer'}}>Register here</span></p>
       {message}
-    </form>
+    </form></div>
+    </div>
   );
 }

@@ -4,7 +4,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import NavigationTabs from './components/NavigationTabs';
 import Header from './components/Header';
 import Footer from './components/Footer';
-
 import Home from './pages/Home';
 import UpcomingAuctions from './pages/UpcomingAuctions';
 import PriceResults from './pages/PriceResult';
@@ -22,19 +21,20 @@ import MyItems from './pages/MyItems'
 
 function App() {
   const {setTokenState,tokenState} = useContext(AuthContext)
-
   return (
     <>
-   <Header />
+      {/* Show header, navigation, footer only if logged in */}
+      {tokenState && <Header />}
+      {tokenState && <NavigationTabs />}
 
       <Routes>
         {/* Protected Home */}
         <Route
           path="/"
           element={
-            
+            <PrivateRoute>
               <Home />
-            
+            </PrivateRoute>
           }
         />
 
@@ -45,18 +45,22 @@ function App() {
         <Route path='/wonitems' element={<WonItems/>}/>
         <Route path='/myitems' element={<MyItems/>}/>
         {/* Auth pages */}
+
         <Route
           path="/login"
-          element={<Login/>}
+         element={tokenState? <Navigate to={'/'}/> :<Login/>}
         />
         <Route
           path="/register"
           element={<Register/>}
         />
+
+        {/* Catch all unknown routes */}
+        <Route path="*" element={<Navigate to={tokenState ? "/" : "/login"} />} />
       </Routes>
 
       {/* Footer only if logged in */}
-    <Footer />
+      {tokenState && <Footer />}
     </>
   );
 }
