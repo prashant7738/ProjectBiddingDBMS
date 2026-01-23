@@ -1,21 +1,41 @@
 import { createContext, useState, useEffect } from 'react';
-import { getToken, removeToken } from '../utils/auth.js';
+import { getProfile, logoutUser } from '../api/auth.js';
 
 export const AuthContext = createContext();
 
 export default function AuthProvider({ children }) {
-  const [tokenState, setTokenState] = useState( localStorage.getItem('token') || getToken());
-   const [message, setMessage] = useState('');
-  useEffect(() => {
-    if (tokenState) {
-      localStorage.setItem('token', tokenState);
-    } else {
-      localStorage.removeItem('token');
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+
+  const refreshProfile = async () => {
+    try {
+      const res = await getProfile();
+      console.log('Profile fetched successfully:', res.data);
+      setUser(res.data);
+    } catch (err) {
+      console.error('Failed to fetch profile:', err.response?.status, err.message);
+      setUser(null);
+    } finally {
+      setLoading(false);
     }
-  }, [tokenState]);
+  };
+
+  useEffect(() => {
+    refreshProfile();
+  }, []);
+
+  const logout = async () => {
+    try {
+      await logoutUser();
+    } catch {
+      // Ignore logout errors - user will be logged out locally anyway
+    }
+    setUser(null);
+  };
 
   return (
-    <AuthContext.Provider value={{ tokenState, setTokenState,message,setMessage }}>
+    <AuthContext.Provider value={{ user, setUser, loading, refreshProfile, logout, message, setMessage }}>
       {children}
     </AuthContext.Provider>
   );

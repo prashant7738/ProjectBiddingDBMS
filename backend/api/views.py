@@ -114,3 +114,11 @@ class MyBidsView(APIView):
         serializer = AuctionSerializer(data , many =True)
         
         return Response(serializer.data)
+    
+
+class ProfileView(APIView):
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({'id': request.user.id, 'email': request.user.email})

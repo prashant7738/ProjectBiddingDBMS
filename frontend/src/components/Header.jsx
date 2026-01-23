@@ -1,12 +1,11 @@
 
-import { useContext, useEffect, useTransition } from 'react';
+import { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { assets } from '../assets/assets'
 import { Link } from 'react-router-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getProfile } from '../api/auth';
+// import { getProfile } from '../api/auth';
 import { useState } from 'react';
-import { getToken, setToken } from '../utils/auth';
 import { AuthContext } from '../context/AuthContext';
 const Header = () => {
     const navigate = useNavigate()
@@ -18,29 +17,12 @@ const Header = () => {
         notifications, setNotifications,
         unreadCount
     } = useContext(AppContext)
-    const { tokenState, setTokenState } = useContext(AuthContext)
-    const [userData, setUserData] = useState(null)
+    const { user, logout } = useContext(AuthContext)
     const [showOptions, setShowOptions] = useState(false)
 
-    // useEffect(() => {
-    //     if (!tokenState) return;
-
-    //     const fetchProfile = async () => {
-    //         try {
-    //             const response = await getProfile(tokenState)
-    //             setUserData(response)
-    //             console.log(response)
-    //         } catch (err) {
-    //             console.error("Error fetching profile:", err)
-    //         }
-    //     }
-
-    //     fetchProfile()
-    // }, [tokenState])
-    const handlelogOut = () => {
-        setToken('')
-        setTokenState('')
-        navigate('/')
+    const handlelogOut = async () => {
+        await logout();
+        navigate('/');
     }
 
 
@@ -144,16 +126,37 @@ const Header = () => {
                         </div>
 
                         <button className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-all hover " onClick={() => setShowOptions(!showOptions)}>
-                            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold">
+                            <div className="w-10 h-10 bg-linear-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold">
                                 JD
                             </div>
-                            <span className="font-medium text-gray-700">{userData?.data.name}</span>
+                            <span className="font-medium text-gray-700">{user?.name}</span>
                            
                         </button>
-                        <div className={`absolute right-37 top-14 gap-3  flex-col items-center bg-gray-100 p-5 rounded-2xl max-w-[100px] ${showOptions ? 'flex' : 'hidden'}`}>
-                                <button className='p-2 hover:font-bold  rounded-xl' >Logout</button>
-                                <button className='p-2 hover:font-bold rounded-xl'>Logout</button>
-                                <button className='p-2  hover:font-bold rounded-xl' onClick={handlelogOut}>Logout</button></div>
+                        <div className={`absolute right-37 top-14 gap-3  flex-col items-center bg-gray-100 p-5 rounded-2xl max-w-25 ${showOptions ? 'flex' : 'hidden'}`}>
+                            {user ? (
+                                <>
+                                    <button
+                                        className='p-2 hover:font-bold rounded-xl'
+                                        onClick={() => { setShowOptions(false); navigate('/profile'); }}
+                                    >
+                                        Profile
+                                    </button>
+                                    <button
+                                        className='p-2 hover:font-bold rounded-xl'
+                                        onClick={async () => { setShowOptions(false); await handlelogOut(); }}
+                                    >
+                                        Logout
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    className='p-2 hover:font-bold rounded-xl'
+                                    onClick={() => { setShowOptions(false); navigate('/login'); }}
+                                >
+                                    Login
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
