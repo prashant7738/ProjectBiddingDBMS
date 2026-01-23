@@ -12,54 +12,37 @@ import Login from './pages/Login';
 
 import PrivateRoute from './components/PrivateRoute';
 import { AuthContext } from './context/AuthContext';
-import { useEffect } from 'react';
-import { getToken } from './utils/auth';
 import AuctionPage from './components/AuctionPage';
 import WonItems from './pages/WonItems';
 import MyItems from './pages/MyItems'
 
 
 function App() {
-  const {user,setUser} = useContext(AuthContext)
+  const {user,setUser,loading} = useContext(AuthContext)
+  if (loading) {
+    console.log('loading')
+    return <div className="h-screen flex items-center justify-center">Loading...</div>;
+  }
+
   return (
     <>
-      {/* Show header, navigation, footer only if logged in */}
       {user && <Header />}
       {user && <NavigationTabs />}
 
       <Routes>
-        {/* Protected Home */}
-        <Route
-          path="/"
-          element={
-            <PrivateRoute>
-              <Home />
-            </PrivateRoute>
-          }
-        />
-
-        {/* Public pages */}
+        <Route path="/" element={<PrivateRoute><Home /></PrivateRoute>} />
         <Route path="/upcoming" element={<UpcomingAuctions />} />
         <Route path="/price-results" element={<PriceResults />} />
-        <Route path='/auctionPage/:id' element={<AuctionPage/>}></Route>
-        <Route path='/wonitems' element={<WonItems/>}/>
-        <Route path='/myitems' element={<MyItems/>}/>
-        {/* Auth pages */}
+        <Route path="/auctionPage/:id" element={<AuctionPage />} />
+        <Route path="/wonitems" element={<WonItems />} />
+        <Route path="/myitems" element={<MyItems />} />
 
-        <Route
-          path="/login"
-         element={user? <Navigate to={'/'}/> :<Login/>}
-        />
-        <Route
-          path="/register"
-          element={<Register/>}
-        />
+        <Route path="/login" element={user ? <Navigate to="/" /> : <Login />} />
+        <Route path="/register" element={user ? <Navigate to="/" /> : <Register />} />
 
-        {/* Catch all unknown routes */}
         <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
       </Routes>
 
-      {/* Footer only if logged in */}
       {user && <Footer />}
     </>
   );

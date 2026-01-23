@@ -26,12 +26,13 @@ SECRET_KEY = 'django-insecure-1)_8u$4x9r(6_t6k)rp2_k0y5dsa%v0dslj*_x8r02h6a88qtn
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,7 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'api',
-    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -154,8 +154,10 @@ SIMPLE_JWT = {
 }
 
 # CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Your React app
     'http://localhost:3000',
 ]
+CORS_ALLOW_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]

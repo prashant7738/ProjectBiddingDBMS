@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getProfile } from '../api/auth';
 import { useState } from 'react';
-import { getToken, setToken } from '../utils/auth';
 import { AuthContext } from '../context/AuthContext';
 const Header = () => {
     const navigate = useNavigate()
@@ -18,36 +17,15 @@ const Header = () => {
         notifications, setNotifications,
         unreadCount
     } = useContext(AppContext)
-    const { user,setUser } = useContext(AuthContext)
+    const { user,setUser,logout } = useContext(AuthContext)
     const [userData, setUserData] = useState(null)
     const [showOptions, setShowOptions] = useState(false)
 
-   useEffect(() => {
-    const fetchProfile = async () => {
-        try {
-            const response = await getProfile();
-            console.log(response);
 
-            if (response.data.userId) {
-                setUser(response.data); // authenticated
-            } else {
-                setUser(null);
-            }
-        } catch (err) {
-            setUser(null); // 401 / not logged in
-            console.error("Error fetching profile:", err);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    fetchProfile();
-}, []);
-
-    const handlelogOut = () => {
-      
-    }
-
+    const handlelogOut = async () => {
+  await logout();
+  navigate("/login", { replace: true });
+};
 
 
     const markAllRead = () => {
@@ -152,7 +130,7 @@ const Header = () => {
                             <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold">
                                 JD
                             </div>
-                            <span className="font-medium text-gray-700">{userData?.data.name}</span>
+                            <span className="font-medium text-gray-700">{user.name}</span>
                            
                         </button>
                         <div className={`absolute right-37 top-14 gap-3  flex-col items-center bg-gray-100 p-5 rounded-2xl max-w-[100px] ${showOptions ? 'flex' : 'hidden'}`}>

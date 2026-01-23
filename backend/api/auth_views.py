@@ -1,5 +1,5 @@
 # In this file all authentication are included
-
+import jwt
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,10 +9,28 @@ from core_db.user_ops import authenticate_user, register_user
 
 
 class LoginView(APIView):
+    def get(self, request):
+        # 1. Grab the cookie
+        token = request.COOKIES.get('access_token')
+        if not token:
+            return Response({"error": "No token"}, status=401)
+        
+        try:
+            # 2. Decode it manually since you use SQLAlchemy/Custom logic
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            return Response({
+                "user": {
+                    "id": payload.get("user_id"),
+                    "email": payload.get("email"),
+                    "name": payload.get("name")
+                }
+            })
+        except Exception:
+            return Response({"error": "Invalid session"}, status=401)
     def post(self ,request):
         email = request.data.get("email")
         password = request.data.get("password")
-        
+        name = request.data.get("name")
         # verify the password
         user = authenticate_user(email, password)
         
@@ -27,7 +45,7 @@ class LoginView(APIView):
             refresh['email'] = user['email']
             
             response = Response({
-                'user' : {'id':user['id'] , 'email':user['email']},
+                'user' : {'name':user['name'],'id':user['id'] , 'email':user['email'],},
             })
             
             # Set tokens in cookies (HttpOnly for security)
@@ -37,7 +55,8 @@ class LoginView(APIView):
                 max_age=360000,  # 1 hour
                 httponly=True,
                 secure=False,  # Set to True in production with HTTPS
-                samesite='Lax'
+                samesite='Lax',
+                path='/'
             )
             
             response.set_cookie(
@@ -46,7 +65,8 @@ class LoginView(APIView):
                 max_age=864000 * 7,  # 7 days
                 httponly=True,
                 secure=False,  # Set to True in production with HTTPS
-                samesite='Lax'
+                samesite='Lax',
+                path='/'
             )
             
             return response
