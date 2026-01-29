@@ -125,38 +125,45 @@ const Header = () => {
                             )}
                         </div>
 
-                        <button className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-all hover " onClick={() => setShowOptions(!showOptions)}>
-                            <div className="w-10 h-10 bg-linear-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                JD
-                            </div>
-                            <span className="font-medium text-gray-700">{user?.name}</span>
-                           
-                        </button>
-                        <div className={`absolute right-37 top-14 gap-3  flex-col items-center bg-gray-100 p-5 rounded-2xl max-w-25 ${showOptions ? 'flex' : 'hidden'}`}>
-                            {user ? (
-                                <>
+                        {user ? (
+                            <div className="relative">
+                                <button className="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-gray-100 transition-all hover" onClick={() => setShowOptions(!showOptions)}>
+                                    <div className="w-10 h-10 bg-linear-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                        JD
+                                    </div>
+                                    <span className="font-medium text-gray-700">{user?.name}</span>
+                                </button>
+                                <div className={`absolute right-0 top-14 gap-3 flex-col items-center bg-gray-100 p-5 rounded-2xl max-w-25 ${showOptions ? 'flex' : 'hidden'}`}>
                                     <button
-                                        className='p-2 hover:font-bold rounded-xl'
+                                        className="p-2 hover:font-bold rounded-xl"
                                         onClick={() => { setShowOptions(false); navigate('/profile'); }}
                                     >
                                         Profile
                                     </button>
                                     <button
-                                        className='p-2 hover:font-bold rounded-xl'
+                                        className="p-2 hover:font-bold rounded-xl"
                                         onClick={async () => { setShowOptions(false); await handlelogOut(); }}
                                     >
                                         Logout
                                     </button>
-                                </>
-                            ) : (
-                                <button
-                                    className='p-2 hover:font-bold rounded-xl'
-                                    onClick={() => { setShowOptions(false); navigate('/login'); }}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex items-center space-x-3">
+                                <Link
+                                    to="/login"
+                                    className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-100 transition-all"
                                 >
-                                    Login
-                                </button>
-                            )}
-                        </div>
+                                    Sign in
+                                </Link>
+                                <Link
+                                    to="/register"
+                                    className="px-4 py-2 rounded-lg bg-linear-to-r from-purple-600 to-indigo-600 text-white hover:opacity-95 transition"
+                                >
+                                    Register
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

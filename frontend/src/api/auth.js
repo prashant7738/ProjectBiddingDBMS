@@ -24,7 +24,7 @@ client.interceptors.response.use(
 );
 
 // Auth endpoints
-export const registerUser = (data) => client.post('/register/', data);  // { name, email, password }
+export const registerUser = (data) => client.post('/register', data);  // { name, email, password }
 export const loginUser = (data) => client.post('/login/', data);        // { email, password }
 export const logoutUser = () => client.post('/logout/');                 // Clears cookies
 
