@@ -1,7 +1,7 @@
 from sqlalchemy import insert , select , and_ , update
 from datetime import datetime
 from .engine import engine 
-from .schemas import bids , auctions , users
+from .schemas import bids , auctions , users, auction_registrations
 
 def place_bid(bidder_id , auction_id , bid_amount):
     with engine.connect() as conn:
@@ -13,6 +13,16 @@ def place_bid(bidder_id , auction_id , bid_amount):
             # if auction exists
             if not auction:
                 return "Error : Auction Not Found"
+            
+            # Check if user is registered for this auction
+            registration_q = select(auction_registrations).where(
+                and_(
+                    auction_registrations.c.user_id == bidder_id,
+                    auction_registrations.c.auction_id == auction_id
+                )
+            )
+            if not conn.execute(registration_q).first():
+                return "Error: You are not registered for this auction. Please register first."
             
             # Check if auction is still open
             if datetime.now() >= auction.end_time:

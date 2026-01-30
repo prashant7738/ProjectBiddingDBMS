@@ -3,7 +3,7 @@ import { useContext, useState, useEffect, useMemo } from "react";
 import { AppContext } from "../context/AppContext";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { getAuctions, getAuctionById, getMediaUrl, placeBid, registerForAuction } from "../api/auth";
+import { getAuctions, getAuctionById, getMediaUrl, getRegisteredUsers, placeBid, registerForAuction } from "../api/auth";
 import AuctionCard from "./AuctionCard";
 
 const normalizeAuction = (raw) => {
@@ -125,7 +125,7 @@ const AuctionPage = () => {
 
     useEffect(() => {
         if (!activeAuction) return;
-        setIsRegistered(activeAuction.registered || false);
+        setIsRegistered((prev) => prev || activeAuction.registered || false);
         const starting = activeAuction.currentBid || activeAuction.startingBid || 0;
         setCurrentBid(starting);
         const history = Array.isArray(activeAuction.bids)
@@ -137,6 +137,50 @@ const AuctionPage = () => {
             : [];
         setBidHistory(history);
     }, [activeAuction]);
+
+    useEffect(() => {
+        if (!activeAuction?.id || !user?.id) return;
+        let isMounted = true;
+        const checkRegistration = async () => {
+            try {
+                const res = await getRegisteredUsers(activeAuction.id);
+                if (res.data?.registered === true || res.data?.is_registered === true) {
+                    if (isMounted) {
+                        setIsRegistered(true);
+                    }
+                    return;
+                }
+                const list = Array.isArray(res.data)
+                    ? res.data
+                    : Array.isArray(res.data?.results)
+                        ? res.data.results
+                        : Array.isArray(res.data?.users)
+                            ? res.data.users
+                            : Array.isArray(res.data?.registered_users)
+                                ? res.data.registered_users
+                                : Array.isArray(res.data?.user_ids)
+                                    ? res.data.user_ids
+                                    : [];
+                const registered = list.some((u) => {
+                    const id = typeof u === 'object' ? (u.id ?? u.user_id) : u;
+                    return String(id) === String(user.id);
+                });
+                if (isMounted) {
+                    setIsRegistered(registered);
+                    if (registered) {
+                        setSelectedItem((prev) => (prev && prev.id === activeAuction.id ? { ...prev, registered: true } : prev));
+                        setAuctions((prev) => prev.map((a) => (a.id === activeAuction.id ? { ...a, registered: true } : a)));
+                    }
+                }
+            } catch {
+                // If lookup fails, keep current registration state
+            }
+        };
+        checkRegistration();
+        return () => {
+            isMounted = false;
+        };
+    }, [activeAuction?.id, user?.id]);
 
     const handleRegister = async () => {
         // Only logged-in users can register
@@ -151,6 +195,8 @@ const AuctionPage = () => {
         try {
             await registerForAuction(activeAuction.id, user.id);
             setIsRegistered(true);
+            setSelectedItem((prev) => (prev && prev.id === activeAuction.id ? { ...prev, registered: true } : prev));
+            setAuctions((prev) => prev.map((a) => (a.id === activeAuction.id ? { ...a, registered: true } : a)));
         } catch (err) {
             setBidError(err.response?.data?.error || 'Failed to register for auction.');
         } finally {

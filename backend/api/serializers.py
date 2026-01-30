@@ -17,6 +17,7 @@ class AuctionSerializer(serializers.Serializer):
     category_id = serializers.IntegerField()
     title = serializers.CharField()
     description = serializers.CharField()
+    image_url = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     starting_price = serializers.DecimalField(max_digits=12, decimal_places=2)
     current_highest_bid = serializers.DecimalField(max_digits=12, decimal_places=2)
     end_time = serializers.DateTimeField()

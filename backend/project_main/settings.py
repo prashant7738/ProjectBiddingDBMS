@@ -125,6 +125,10 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# Media files (User uploaded files)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 
 # Database 
@@ -157,7 +161,12 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Your React app
-    'http://localhost:3000',
 ]
 
 CORS_ALLOW_CREDENTIALS = True
+
+SESSION_COOKIE_SAMESITE = 'Lax' # Or 'None' if using HTTPS/Production
+CSRF_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_HTTPONLY = True  # Prevents JS from reading the cookie
+
+CSRF_COOKIE_HTTPONLY = False

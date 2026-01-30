@@ -99,5 +99,6 @@ def run_day_4():
 
 # run_day_4()
 
-close_expired_auctions()
+seed_categories()
+# close_expired_auctions()
 
