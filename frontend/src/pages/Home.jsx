@@ -17,7 +17,7 @@ const Home = () => {
                     name: raw?.title ?? 'Untitled Auction',
                     category: raw?.category_name ?? raw?.category ?? 'general',
                     image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
-                    currentBid: raw?.current_bid ?? raw?.starting_price ?? 0,
+                    currentBid: raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0,
                     startingBid: raw?.starting_price ?? 0,
                     isLive: raw?.is_live ?? (endTime > new Date()),
                     endTime,

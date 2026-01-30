@@ -1,20 +1,20 @@
 
-import { useContext, useState, useEffect, useMemo } from "react";
+import { useContext, useState, useEffect, useMemo, useRef } from "react";
 import { AppContext } from "../context/AppContext";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { getAuctions, getAuctionById, getMediaUrl, getRegisteredUsers, placeBid, registerForAuction } from "../api/auth";
+import apiClient, { getAuctions, getAuctionById, getMediaUrl, getRegisteredUsers, placeBid, registerForAuction } from "../api/auth";
 import AuctionCard from "./AuctionCard";
 
 const normalizeAuction = (raw) => {
     const endTime = raw?.end_time ? new Date(raw.end_time) : new Date(Date.now() + 3600000);
-    const currentBid = raw?.current_bid ?? raw?.starting_price ?? 0;
-    const startingBid = raw?.starting_price ?? 0;
-    const name = raw?.title ?? 'Untitled Auction';
+    const currentBid = raw?.current_highest_bid ?? raw?.current_bid ?? raw?.highest_bid ?? raw?.currentBid ?? raw?.starting_price ?? 0;
+    const startingBid = raw?.starting_price ?? raw?.startingPrice ?? 0;
+    const name = raw?.title ?? raw?.name ?? 'Untitled Auction';
     const category = raw?.category_name ?? raw?.category ?? 'general';
     const country = raw?.country ?? 'Unknown';
-    const isLive = raw?.is_live ?? (endTime > new Date());
-    const bidCount = raw?.bid_count ?? 0;
+    const isLive = raw?.is_live ?? raw?.isLive ?? (endTime > new Date());
+    const bidCount = raw?.bid_count ?? raw?.bidCount ?? 0;
     const image = getMediaUrl(raw?.image_url ?? raw?.image ?? '');
     const description = raw?.description ?? '';
     const registered = raw?.registered ?? false;
@@ -47,6 +47,10 @@ const AuctionPage = () => {
     const [bidHistory, setBidHistory] = useState([]);
     const [bidError, setBidError] = useState('');
     const [registering, setRegistering] = useState(false);
+    const [bidAlert, setBidAlert] = useState('');
+    const wsRef = useRef(null);
+    const reconnectRef = useRef(null);
+    const alertTimeoutRef = useRef(null);
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -182,6 +186,188 @@ const AuctionPage = () => {
         };
     }, [activeAuction?.id, user?.id]);
 
+    const getWsUrl = (auctionId) => {
+        const httpBase = apiClient?.defaults?.baseURL || '';
+        const apiRoot = httpBase.replace(/\/?api\/?$/, '');
+        if (apiRoot) {
+            const wsBase = apiRoot.replace(/^https?/, (match) => (match === 'https' ? 'wss' : 'ws'));
+            return `${wsBase}/ws/auctions/${auctionId}/`;
+        }
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        return `${protocol}://${window.location.host}/ws/auctions/${auctionId}/`;
+    };
+
+    useEffect(() => {
+        if (!activeAuction?.id || !user?.id || !isRegistered) {
+            if (wsRef.current) {
+                wsRef.current.close();
+                wsRef.current = null;
+            }
+            if (reconnectRef.current) {
+                clearTimeout(reconnectRef.current);
+                reconnectRef.current = null;
+            }
+            return;
+        }
+
+        console.log('[WS] Attempting connection for user:', user.id, 'auction:', activeAuction.id);
+        let didUnmount = false;
+
+        const handleBidUpdate = (payload, options = {}) => {
+            const rawAmount = payload?.current_highest_bid
+                ?? payload?.current_bid
+                ?? payload?.currentBid
+                ?? payload?.amount
+                ?? payload?.bid?.amount
+                ?? payload?.data?.amount
+                ?? payload?.data?.bid?.amount
+                ?? payload?.auction?.current_bid
+                ?? payload?.auction?.currentBid
+                ?? payload?.data?.current_bid
+                ?? payload?.data?.currentBid;
+            const amount = Number.parseFloat(rawAmount);
+            if (Number.isFinite(amount)) {
+                setCurrentBid(amount);
+                setSelectedItem((prev) =>
+                    prev && prev.id === activeAuction.id ? { ...prev, currentBid: amount } : prev
+                );
+                setAuctions((prev) =>
+                    prev.map((a) => (a.id === activeAuction.id ? { ...a, currentBid: amount } : a))
+                );
+            }
+
+            if (Array.isArray(payload?.bids)) {
+                const history = payload.bids.map((bid) => ({
+                    bidder: bid.bidder_name || bid.bidder || (bid.bidder_id ? `Bidder #${bid.bidder_id}` : 'Bidder'),
+                    amount: bid.amount ?? 0,
+                    time: bid.time || bid.created_at || 'Just now',
+                }));
+                setBidHistory(history);
+                return;
+            }
+
+            if (payload?.amount || payload?.bid?.amount || payload?.data?.bid?.amount) {
+                const bidAmount = payload?.amount ?? payload?.bid?.amount ?? payload?.data?.bid?.amount;
+                const bidderName =
+                    payload?.bidder_name
+                    || payload?.bidder
+                    || payload?.bidder_id
+                    || payload?.bid?.bidder_name
+                    || payload?.bid?.bidder
+                    || payload?.bid?.bidder_id
+                    || 'Bidder';
+                const bidTime = payload?.time || payload?.created_at || payload?.bid?.time || payload?.bid?.created_at || 'Just now';
+                setBidHistory((prev) => [
+                    {
+                        bidder: bidderName,
+                        amount: bidAmount ?? 0,
+                        time: bidTime,
+                    },
+                    ...prev,
+                ]);
+            }
+
+            if (options.showAlert && Number.isFinite(amount)) {
+                const bidderName =
+                    payload?.bidder_name
+                    || payload?.bidder
+                    || payload?.bidder_id
+                    || payload?.bid?.bidder_name
+                    || payload?.bid?.bidder
+                    || payload?.bid?.bidder_id
+                    || 'Someone';
+                setBidAlert(`${bidderName} placed a new bid: $${amount.toLocaleString()}`);
+                if (alertTimeoutRef.current) {
+                    clearTimeout(alertTimeoutRef.current);
+                }
+                alertTimeoutRef.current = setTimeout(() => {
+                    setBidAlert('');
+                }, 3000);
+            }
+        };
+
+        const connect = () => {
+            const wsUrl = getWsUrl(activeAuction.id);
+            console.log('[WS] Connecting to:', wsUrl);
+            const socket = new WebSocket(wsUrl);
+            wsRef.current = socket;
+
+            socket.onopen = () => {
+                console.info('[WS] Connected to auction channel', activeAuction.id);
+                setBidError('');
+            };
+
+            socket.onmessage = (event) => {
+                console.log('[WS] Message received:', event.data);
+                try {
+                    const data = JSON.parse(event.data);
+                    const type = data?.type || data?.event || data?.action;
+
+                    if (type === 'auction_state' || type === 'state') {
+                        handleBidUpdate(data, { showAlert: false });
+                        return;
+                    }
+
+                    if (type === 'bid_update' || type === 'bid_placed' || type === 'BID_PLACED' || type === 'bid') {
+                        handleBidUpdate(data, { showAlert: true });
+                        return;
+                    }
+
+                    if (type === 'error' || data?.error) {
+                        setBidError(data?.message || data?.error || 'Failed to place bid.');
+                        return;
+                    }
+
+                    if (
+                        data?.current_bid
+                        || data?.currentBid
+                        || data?.amount
+                        || data?.bid?.amount
+                        || data?.data?.bid?.amount
+                    ) {
+                        handleBidUpdate(data, { showAlert: true });
+                    }
+                } catch {
+                    // Ignore non-JSON messages
+                }
+            };
+
+            socket.onclose = (event) => {
+                console.warn('[WS] Disconnected from auction channel', activeAuction.id, 'Code:', event.code, 'Reason:', event.reason);
+                if (event.code === 1006) {
+                    console.error('[WS] Abnormal closure - backend likely rejected connection (auth issue?)');
+                    setBidError('Connection failed. Please ensure you are logged in.');
+                }
+                if (!didUnmount && event.code !== 1000) {
+                    reconnectRef.current = setTimeout(connect, 3000);
+                }
+            };
+
+            socket.onerror = (err) => {
+                console.error('[WS] Connection error:', err);
+                console.log('[WS] Check: 1) Backend WS server running, 2) User logged in with valid cookie, 3) CORS configured');
+            };
+        };
+
+        connect();
+
+        return () => {
+            didUnmount = true;
+            if (reconnectRef.current) {
+                clearTimeout(reconnectRef.current);
+                reconnectRef.current = null;
+            }
+            if (alertTimeoutRef.current) {
+                clearTimeout(alertTimeoutRef.current);
+                alertTimeoutRef.current = null;
+            }
+            if (wsRef.current) {
+                wsRef.current.close();
+                wsRef.current = null;
+            }
+        };
+    }, [activeAuction?.id, user?.id, isRegistered]);
+
     const handleRegister = async () => {
         // Only logged-in users can register
         if (!user?.id) {
@@ -219,6 +405,22 @@ const AuctionPage = () => {
             return;
         }
         
+        const socket = wsRef.current;
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: 'place_bid', amount: bidAmount }));
+            setCurrentBid(bidAmount);
+            setBidHistory((prev) => [
+                {
+                    bidder: user.name || 'You',
+                    amount: bidAmount,
+                    time: 'Just now',
+                },
+                ...prev,
+            ]);
+            setUserBid('');
+            return;
+        }
+
         try {
             const res = await placeBid({
                 bidder_id: user.id,
@@ -275,6 +477,11 @@ const AuctionPage = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {bidAlert && (
+                <div className="mb-4 rounded-lg border border-green-200 bg-green-50 text-green-700 px-4 py-3 text-sm">
+                    {bidAlert}
+                </div>
+            )}
             <Link
                 to={'/upcoming'}
                 className="mb-6 flex items-center text-gray-600 hover:text-gray-900"
@@ -354,7 +561,7 @@ const AuctionPage = () => {
                                     <div className="flex gap-2">
                                         <input
                                             type="number"
-                                            placeholder={`Min bid: $${(currentBid + 500).toLocaleString()}`}
+                                            placeholder="Enter bid amount"
                                             value={userBid}
                                             onChange={(e) => setUserBid(e.target.value)}
                                             className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -367,9 +574,6 @@ const AuctionPage = () => {
                                             Place Bid
                                         </button>
                                     </div>
-                                    <p className="text-sm text-gray-500">
-                                        Minimum bid increment: $500
-                                    </p>
                                     {bidError && (
                                         <p className="text-sm text-red-600">{bidError}</p>
                                     )}
