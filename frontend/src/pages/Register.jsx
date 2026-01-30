@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { registerUser } from '../api/auth.js';
+import { useState, useContext } from 'react';
+import { registerUser, loginUser } from '../api/auth.js';
 import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext.jsx';
 import { assets } from '../assets/assets';
 
 export default function Register() {
@@ -9,6 +10,7 @@ export default function Register() {
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { refreshProfile } = useContext(AuthContext);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -25,9 +27,18 @@ export default function Register() {
     setSubmitting(true);
     try {
       const payload = { name: form.name, email: form.email, password: form.password };
-      const res = await registerUser(payload);
-      setSuccess(res.data?.message || 'Registration successful. Redirecting to login…');
-      setTimeout(() => navigate('/login'), 600);
+      await registerUser(payload);
+      setSuccess('User registered successfully. Logging you in...');
+      
+      // Auto-login after successful registration
+      await new Promise((r) => setTimeout(r, 120));
+      await loginUser({ email: form.email, password: form.password });
+      
+      // Refresh profile to update auth context
+      await new Promise((r) => setTimeout(r, 120));
+      await refreshProfile();
+      
+      navigate('/');
     } catch (err) {
       setError(err.response?.data?.error || 'Unable to register. Please try again.');
     } finally {

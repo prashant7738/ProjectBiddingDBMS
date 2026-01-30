@@ -10,12 +10,17 @@ export default function AuthProvider({ children }) {
 
   const refreshProfile = async () => {
     try {
+      console.log('Attempting to fetch profile...');
+      console.log('Current cookies:', document.cookie);
       const res = await getProfile();
       console.log('Profile fetched successfully:', res.data);
       setUser(res.data);
+      return true;
     } catch (err) {
       console.error('Failed to fetch profile:', err.response?.status, err.message);
+      console.error('Error details:', err.response?.data);
       setUser(null);
+      return false;
     } finally {
       setLoading(false);
     }

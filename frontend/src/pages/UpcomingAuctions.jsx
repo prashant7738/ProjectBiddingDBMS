@@ -2,14 +2,64 @@ import React from 'react'
 import AuctionCard from '../components/AuctionCard';
 import { useEffect, useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
-import { mockAuctions } from '../data/mockAuctions';
+import { getAuctions, getMediaUrl } from '../api/auth';
 const UpcomingAuctions = () => {
     const { selectedCategory, selectedCountry, liveFilter, setSelectedItem, searchQuery } = useContext(AppContext);
     const { setSelectedCategory, setSelectedCountry, setLiveFilter } = useContext(AppContext);
     const [filteredAuctions, setFilteredAuctions] = useState([]);
+    const [auctions, setAuctions] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const normalizeAuction = (raw) => {
+        const endTime = raw?.end_time ? new Date(raw.end_time) : new Date(Date.now() + 3600000);
+        return {
+            id: raw?.id ?? raw?.auction_id,
+            name: raw?.title ?? 'Untitled Auction',
+            category: raw?.category_name ?? raw?.category ?? 'general',
+            image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
+            currentBid: raw?.current_bid ?? raw?.starting_price ?? 0,
+            startingBid: raw?.starting_price ?? 0,
+            isLive: raw?.is_live ?? (endTime > new Date()),
+            endTime,
+            country: raw?.country ?? 'Unknown',
+            description: raw?.description ?? '',
+            bidCount: raw?.bid_count ?? 0,
+            registered: raw?.registered ?? false,
+        };
+    };
+
+    useEffect(() => {
+        let isMounted = true;
+        const loadAuctions = async () => {
+            setLoading(true);
+            setError('');
+            try {
+                const res = await getAuctions();
+                const list = Array.isArray(res.data)
+                    ? res.data
+                    : Array.isArray(res.data?.results)
+                        ? res.data.results
+                        : [];
+                if (isMounted) {
+                    setAuctions(list.map(normalizeAuction));
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setError(err.response?.data?.error || 'Failed to load auctions.');
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
+        loadAuctions();
+        return () => { isMounted = false; };
+    }, []);
 
 useEffect(() => {
-  const filtered = mockAuctions.filter((auction) => {
+  const filtered = auctions.filter((auction) => {
     const categoryMatch =
       selectedCategory === "all" || auction.category === selectedCategory;
 
@@ -32,10 +82,10 @@ useEffect(() => {
   selectedCountry,
   liveFilter,
   searchQuery,
-  mockAuctions,
+    auctions,
 ]);
 
-    const countries = ['all', ...new Set(mockAuctions.map(a => a.country))];
+        const countries = ['all', ...new Set(auctions.map(a => a.country))];
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -97,17 +147,23 @@ useEffect(() => {
                 </h2>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredAuctions.map(auction => (
-                    <AuctionCard
-                        key={auction.id}
-                        auction={auction}
-                        onClick={() => {
-                            setSelectedItem(auction);
-                        }}
-                    />
-                ))}
-            </div>
+            {loading ? (
+                <p className="text-gray-600">Loading auctions…</p>
+            ) : error ? (
+                <p className="text-red-600">{error}</p>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredAuctions.map(auction => (
+                        <AuctionCard
+                            key={auction.id}
+                            auction={auction}
+                            onClick={() => {
+                                setSelectedItem(auction);
+                            }}
+                        />
+                    ))}
+                </div>
+            )}
         </div>
     );
 

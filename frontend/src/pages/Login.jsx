@@ -8,7 +8,7 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const { refreshProfile } = useContext(AuthContext);
+  const { refreshProfile, setUser } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -22,7 +22,11 @@ export default function Login() {
       console.log('Login response:', res.data);
       // Small delay to ensure cookies are committed
       await new Promise((r) => setTimeout(r, 120));
-      await refreshProfile();
+      const ok = await refreshProfile();
+      if (!ok) {
+        const fallbackName = res.data?.user?.name || res.data?.name || form.email.split('@')[0];
+        setUser({ name: fallbackName, email: form.email });
+      }
       navigate('/');
     } catch (err) {
       console.error('Login error:', err);

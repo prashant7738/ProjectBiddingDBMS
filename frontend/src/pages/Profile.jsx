@@ -22,7 +22,7 @@ export default function Profile() {
       <div className="bg-gray-100 p-6 rounded-lg">
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">User ID</label>
-          <p className="text-lg font-semibold text-gray-900">{user?.id || 'N/A'}</p>
+          <p className="text-lg font-semibold text-gray-900">{user.id || 'N/A'}</p>
         </div>
 
         {user?.email && (
