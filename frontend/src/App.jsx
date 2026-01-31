@@ -10,6 +10,7 @@ import PriceResults from './pages/PriceResult';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
+import CreateAuction from './pages/CreateAuction';
 
 import PrivateRoute from './components/PrivateRoute';
 import AuctionPage from './components/AuctionPage';
@@ -21,6 +22,7 @@ function App() {
   return (
     <>
    <Header />
+   <NavigationTabs/>
 
       <Routes>
         {/* Protected Routes - Wrapped with PrivateRoute */}
@@ -54,6 +56,15 @@ function App() {
           element={
             <PrivateRoute>
               <MyItems />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/create-auction"
+          element={
+            <PrivateRoute>
+              <CreateAuction />
             </PrivateRoute>
           }
         />

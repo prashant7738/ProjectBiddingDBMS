@@ -24,6 +24,10 @@ def place_bid(bidder_id , auction_id , bid_amount):
             if not conn.execute(registration_q).first():
                 return "Error: You are not registered for this auction. Please register first."
             
+            # to check if auction is started or not
+            if datetime.now() <= auction.start_time:
+                return "ERROR : the time is not started"
+            
             # Check if auction is still open
             if datetime.now() >= auction.end_time:
                 return "ERROR : the time is finished"

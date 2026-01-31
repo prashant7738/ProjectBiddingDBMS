@@ -3,7 +3,7 @@ from datetime import datetime
 from .engine import engine
 from .schemas import auctions, auction_registrations, users
 
-def create_auction(seller_id , title , description, category_id, starting_price , end_time, image_url=None):
+def create_auction(seller_id , title , description, category_id, starting_price ,start_time,  end_time, image_url=None):
     # saves a new auction to the database
     with engine.connect() as conn:
         stmt = insert(auctions).values(
@@ -12,6 +12,7 @@ def create_auction(seller_id , title , description, category_id, starting_price 
             description = description,
             category_id = category_id,
             starting_price = starting_price,
+            start_time = start_time,
             end_time = end_time,
             current_highest_bid = starting_price,
             image_url = image_url
@@ -30,6 +31,7 @@ def get_active_auctions():
         now = datetime.now()
         query = select(auctions).where(
             and_(
+                # auctions.c.start_time < now,
                 auctions.c.end_time > now,
                 auctions.c.is_active == True
             )
@@ -62,7 +64,8 @@ def close_expired_auctions():
     with engine.connect() as conn:
         now = datetime.now()
         stmt = update(auctions).where(
-            and_(auctions.c.end_time < now,
+            and_(
+                auctions.c.end_time < now,
                  auctions.c.is_active == True
                  )
         ).values(is_active = False)

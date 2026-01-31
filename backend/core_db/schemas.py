@@ -38,6 +38,7 @@ auctions = Table(
     Column("category_id", ForeignKey('categories.id', ondelete='SET NULL'), nullable=True),
     Column("starting_price", Numeric(12, 2), nullable=False),
     Column("current_highest_bid", Numeric(12, 2)), # Helps track price easily
+    Column("start_time", DateTime, server_default=func.now()),
     Column("end_time", DateTime, nullable=False),
     Column("is_active", Boolean, server_default="true"), # To mark finished auctions
 )
