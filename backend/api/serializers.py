@@ -20,6 +20,7 @@ class AuctionSerializer(serializers.Serializer):
     image_url = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     starting_price = serializers.DecimalField(max_digits=12, decimal_places=2)
     current_highest_bid = serializers.DecimalField(max_digits=12, decimal_places=2)
+    start_time = serializers.DateTimeField()
     end_time = serializers.DateTimeField()
     is_active = serializers.BooleanField()
     

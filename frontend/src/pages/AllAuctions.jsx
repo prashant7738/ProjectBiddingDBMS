@@ -3,9 +3,9 @@ import AuctionCard from '../components/AuctionCard';
 import { useEffect, useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { getAuctions, getMediaUrl } from '../api/auth';
-const UpcomingAuctions = () => {
-    const { selectedCategory, selectedCountry, liveFilter, setSelectedItem, searchQuery } = useContext(AppContext);
-    const { setSelectedCategory, setSelectedCountry, setLiveFilter } = useContext(AppContext);
+const AllAuctions = () => {
+    const { selectedCategory, selectedCountry, setSelectedItem, searchQuery } = useContext(AppContext);
+    const { setSelectedCategory, setSelectedCountry } = useContext(AppContext);
     const [filteredAuctions, setFilteredAuctions] = useState([]);
     const [auctions, setAuctions] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -68,8 +68,8 @@ const UpcomingAuctions = () => {
 
 useEffect(() => {
   const filtered = auctions.filter((auction) => {
-    // Only show auctions that haven't started yet
-    const isUpcoming = auction.startTime && new Date(auction.startTime) > new Date();
+    // Show auctions that haven't ended yet
+    const isNotEnded = new Date(auction.endTime) > new Date();
     
     const categoryMatch =
       selectedCategory === "all" || auction.category === selectedCategory;
@@ -79,7 +79,7 @@ useEffect(() => {
 
     const searchMatch =
       auction.name?.toLowerCase().includes(searchQuery.toLowerCase()) 
-    return isUpcoming && categoryMatch && countryMatch && searchMatch;
+    return isNotEnded && categoryMatch && countryMatch && searchMatch;
   });
 
   setFilteredAuctions(filtered);
@@ -95,24 +95,22 @@ useEffect(() => {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Filters */}
-            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Auctions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Status Filter */}
+            <div className="mb-8 p-4 bg-white rounded-lg shadow-md">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                         <select
-                            value={liveFilter}
-                            onChange={(e) => setLiveFilter(e.target.value)}
+                            value={selectedCategory}
+                            onChange={(e) => setSelectedCategory(e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         >
-                            <option value="all">All Auctions</option>
-                            <option value="live">Live Only</option>
-                            <option value="upcoming">Upcoming Only</option>
+                            <option value="all">All Categories</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Jewelry">Jewelry</option>
+                            <option value="Art">Art</option>
+                            <option value="Collectibles">Collectibles</option>
                         </select>
                     </div>
-
-                    {/* Country Filter */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
                         <select
@@ -125,21 +123,6 @@ useEffect(() => {
                                     {country === 'all' ? 'All Countries' : country}
                                 </option>
                             ))}
-                        </select>
-                    </div>
-
-                    {/* Category Filter */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                            <option value="all">All Categories</option>
-                            <option value="art">Art</option>
-                            <option value="jewelry">Jewelry</option>
-                            <option value="furniture">Furniture</option>
                         </select>
                     </div>
                 </div>
@@ -174,4 +157,4 @@ useEffect(() => {
 
 }
 
-export default UpcomingAuctions
+export default AllAuctions

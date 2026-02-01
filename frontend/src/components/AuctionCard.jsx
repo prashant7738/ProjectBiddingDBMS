@@ -30,12 +30,26 @@ const AuctionCard = ({ auction, onClick }) => {
                             alt={auction.name}
                             className="item-image"
                         />
-                        {auction.isLive && (
-                            <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center live-badge">
-                                <span className="w-2 h-2 bg-white rounded-full mr-2"></span>
-                                LIVE
-                            </div>
-                        )}
+                        {(() => {
+                            if (auction.isLive) {
+                                return (
+                                    <div className="absolute top-4 left-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center live-badge">
+                                        <span className="w-2 h-2 bg-white rounded-full mr-2"></span>
+                                        LIVE
+                                    </div>
+                                );
+                            } else if (auction.startTime && new Date(auction.startTime) > new Date()) {
+                                return (
+                                    <div className="absolute top-4 left-4 bg-blue-500 text-white px-3 py-1 rounded-lg text-sm font-semibold flex items-center gap-1">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>{new Date(auction.startTime).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })()}
                         <div className="absolute top-4 right-4 bg-white bg-opacity-90 px-3 py-1 rounded-full text-sm font-semibold text-gray-700">
                             {auction.country}
                         </div>
