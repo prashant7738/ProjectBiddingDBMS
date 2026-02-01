@@ -47,6 +47,9 @@ export const createAuction = (formData) => client.post('/create-auction/', formD
     headers: { 'Content-Type': 'multipart/form-data' },
 });
 
+// MyBids
+export const myBids = (id) => client.get(`/my-bids/${id}/`);
+
 
 
 

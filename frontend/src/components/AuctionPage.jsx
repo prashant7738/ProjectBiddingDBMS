@@ -407,26 +407,22 @@ const AuctionPage = () => {
         
         const socket = wsRef.current;
         if (socket && socket.readyState === WebSocket.OPEN) {
+            // Try WebSocket first, but wait for response
             socket.send(JSON.stringify({ type: 'place_bid', amount: bidAmount }));
-            setCurrentBid(bidAmount);
-            setBidHistory((prev) => [
-                {
-                    bidder: user.name || 'You',
-                    amount: bidAmount,
-                    time: 'Just now',
-                },
-                ...prev,
-            ]);
             setUserBid('');
+            // Don't update UI - wait for WebSocket response via handleBidUpdate
             return;
         }
 
+        // Fallback to HTTP API - WAIT FOR RESPONSE before updating UI
         try {
             const res = await placeBid({
                 bidder_id: user.id,
                 auction_id: activeAuction.id,
                 amount: bidAmount,
             });
+            
+            // Only update UI if backend confirms success
             const updatedBid = res.data?.amount ?? bidAmount;
             const updatedCurrent = res.data?.current_bid ?? updatedBid;
             setCurrentBid(updatedCurrent);
@@ -447,6 +443,7 @@ const AuctionPage = () => {
             }
         } catch (err) {
             // Backend handles all validation errors (auth, registration, bid amount, etc.)
+            // Don't update UI - keep it as is
             setBidError(err.response?.data?.error || 'Failed to place bid.');
         }
     };

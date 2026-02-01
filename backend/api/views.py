@@ -60,7 +60,7 @@ class CreateAuction(APIView):
             # Store full URL in database for frontend access
             image_url = f"/media/{image_path}"
 
-        result = create_auction(seller_id , title , description, category_id, starting_price ,start_time, end_time, image_url)
+        result = create_auction(seller_id , title , description, category_id, starting_price , end_time, start_time, image_url)
 
         return Response({"message": result, "image_url": image_url} , status=status.HTTP_201_CREATED)
 

@@ -1,9 +1,13 @@
 from sqlalchemy import insert , select, and_, update
-from datetime import datetime
+from django.utils import timezone
 from .engine import engine
 from .schemas import auctions, auction_registrations, users
 
-def create_auction(seller_id , title , description, category_id, starting_price ,start_time,  end_time, image_url=None):
+def create_auction(seller_id , title , description, category_id, starting_price , end_time,start_time=None, image_url=None ):
+    # If start_time is not provided, use current time
+    if start_time is None:
+        start_time = timezone.now()
+    
     # saves a new auction to the database
     with engine.connect() as conn:
         stmt = insert(auctions).values(
@@ -28,10 +32,9 @@ def get_active_auctions():
     SQL: SELECT * FROM auctions WHERE end_time > NOW() AND is_active = true
     """
     with engine.connect() as conn:
-        now = datetime.now()
+        now = timezone.now()
         query = select(auctions).where(
             and_(
-                # auctions.c.start_time < now,
                 auctions.c.end_time > now,
                 auctions.c.is_active == True
             )
@@ -62,7 +65,7 @@ def get_auctions_by_seller(seller_id):
 # This fuction is a maintiance type function which set is_active to false if the time is finished for the auciton 
 def close_expired_auctions():
     with engine.connect() as conn:
-        now = datetime.now()
+        now = timezone.now()
         stmt = update(auctions).where(
             and_(
                 auctions.c.end_time < now,
