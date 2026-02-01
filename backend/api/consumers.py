@@ -75,6 +75,16 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
         if amount is None:
             await self.send_json({"type": "error", "message": "Missing amount"})
             return
+        
+        # Validate amount is a positive number
+        try:
+            amount = float(amount)
+            if amount <= 0:
+                await self.send_json({"type": "error", "message": "Bid amount must be positive"})
+                return
+        except (ValueError, TypeError):
+            await self.send_json({"type": "error", "message": "Invalid bid amount format"})
+            return
 
         result = await database_sync_to_async(place_bid)(
             self.user.id,
@@ -82,7 +92,7 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
             amount,
         )
 
-        if "Success" in result:
+        if result.startswith("Success"):
             auction = await database_sync_to_async(get_auction_by_id)(self.auction_id)
             payload = {
                 "type": "bid_update",
@@ -95,8 +105,16 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
                 self.group_name,
                 {"type": "broadcast_bid", "payload": payload},
             )
+            print(f"✅ Bid placed successfully by user {self.user.id}: ${amount}")
         else:
-            await self.send_json({"type": "error", "message": result})
+            print(f"❌ Bid rejected for user {self.user.id}: {result}")
+            # Send error with current auction state so client can correct UI
+            auction = await database_sync_to_async(get_auction_by_id)(self.auction_id)
+            await self.send_json({
+                "type": "error", 
+                "message": result,
+                "current_highest_bid": float(auction.get("current_highest_bid") or 0) if auction else 0
+            })
 
     async def broadcast_bid(self, event):
         await self.send_json(event["payload"])

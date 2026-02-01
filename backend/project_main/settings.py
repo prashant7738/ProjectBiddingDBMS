@@ -171,6 +171,7 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',  # Your React app
+    'http://localhost:5174',  # Your React app (alternative port)
 ]
 
 CORS_ALLOW_CREDENTIALS = True

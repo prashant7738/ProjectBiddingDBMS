@@ -5,8 +5,9 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 
 import Home from './pages/Home';
+import AllAuctions from './pages/AllAuctions';
 import UpcomingAuctions from './pages/UpcomingAuctions';
-import PriceResults from './pages/PriceResult';
+import EndedAuctions from './pages/EndedAuctions';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
@@ -43,6 +44,20 @@ function App() {
         />
 
         <Route
+          path="/all-auctions"
+          element={
+              <AllAuctions />
+          }
+        />
+
+        <Route
+          path="/upcoming"
+          element={
+              <UpcomingAuctions />
+          }
+        />
+
+        <Route
           path="/wonitems"
           element={
             <PrivateRoute>
@@ -70,8 +85,7 @@ function App() {
         />
 
         {/* Public Routes - Not wrapped with PrivateRoute */}
-        <Route path="/upcoming" element={<UpcomingAuctions />} />
-        <Route path="/price-results" element={<PriceResults />} />
+        <Route path="/ended-auctions" element={<EndedAuctions />} />
         <Route path='/auctionPage/:id' element={<AuctionPage/>} />
 
         {/* Auth pages */}

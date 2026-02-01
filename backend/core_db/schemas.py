@@ -38,8 +38,8 @@ auctions = Table(
     Column("category_id", ForeignKey('categories.id', ondelete='SET NULL'), nullable=True),
     Column("starting_price", Numeric(12, 2), nullable=False),
     Column("current_highest_bid", Numeric(12, 2)), # Helps track price easily
-    Column("start_time", DateTime, server_default=func.now()),
-    Column("end_time", DateTime, nullable=False),
+    Column("start_time", DateTime(timezone=True), nullable = False),
+    Column("end_time", DateTime(timezone=True), nullable=False),
     Column("is_active", Boolean, server_default="true"), # To mark finished auctions
 )
 
@@ -49,7 +49,7 @@ bids = Table(
     Column("auction_id", ForeignKey("auctions.id", ondelete="CASCADE"), nullable=False),
     Column("bidder_id", ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
     Column("amount", Numeric(12, 2), nullable=False),
-    Column("bid_time", DateTime, server_default=func.now()), # Records exactly when bid was placed
+    Column("bid_time", DateTime(timezone=True), server_default=func.now()), # Records exactly when bid was placed
 )
 
 auction_registrations = Table(
@@ -57,5 +57,5 @@ auction_registrations = Table(
     Column("id", Integer, primary_key=True),
     Column("auction_id", ForeignKey("auctions.id", ondelete="CASCADE"), nullable=False),
     Column("user_id", ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-    Column("registered_at", DateTime, server_default=func.now()),
+    Column("registered_at", DateTime(timezone=True), server_default=func.now()),
 )

@@ -3,17 +3,24 @@ import { useContext, useState, useEffect, useMemo, useRef } from "react";
 import { AppContext } from "../context/AppContext";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import apiClient, { getAuctions, getAuctionById, getMediaUrl, getRegisteredUsers, placeBid, registerForAuction } from "../api/auth";
+import apiClient, { getAuctions, getAuctionById, getMediaUrl, getRegisteredUsers, placeBid, registerForAuction, getUserBidForAuction, getAuctionBidHistory } from "../api/auth";
 import AuctionCard from "./AuctionCard";
 
 const normalizeAuction = (raw) => {
+    const startTime = raw?.start_time ? new Date(raw.start_time) : new Date();
     const endTime = raw?.end_time ? new Date(raw.end_time) : new Date(Date.now() + 3600000);
+    const now = new Date();
+    
+    // Auction is live if: current time is between start and end time AND is_active is true
+    const isLive = (raw?.is_live ?? raw?.isLive) !== undefined 
+        ? (raw?.is_live ?? raw?.isLive) 
+        : (now >= startTime && now <= endTime && (raw?.is_active ?? true));
+    
     const currentBid = raw?.current_highest_bid ?? raw?.current_bid ?? raw?.highest_bid ?? raw?.currentBid ?? raw?.starting_price ?? 0;
     const startingBid = raw?.starting_price ?? raw?.startingPrice ?? 0;
     const name = raw?.title ?? raw?.name ?? 'Untitled Auction';
     const category = raw?.category_name ?? raw?.category ?? 'general';
     const country = raw?.country ?? 'Unknown';
-    const isLive = raw?.is_live ?? raw?.isLive ?? (endTime > new Date());
     const bidCount = raw?.bid_count ?? raw?.bidCount ?? 0;
     const image = getMediaUrl(raw?.image_url ?? raw?.image ?? '');
     const description = raw?.description ?? '';
@@ -28,6 +35,7 @@ const normalizeAuction = (raw) => {
         currentBid,
         startingBid,
         isLive,
+        startTime,
         endTime,
         country,
         description,
@@ -44,9 +52,11 @@ const AuctionPage = () => {
     const [loadError, setLoadError] = useState('');
     const [isRegistered, setIsRegistered] = useState(false);
     const [currentBid, setCurrentBid] = useState(0);
+    const [userCurrentBid, setUserCurrentBid] = useState(null);
     const [bidHistory, setBidHistory] = useState([]);
     const [bidError, setBidError] = useState('');
     const [registering, setRegistering] = useState(false);
+    const [isBidHistoryExpanded, setIsBidHistoryExpanded] = useState(false);
     const [bidAlert, setBidAlert] = useState('');
     const wsRef = useRef(null);
     const reconnectRef = useRef(null);
@@ -104,7 +114,9 @@ const AuctionPage = () => {
         const loadAuctionById = async () => {
             try {
                 const res = await getAuctionById(id);
+                console.log('Raw auction data from API:', res.data);
                 const normalized = normalizeAuction(res.data);
+                console.log('Normalized auction data:', normalized);
                 if (isMounted) {
                     setSelectedItem(normalized);
                 }
@@ -132,15 +144,74 @@ const AuctionPage = () => {
         setIsRegistered((prev) => prev || activeAuction.registered || false);
         const starting = activeAuction.currentBid || activeAuction.startingBid || 0;
         setCurrentBid(starting);
-        const history = Array.isArray(activeAuction.bids)
-            ? activeAuction.bids.map((bid) => ({
-                bidder: bid.bidder_name || bid.bidder || (bid.bidder_id ? `Bidder #${bid.bidder_id}` : 'Bidder'),
-                amount: bid.amount ?? 0,
-                time: bid.time || bid.created_at || 'Just now',
-            }))
-            : [];
-        setBidHistory(history);
+        console.log('Active auction updated:', {
+            id: activeAuction.id,
+            startTime: activeAuction.startTime,
+            endTime: activeAuction.endTime,
+            isLive: activeAuction.isLive
+        });
+        // Note: Bid history is now fetched from the API in a separate useEffect
     }, [activeAuction]);
+
+    // Fetch user's current bid for this auction
+    useEffect(() => {
+        if (!activeAuction?.id || !user?.id) return;
+        let isMounted = true;
+        const fetchUserBid = async () => {
+            try {
+                const res = await getUserBidForAuction(activeAuction.id, user.id);
+                console.log('User bid response:', res);
+                if (isMounted) {
+                    setUserCurrentBid(res.data);
+                    console.log('User current bid set to:', res.data);
+                }
+            } catch (err) {
+                // 404 is expected if user hasn't placed a bid yet
+                if (err.response?.status === 404) {
+                    console.log('User has no bids for this auction');
+                } else {
+                    console.error('Error fetching user bid:', err.response?.status, err.response?.data);
+                }
+                if (isMounted) {
+                    setUserCurrentBid(null);
+                }
+            }
+        };
+        fetchUserBid();
+        return () => {
+            isMounted = false;
+        };
+    }, [activeAuction?.id, user?.id]);
+
+    // Fetch bid history for the auction
+    useEffect(() => {
+        if (!activeAuction?.id) return;
+        let isMounted = true;
+        const fetchBidHistory = async () => {
+            try {
+                const res = await getAuctionBidHistory(activeAuction.id);
+                console.log('Bid history response:', res.data);
+                if (isMounted && Array.isArray(res.data)) {
+                    const history = res.data.map((bid) => ({
+                        bidder: bid.bidder_name || `Bidder #${bid.bidder_id}`,
+                        amount: bid.amount ?? 0,
+                        time: bid.bid_time || 'Just now',
+                    }));
+                    console.log('Formatted bid history:', history);
+                    setBidHistory(history);
+                }
+            } catch (err) {
+                console.error('Error fetching bid history:', err);
+                if (isMounted) {
+                    setBidHistory([]);
+                }
+            }
+        };
+        fetchBidHistory();
+        return () => {
+            isMounted = false;
+        };
+    }, [activeAuction?.id]);
 
     useEffect(() => {
         if (!activeAuction?.id || !user?.id) return;
@@ -407,26 +478,22 @@ const AuctionPage = () => {
         
         const socket = wsRef.current;
         if (socket && socket.readyState === WebSocket.OPEN) {
+            // Try WebSocket first, but wait for response
             socket.send(JSON.stringify({ type: 'place_bid', amount: bidAmount }));
-            setCurrentBid(bidAmount);
-            setBidHistory((prev) => [
-                {
-                    bidder: user.name || 'You',
-                    amount: bidAmount,
-                    time: 'Just now',
-                },
-                ...prev,
-            ]);
             setUserBid('');
+            // Don't update UI - wait for WebSocket response via handleBidUpdate
             return;
         }
 
+        // Fallback to HTTP API - WAIT FOR RESPONSE before updating UI
         try {
             const res = await placeBid({
                 bidder_id: user.id,
                 auction_id: activeAuction.id,
                 amount: bidAmount,
             });
+            
+            // Only update UI if backend confirms success
             const updatedBid = res.data?.amount ?? bidAmount;
             const updatedCurrent = res.data?.current_bid ?? updatedBid;
             setCurrentBid(updatedCurrent);
@@ -447,6 +514,7 @@ const AuctionPage = () => {
             }
         } catch (err) {
             // Backend handles all validation errors (auth, registration, bid amount, etc.)
+            // Don't update UI - keep it as is
             setBidError(err.response?.data?.error || 'Failed to place bid.');
         }
     };
@@ -502,12 +570,37 @@ const AuctionPage = () => {
                                 alt={activeAuction.name}
                                 className="item-image"
                             />
-                            {activeAuction.isLive && (
-                                <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center live-badge">
-                                    <span className="w-2 h-2 bg-white rounded-full mr-2"></span>
-                                    LIVE AUCTION
-                                </div>
-                            )}
+                            {(() => {
+                                console.log('Rendering badge. isLive:', activeAuction.isLive, 'startTime:', activeAuction.startTime, 'now:', new Date());
+                                if (activeAuction.isLive) {
+                                    return (
+                                        <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold flex items-center live-badge">
+                                            <span className="w-2 h-2 bg-white rounded-full mr-2"></span>
+                                            LIVE AUCTION
+                                        </div>
+                                    );
+                                } else if (activeAuction.startTime && new Date(activeAuction.startTime) > new Date()) {
+                                    return (
+                                        <div className="absolute top-4 left-4 bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold">
+                                            <div className="flex items-center gap-2">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <div>
+                                                    <div className="text-xs opacity-90">Starts</div>
+                                                    <div className="font-bold">{new Date(activeAuction.startTime).toLocaleString('en-US', { 
+                                                        month: 'short', 
+                                                        day: 'numeric', 
+                                                        hour: '2-digit', 
+                                                        minute: '2-digit'
+                                                    })}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })()}
                         </div>
                     </div>
 
@@ -538,6 +631,15 @@ const AuctionPage = () => {
                                     </p>
                                 </div>
                             </div>
+
+                            {userCurrentBid && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                    <p className="text-sm text-gray-500 mb-1">Your Current Bid</p>
+                                    <p className="text-xl font-bold text-blue-600">
+                                        ${typeof userCurrentBid.amount === 'number' ? userCurrentBid.amount.toLocaleString() : userCurrentBid.amount}
+                                    </p>
+                                </div>
+                            )}
 
                             {!isRegistered ? (
                                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
@@ -589,25 +691,51 @@ const AuctionPage = () => {
                         </div>
 
                         {/* Bid History */}
-                        {activeAuction.isLive && isRegistered && (
+                        {isRegistered && (
                             <div className="bg-white rounded-xl shadow-lg p-8">
-                                <h3 className="text-xl font-semibold mb-4">Bid History</h3>
-                                <div className="space-y-3">
-                                    {bidHistory.map((bid, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                                        >
-                                            <div>
-                                                <p className="font-semibold text-gray-900">{bid.bidder}</p>
-                                                <p className="text-sm text-gray-500">{bid.time}</p>
-                                            </div>
-                                            <p className="text-lg font-bold text-purple-600">
-                                                ${bid.amount.toLocaleString()}
-                                            </p>
-                                        </div>
-                                    ))}
+                                <div 
+                                    className="flex items-center justify-between cursor-pointer mb-4"
+                                    onClick={() => setIsBidHistoryExpanded(!isBidHistoryExpanded)}
+                                >
+                                    <h3 className="text-xl font-semibold">Bid History</h3>
+                                    <svg 
+                                        className={`w-6 h-6 transition-transform duration-200 ${
+                                            isBidHistoryExpanded ? 'rotate-180' : ''
+                                        }`}
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round" 
+                                            strokeWidth={2} 
+                                            d="M19 9l-7 7-7-7" 
+                                        />
+                                    </svg>
                                 </div>
+                                {isBidHistoryExpanded && (
+                                    <div className="space-y-3">
+                                        {bidHistory.length > 0 ? (
+                                            bidHistory.map((bid, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                                >
+                                                    <div>
+                                                        <p className="font-semibold text-gray-900">{bid.bidder}</p>
+                                                        <p className="text-sm text-gray-500">{bid.time}</p>
+                                                    </div>
+                                                    <p className="text-lg font-bold text-purple-600">
+                                                        ${bid.amount.toLocaleString()}
+                                                    </p>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-gray-500 text-center py-4">No bids yet. Be the first!</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
