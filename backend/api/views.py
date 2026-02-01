@@ -195,7 +195,7 @@ class AuctionAccessView(APIView):
     
     def get(self, request, auction_id, user_id):
         """
-        Get auction details. Only registered users can access.
+        Get user's highest bid for a specific auction.
         """
         # Check if user is registered for this auction
         if not is_user_registered_for_auction(user_id, auction_id):
@@ -204,23 +204,17 @@ class AuctionAccessView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # Retrieve auction details from get_active_auctions or a single auction query
-        from core_db.auction_ops import auctions
-        from core_db.engine import engine
-        from sqlalchemy import select
+        from core_db.bid_ops import get_user_bid_for_auction
         
-        with engine.connect() as conn:
-            query = select(auctions).where(auctions.c.id == auction_id)
-            auction = conn.execute(query).first()
-            
-            if not auction:
-                return Response(
-                    {"error": "Auction not found"}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            serializer = AuctionSerializer(dict(auction._mapping))
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        user_bid = get_user_bid_for_auction(user_id, auction_id)
+        
+        if user_bid:
+            return Response(user_bid, status=status.HTTP_200_OK)
+        else:
+            return Response(
+                {"error": "No bid found for this user on this auction"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
 
 
 # Get all registered users for an auction
@@ -235,3 +229,19 @@ class AuctionRegisteredUsersView(APIView):
         """
         users = get_auction_registrations(auction_id)
         return Response(users, status=status.HTTP_200_OK)
+
+
+# Get bid history for a specific auction
+class AuctionBidHistoryView(APIView):
+    
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, auction_id):
+        """
+        Get all bids for a specific auction.
+        """
+        from core_db.bid_ops import get_auction_bid_history
+        
+        bids = get_auction_bid_history(auction_id)
+        return Response(bids, status=status.HTTP_200_OK)

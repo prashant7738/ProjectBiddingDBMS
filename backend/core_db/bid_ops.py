@@ -76,3 +76,48 @@ def get_user_bidding_history(user_id):
         
         result = conn.execute(query)
         return [dict(row._mapping) for row in result]
+
+
+def get_user_bid_for_auction(user_id, auction_id):
+    """
+    Get the user's highest bid for a specific auction.
+    Returns the bid amount or None if user hasn't bid.
+    """
+    with engine.connect() as conn:
+        query = select(bids).where(
+            and_(
+                bids.c.bidder_id == user_id,
+                bids.c.auction_id == auction_id
+            )
+        ).order_by(bids.c.amount.desc()).limit(1)
+        
+        result = conn.execute(query).first()
+        if result:
+            return {
+                'amount': float(result.amount),
+                'bid_time': result.bid_time,
+                'auction_id': result.auction_id
+            }
+        return None
+
+
+def get_auction_bid_history(auction_id):
+    """
+    Get all bids for a specific auction ordered by amount (highest first).
+    Returns list of bids with bidder info.
+    """
+    with engine.connect() as conn:
+        # Join bids with users to get bidder names
+        j = bids.join(users, bids.c.bidder_id == users.c.id)
+        query = select(
+            bids.c.id,
+            bids.c.amount,
+            bids.c.bid_time,
+            bids.c.bidder_id,
+            users.c.name.label('bidder_name')
+        ).select_from(j).where(
+            bids.c.auction_id == auction_id
+        ).order_by(bids.c.amount.desc())
+        
+        result = conn.execute(query)
+        return [dict(row._mapping) for row in result]

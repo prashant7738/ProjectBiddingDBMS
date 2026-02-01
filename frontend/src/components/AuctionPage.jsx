@@ -3,7 +3,7 @@ import { useContext, useState, useEffect, useMemo, useRef } from "react";
 import { AppContext } from "../context/AppContext";
 import { AuthContext } from "../context/AuthContext";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import apiClient, { getAuctions, getAuctionById, getMediaUrl, getRegisteredUsers, placeBid, registerForAuction } from "../api/auth";
+import apiClient, { getAuctions, getAuctionById, getMediaUrl, getRegisteredUsers, placeBid, registerForAuction, getUserBidForAuction, getAuctionBidHistory } from "../api/auth";
 import AuctionCard from "./AuctionCard";
 
 const normalizeAuction = (raw) => {
@@ -44,9 +44,11 @@ const AuctionPage = () => {
     const [loadError, setLoadError] = useState('');
     const [isRegistered, setIsRegistered] = useState(false);
     const [currentBid, setCurrentBid] = useState(0);
+    const [userCurrentBid, setUserCurrentBid] = useState(null);
     const [bidHistory, setBidHistory] = useState([]);
     const [bidError, setBidError] = useState('');
     const [registering, setRegistering] = useState(false);
+    const [isBidHistoryExpanded, setIsBidHistoryExpanded] = useState(false);
     const [bidAlert, setBidAlert] = useState('');
     const wsRef = useRef(null);
     const reconnectRef = useRef(null);
@@ -132,15 +134,68 @@ const AuctionPage = () => {
         setIsRegistered((prev) => prev || activeAuction.registered || false);
         const starting = activeAuction.currentBid || activeAuction.startingBid || 0;
         setCurrentBid(starting);
-        const history = Array.isArray(activeAuction.bids)
-            ? activeAuction.bids.map((bid) => ({
-                bidder: bid.bidder_name || bid.bidder || (bid.bidder_id ? `Bidder #${bid.bidder_id}` : 'Bidder'),
-                amount: bid.amount ?? 0,
-                time: bid.time || bid.created_at || 'Just now',
-            }))
-            : [];
-        setBidHistory(history);
+        // Note: Bid history is now fetched from the API in a separate useEffect
     }, [activeAuction]);
+
+    // Fetch user's current bid for this auction
+    useEffect(() => {
+        if (!activeAuction?.id || !user?.id) return;
+        let isMounted = true;
+        const fetchUserBid = async () => {
+            try {
+                const res = await getUserBidForAuction(activeAuction.id, user.id);
+                console.log('User bid response:', res);
+                if (isMounted) {
+                    setUserCurrentBid(res.data);
+                    console.log('User current bid set to:', res.data);
+                }
+            } catch (err) {
+                // 404 is expected if user hasn't placed a bid yet
+                if (err.response?.status === 404) {
+                    console.log('User has no bids for this auction');
+                } else {
+                    console.error('Error fetching user bid:', err.response?.status, err.response?.data);
+                }
+                if (isMounted) {
+                    setUserCurrentBid(null);
+                }
+            }
+        };
+        fetchUserBid();
+        return () => {
+            isMounted = false;
+        };
+    }, [activeAuction?.id, user?.id]);
+
+    // Fetch bid history for the auction
+    useEffect(() => {
+        if (!activeAuction?.id) return;
+        let isMounted = true;
+        const fetchBidHistory = async () => {
+            try {
+                const res = await getAuctionBidHistory(activeAuction.id);
+                console.log('Bid history response:', res.data);
+                if (isMounted && Array.isArray(res.data)) {
+                    const history = res.data.map((bid) => ({
+                        bidder: bid.bidder_name || `Bidder #${bid.bidder_id}`,
+                        amount: bid.amount ?? 0,
+                        time: bid.bid_time || 'Just now',
+                    }));
+                    console.log('Formatted bid history:', history);
+                    setBidHistory(history);
+                }
+            } catch (err) {
+                console.error('Error fetching bid history:', err);
+                if (isMounted) {
+                    setBidHistory([]);
+                }
+            }
+        };
+        fetchBidHistory();
+        return () => {
+            isMounted = false;
+        };
+    }, [activeAuction?.id]);
 
     useEffect(() => {
         if (!activeAuction?.id || !user?.id) return;
@@ -536,6 +591,15 @@ const AuctionPage = () => {
                                 </div>
                             </div>
 
+                            {userCurrentBid && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                                    <p className="text-sm text-gray-500 mb-1">Your Current Bid</p>
+                                    <p className="text-xl font-bold text-blue-600">
+                                        ${typeof userCurrentBid.amount === 'number' ? userCurrentBid.amount.toLocaleString() : userCurrentBid.amount}
+                                    </p>
+                                </div>
+                            )}
+
                             {!isRegistered ? (
                                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
                                     <h3 className="font-semibold text-gray-900 mb-2">Registration Required</h3>
@@ -586,25 +650,51 @@ const AuctionPage = () => {
                         </div>
 
                         {/* Bid History */}
-                        {activeAuction.isLive && isRegistered && (
+                        {isRegistered && (
                             <div className="bg-white rounded-xl shadow-lg p-8">
-                                <h3 className="text-xl font-semibold mb-4">Bid History</h3>
-                                <div className="space-y-3">
-                                    {bidHistory.map((bid, index) => (
-                                        <div
-                                            key={index}
-                                            className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                                        >
-                                            <div>
-                                                <p className="font-semibold text-gray-900">{bid.bidder}</p>
-                                                <p className="text-sm text-gray-500">{bid.time}</p>
-                                            </div>
-                                            <p className="text-lg font-bold text-purple-600">
-                                                ${bid.amount.toLocaleString()}
-                                            </p>
-                                        </div>
-                                    ))}
+                                <div 
+                                    className="flex items-center justify-between cursor-pointer mb-4"
+                                    onClick={() => setIsBidHistoryExpanded(!isBidHistoryExpanded)}
+                                >
+                                    <h3 className="text-xl font-semibold">Bid History</h3>
+                                    <svg 
+                                        className={`w-6 h-6 transition-transform duration-200 ${
+                                            isBidHistoryExpanded ? 'rotate-180' : ''
+                                        }`}
+                                        fill="none" 
+                                        stroke="currentColor" 
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path 
+                                            strokeLinecap="round" 
+                                            strokeLinejoin="round" 
+                                            strokeWidth={2} 
+                                            d="M19 9l-7 7-7-7" 
+                                        />
+                                    </svg>
                                 </div>
+                                {isBidHistoryExpanded && (
+                                    <div className="space-y-3">
+                                        {bidHistory.length > 0 ? (
+                                            bidHistory.map((bid, index) => (
+                                                <div
+                                                    key={index}
+                                                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                                >
+                                                    <div>
+                                                        <p className="font-semibold text-gray-900">{bid.bidder}</p>
+                                                        <p className="text-sm text-gray-500">{bid.time}</p>
+                                                    </div>
+                                                    <p className="text-lg font-bold text-purple-600">
+                                                        ${bid.amount.toLocaleString()}
+                                                    </p>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-gray-500 text-center py-4">No bids yet. Be the first!</p>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

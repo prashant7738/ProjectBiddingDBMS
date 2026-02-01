@@ -42,6 +42,12 @@ export const placeBid = (data) => client.post('/bids/place/', data);    // { bid
 export const registerForAuction = (auctionId, userId) => client.post(`/auctions/${auctionId}/register/`, { user_id: userId });
 export const getRegisteredUsers = (auctionId) => client.get(`/auctions/${auctionId}/registered-users/`);
 
+// User's bid for specific auction
+export const getUserBidForAuction = (auctionId, userId) => client.get(`/auctions/${auctionId}/users/${userId}/`);
+
+// Auction bid history
+export const getAuctionBidHistory = (auctionId) => client.get(`/auctions/${auctionId}/bids/`);
+
 // Auction creation endpoint
 export const createAuction = (formData) => client.post('/create-auction/', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },

@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (AuctionListView, PlaceBidView, MyAuctionView, MyBidsView, CreateAuction, 
-                   ProfileView, RegisterForAuctionView, AuctionAccessView, AuctionRegisteredUsersView, AuctionDetailView)
+                   ProfileView, RegisterForAuctionView, AuctionAccessView, AuctionRegisteredUsersView, 
+                   AuctionDetailView, AuctionBidHistoryView)
 from .auth_views import LoginView, RegisterView, LogoutView, TokenRefreshView
 
 urlpatterns = [
@@ -9,6 +10,7 @@ urlpatterns = [
     path('auctions/<int:auction_id>/', AuctionDetailView.as_view(), name='auction-detail'),
     path('auctions/<int:auction_id>/users/<int:user_id>/', AuctionAccessView.as_view(), name='auction-access'),
     path('auctions/<int:auction_id>/registered-users/', AuctionRegisteredUsersView.as_view(), name='auction-registered-users'),
+    path('auctions/<int:auction_id>/bids/', AuctionBidHistoryView.as_view(), name='auction-bid-history'),
     path('auctions/<int:auction_id>/register/', RegisterForAuctionView.as_view(), name='register-auction'),
     path('bids/place/', PlaceBidView.as_view(), name='place-bid'),
     path('my-auctions/<int:user_id>/', MyAuctionView.as_view(), name='auction-view'),
