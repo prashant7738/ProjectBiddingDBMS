@@ -2,7 +2,7 @@ import React from 'react'
 import AuctionCard from '../components/AuctionCard';
 import { useEffect, useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
-import { getAuctions, getMediaUrl } from '../api/auth';
+import { getEndedAuctions, getMediaUrl } from '../api/auth';
 const EndedAuctions = () => {
     const { selectedCategory, selectedCountry, setSelectedItem, searchQuery } = useContext(AppContext);
     const { setSelectedCategory, setSelectedCountry } = useContext(AppContext);
@@ -23,6 +23,8 @@ const EndedAuctions = () => {
         return {
             id: raw?.id ?? raw?.auction_id,
             name: raw?.title ?? 'Untitled Auction',
+            sellerName: raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? '',
+            winnerName: raw?.winner_name ?? raw?.winnerName ?? raw?.winner?.name ?? '',
             category: raw?.category_name ?? raw?.category ?? 'general',
             image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
             currentBid: raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0,
@@ -43,7 +45,7 @@ const EndedAuctions = () => {
             setLoading(true);
             setError('');
             try {
-                const res = await getAuctions();
+                const res = await getEndedAuctions();
                 const list = Array.isArray(res.data)
                     ? res.data
                     : Array.isArray(res.data?.results)

@@ -23,6 +23,7 @@ const UpcomingAuctions = () => {
         return {
             id: raw?.id ?? raw?.auction_id,
             name: raw?.title ?? 'Untitled Auction',
+            sellerName: raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? '',
             category: raw?.category_name ?? raw?.category ?? 'general',
             image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
             currentBid: raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0,

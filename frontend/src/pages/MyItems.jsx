@@ -1,14 +1,41 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { Link } from 'react-router-dom'
-import { myBids } from '../api/auth'
+import { myBids, getMediaUrl } from '../api/auth'
 import { AuthContext } from '../context/AuthContext'
 import AuctionCard from '../components/AuctionCard'
 
 const MyItems = () => {
-  const { user } = AuthContext()
+  const { user } = useContext(AuthContext)
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+
+  const normalizeAuction = (raw) => {
+    const startTime = raw?.start_time ? new Date(raw.start_time) : new Date()
+    const endTime = raw?.end_time ? new Date(raw.end_time) : new Date(Date.now() + 3600000)
+    const now = new Date()
+
+    const isLive = (raw?.is_live ?? raw?.isLive) !== undefined
+      ? (raw?.is_live ?? raw?.isLive)
+      : (now >= startTime && now <= endTime && (raw?.is_active ?? true))
+
+    return {
+      id: raw?.id ?? raw?.auction_id,
+      name: raw?.title ?? 'Untitled Auction',
+      sellerName: raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? '',
+      category: raw?.category_name ?? raw?.category ?? 'general',
+      image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
+      currentBid: raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0,
+      startingBid: raw?.starting_price ?? 0,
+      isLive,
+      startTime,
+      endTime,
+      country: raw?.country ?? 'Unknown',
+      description: raw?.description ?? '',
+      bidCount: raw?.bid_count ?? 0,
+      registered: raw?.registered ?? false,
+    }
+  }
 
   useEffect(() => {
     const fetchMyBids = async () => {
@@ -20,7 +47,12 @@ const MyItems = () => {
       try {
         setLoading(true)
         const response = await myBids(user.id)
-        setItems(response.data || [])
+        const list = Array.isArray(response.data)
+          ? response.data
+          : Array.isArray(response.data?.results)
+            ? response.data.results
+            : []
+        setItems(list.map(normalizeAuction))
       } catch (err) {
         console.error('Error fetching my bids:', err)
         setError('Failed to load your bidding items')

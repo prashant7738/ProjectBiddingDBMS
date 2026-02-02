@@ -25,6 +25,7 @@ const normalizeAuction = (raw) => {
     const image = getMediaUrl(raw?.image_url ?? raw?.image ?? '');
     const description = raw?.description ?? '';
     const registered = raw?.registered ?? false;
+    const winnerName = raw?.winner_name ?? raw?.winnerName ?? raw?.winner?.name ?? '';
     const id = raw?.id ?? raw?.auction_id;
 
     return {
@@ -41,6 +42,7 @@ const normalizeAuction = (raw) => {
         description,
         bidCount,
         registered,
+        winnerName,
     };
 };
 
@@ -210,6 +212,39 @@ const AuctionPage = () => {
         fetchBidHistory();
         return () => {
             isMounted = false;
+        };
+    }, [activeAuction?.id]);
+
+    useEffect(() => {
+        if (!activeAuction?.id) return;
+        let isMounted = true;
+        let intervalId;
+
+        const pollAuctionState = async () => {
+            try {
+                const res = await getAuctionById(activeAuction.id);
+                if (!isMounted || !res?.data) return;
+                const normalized = normalizeAuction(res.data);
+                const latestBid = normalized.currentBid ?? 0;
+
+                setCurrentBid(latestBid);
+                setSelectedItem((prev) =>
+                    prev && prev.id === activeAuction.id ? { ...prev, ...normalized, currentBid: latestBid } : prev
+                );
+                setAuctions((prev) =>
+                    prev.map((a) => (a.id === activeAuction.id ? { ...a, ...normalized, currentBid: latestBid } : a))
+                );
+            } catch {
+                // Ignore polling errors
+            }
+        };
+
+        pollAuctionState();
+        intervalId = setInterval(pollAuctionState, 5000);
+
+        return () => {
+            isMounted = false;
+            if (intervalId) clearInterval(intervalId);
         };
     }, [activeAuction?.id]);
 
@@ -681,12 +716,24 @@ const AuctionPage = () => {
                                     )}
                                 </div>
                             ) : (
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                                    <h3 className="font-semibold text-gray-900 mb-2">Auction Starting Soon</h3>
-                                    <p className="text-sm text-gray-600">
-                                        You are registered. The auction will begin shortly.
-                                    </p>
-                                </div>
+                                (activeAuction.endTime && new Date(activeAuction.endTime) <= new Date()) ? (
+                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                                        <h3 className="font-semibold text-gray-900 mb-2">Auction Ended</h3>
+                                        <p className="text-sm text-gray-600">
+                                            This auction has ended. Bidding is closed.
+                                        </p>
+                                        <p className="text-sm text-gray-700 mt-2">
+                                            Winner: <span className="font-semibold">{activeAuction.winnerName || 'No bids'}</span>
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                                        <h3 className="font-semibold text-gray-900 mb-2">Auction Starting Soon</h3>
+                                        <p className="text-sm text-gray-600">
+                                            You are registered. The auction will begin shortly.
+                                        </p>
+                                    </div>
+                                )
                             )}
                         </div>
 

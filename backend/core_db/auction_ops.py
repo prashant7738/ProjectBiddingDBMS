@@ -1,7 +1,64 @@
-from sqlalchemy import insert , select, and_, update
+from sqlalchemy import insert , select, and_, update, func
 from django.utils import timezone
 from .engine import engine
-from .schemas import auctions, auction_registrations, users
+from .schemas import auctions, auction_registrations, users, bids
+
+
+def _winning_bids_subquery():
+    max_amount_per_auction = (
+        select(
+            bids.c.auction_id,
+            func.max(bids.c.amount).label('max_amount')
+        )
+        .group_by(bids.c.auction_id)
+        .subquery()
+    )
+
+    latest_max_bid_time = (
+        select(
+            bids.c.auction_id,
+            func.max(bids.c.bid_time).label('latest_bid_time')
+        )
+        .select_from(
+            bids.join(
+                max_amount_per_auction,
+                and_(
+                    bids.c.auction_id == max_amount_per_auction.c.auction_id,
+                    bids.c.amount == max_amount_per_auction.c.max_amount
+                )
+            )
+        )
+        .group_by(bids.c.auction_id)
+        .subquery()
+    )
+
+    winning_bids = (
+        select(
+            bids.c.auction_id,
+            bids.c.bidder_id.label('winner_id'),
+            bids.c.amount.label('winning_amount'),
+            bids.c.bid_time.label('winning_bid_time')
+        )
+        .select_from(
+            bids.join(
+                max_amount_per_auction,
+                and_(
+                    bids.c.auction_id == max_amount_per_auction.c.auction_id,
+                    bids.c.amount == max_amount_per_auction.c.max_amount
+                )
+            )
+            .join(
+                latest_max_bid_time,
+                and_(
+                    bids.c.auction_id == latest_max_bid_time.c.auction_id,
+                    bids.c.bid_time == latest_max_bid_time.c.latest_bid_time
+                )
+            )
+        )
+        .subquery()
+    )
+
+    return winning_bids
 
 def create_auction(seller_id , title , description, category_id, starting_price , end_time,start_time=None, image_url=None ):
     # If start_time is not provided, use current time
@@ -33,11 +90,40 @@ def get_active_auctions():
     """
     with engine.connect() as conn:
         now = timezone.now()
-        query = select(auctions).where(
+        j = auctions.join(users, auctions.c.seller_id == users.c.id)
+        query = select(auctions, users.c.name.label('seller_name')).select_from(j).where(
             and_(
                 auctions.c.end_time > now,
                 auctions.c.is_active == True
             )
+        )
+        result = conn.execute(query)
+        return [dict(row._mapping) for row in result]
+
+
+def get_ended_auctions():
+    """
+    SQL: SELECT * FROM auctions WHERE end_time <= NOW()
+    """
+    with engine.connect() as conn:
+        now = timezone.now()
+        seller = users.alias('seller')
+        winner = users.alias('winner')
+        winning_bids = _winning_bids_subquery()
+        j = (
+            auctions
+            .join(seller, auctions.c.seller_id == seller.c.id)
+            .outerjoin(winning_bids, auctions.c.id == winning_bids.c.auction_id)
+            .outerjoin(winner, winning_bids.c.winner_id == winner.c.id)
+        )
+        query = (
+            select(
+                auctions,
+                seller.c.name.label('seller_name'),
+                winner.c.name.label('winner_name')
+            )
+            .select_from(j)
+            .where(auctions.c.end_time <= now)
         )
         result = conn.execute(query)
         return [dict(row._mapping) for row in result]
@@ -49,7 +135,24 @@ def get_auction_by_id(auction_id):
     Get a specific auction by ID
     """
     with engine.connect() as conn:
-        query = select(auctions).where(auctions.c.id == auction_id)
+        seller = users.alias('seller')
+        winner = users.alias('winner')
+        winning_bids = _winning_bids_subquery()
+        j = (
+            auctions
+            .join(seller, auctions.c.seller_id == seller.c.id)
+            .outerjoin(winning_bids, auctions.c.id == winning_bids.c.auction_id)
+            .outerjoin(winner, winning_bids.c.winner_id == winner.c.id)
+        )
+        query = (
+            select(
+                auctions,
+                seller.c.name.label('seller_name'),
+                winner.c.name.label('winner_name')
+            )
+            .select_from(j)
+            .where(auctions.c.id == auction_id)
+        )
         result = conn.execute(query)
         row = result.first()
         return dict(row._mapping) if row else None

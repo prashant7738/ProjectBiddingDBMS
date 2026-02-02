@@ -14,6 +14,8 @@ class CategorySerializer(serializers.Serializer):
 class AuctionSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     seller_id = serializers.IntegerField()
+    seller_name = serializers.CharField(required=False, allow_null=True)
+    winner_name = serializers.CharField(required=False, allow_null=True)
     category_id = serializers.IntegerField()
     title = serializers.CharField()
     description = serializers.CharField()

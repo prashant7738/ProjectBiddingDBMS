@@ -34,6 +34,7 @@ export const getProfile = () => client.get('/profile/');
 // Auction endpoints (public)
 export const getAuctions = () => client.get('/auctions/');
 export const getAuctionById = (id) => client.get(`/auctions/${id}/`);
+export const getEndedAuctions = () => client.get('/auctions/ended/');
 
 // Bid endpoints (protected - requires login)
 export const placeBid = (data) => client.post('/bids/place/', data);    // { bidder_id, auction_id, amount }
@@ -55,6 +56,15 @@ export const createAuction = (formData) => client.post('/create-auction/', formD
 
 // MyBids
 export const myBids = (id) => client.get(`/my-bids/${id}/`);
+
+// Won Items
+export const winItems = (id) => client.get(`/win-items/${id}/`);
+
+// Notifications
+export const getNotifications = (id, since) => {
+    const params = since ? { since } : {};
+    return client.get(`/notifications/${id}/`, { params });
+};
 
 
 

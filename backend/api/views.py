@@ -1,9 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from core_db.auction_ops import get_active_auctions , get_auctions_by_seller, create_auction, register_user_for_auction, is_user_registered_for_auction, get_auction_registrations, get_auction_by_id
+from core_db.auction_ops import get_active_auctions , get_ended_auctions, get_auctions_by_seller, create_auction, register_user_for_auction, is_user_registered_for_auction, get_auction_registrations, get_auction_by_id
 from .serializers import AuctionSerializer ,BidSerializer
 from rest_framework import status
-from core_db.bid_ops import place_bid, get_user_bidding_history
+from core_db.bid_ops import place_bid, get_user_bidding_history, get_won_items, get_user_notifications
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
 import os
@@ -82,6 +82,16 @@ class AuctionListView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
+# To see all ended auctions
+class EndedAuctionListView(APIView):
+    def get(self, request):
+        paginator = StandardResultsSetPagination()
+        data = get_ended_auctions()
+        result_page = paginator.paginate_queryset(data, request)
+        serializer = AuctionSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
 # To see a specific auction by ID
 class AuctionDetailView(APIView):
     def get(self, request, auction_id):
@@ -153,6 +163,17 @@ class MyBidsView(APIView):
         
         serializer = AuctionSerializer(data , many =True)
         
+        return Response(serializer.data)
+
+
+# view to see all auctions a user has won
+class WonItemsView(APIView):
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        data = get_won_items(user_id)
+        serializer = AuctionSerializer(data, many=True)
         return Response(serializer.data)
     
 
@@ -245,3 +266,17 @@ class AuctionBidHistoryView(APIView):
         
         bids = get_auction_bid_history(auction_id)
         return Response(bids, status=status.HTTP_200_OK)
+
+
+# Notifications polling endpoint
+class NotificationsView(APIView):
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        from django.utils.dateparse import parse_datetime
+        since = request.query_params.get('since')
+        since_dt = parse_datetime(since) if since else None
+
+        data = get_user_notifications(user_id, since_dt)
+        return Response(data, status=status.HTTP_200_OK)

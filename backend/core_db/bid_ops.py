@@ -1,5 +1,6 @@
 from sqlalchemy import insert , select , and_ , update
 from decimal import Decimal
+from datetime import timedelta
 from django.utils import timezone
 from sqlalchemy.sql import func
 from .engine import engine 
@@ -69,10 +70,34 @@ def place_bid(bidder_id , auction_id , bid_amount):
         
         
 def get_user_bidding_history(user_id):
+    """
+    Get all auctions that a user has bid on.
+    Returns one auction per bid (the latest bid for each auction).
+    """
     with engine.connect() as conn:
+        # Subquery to get the latest bid time for each auction by this user
+        latest_bid_per_auction = (
+            select(
+                bids.c.auction_id,
+                func.max(bids.c.bid_time).label('latest_bid_time')
+            )
+            .where(bids.c.bidder_id == user_id)
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
         
-        j = auctions.join(bids , auctions.c.id == bids.c.auction_id)
-        query = select(auctions).select_from(j).where(bids.c.bidder_id == user_id)
+        # Join auctions with the latest bids and seller info
+        j = (
+            auctions
+            .join(latest_bid_per_auction, auctions.c.id == latest_bid_per_auction.c.auction_id)
+            .join(users, auctions.c.seller_id == users.c.id)
+        )
+        
+        query = (
+            select(auctions, users.c.name.label('seller_name'))
+            .select_from(j)
+            .order_by(auctions.c.start_time.desc())
+        )
         
         result = conn.execute(query)
         return [dict(row._mapping) for row in result]
@@ -101,6 +126,83 @@ def get_user_bid_for_auction(user_id, auction_id):
         return None
 
 
+def get_won_items(user_id):
+    """
+    Get auctions that the user has won (highest bid after auction end).
+    If multiple bids have the same highest amount, the latest bid wins.
+    """
+    with engine.connect() as conn:
+        now = timezone.now()
+
+        max_amount_per_auction = (
+            select(
+                bids.c.auction_id,
+                func.max(bids.c.amount).label('max_amount')
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
+
+        latest_max_bid_time = (
+            select(
+                bids.c.auction_id,
+                func.max(bids.c.bid_time).label('latest_bid_time')
+            )
+            .select_from(
+                bids.join(
+                    max_amount_per_auction,
+                    and_(
+                        bids.c.auction_id == max_amount_per_auction.c.auction_id,
+                        bids.c.amount == max_amount_per_auction.c.max_amount
+                    )
+                )
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
+
+        winning_bids = (
+            bids.join(
+                max_amount_per_auction,
+                and_(
+                    bids.c.auction_id == max_amount_per_auction.c.auction_id,
+                    bids.c.amount == max_amount_per_auction.c.max_amount
+                )
+            )
+            .join(
+                latest_max_bid_time,
+                and_(
+                    bids.c.auction_id == latest_max_bid_time.c.auction_id,
+                    bids.c.bid_time == latest_max_bid_time.c.latest_bid_time
+                )
+            )
+        )
+
+        j = (
+            auctions
+            .join(winning_bids, auctions.c.id == bids.c.auction_id)
+            .join(users, auctions.c.seller_id == users.c.id)
+        )
+
+        query = (
+            select(
+                auctions,
+                users.c.name.label('seller_name')
+            )
+            .select_from(j)
+            .where(
+                and_(
+                    bids.c.bidder_id == user_id,
+                    auctions.c.end_time < now
+                )
+            )
+            .order_by(auctions.c.end_time.desc())
+        )
+
+        result = conn.execute(query)
+        return [dict(row._mapping) for row in result]
+
+
 def get_auction_bid_history(auction_id):
     """
     Get all bids for a specific auction ordered by amount (highest first).
@@ -121,3 +223,180 @@ def get_auction_bid_history(auction_id):
         
         result = conn.execute(query)
         return [dict(row._mapping) for row in result]
+
+
+def get_user_notifications(user_id, since=None):
+    """
+    Build notification list for a user since a given datetime.
+    Notifications include: auction started/ended (registered), outbid, and won.
+    """
+    now = timezone.now()
+    since_time = since or (now - timedelta(days=7))
+
+    notifications = []
+
+    with engine.connect() as conn:
+        # Auction started/ended for registered users
+        reg_join = auction_registrations.join(auctions, auction_registrations.c.auction_id == auctions.c.id)
+        reg_query = select(
+            auctions.c.id.label('auction_id'),
+            auctions.c.title.label('title'),
+            auctions.c.start_time,
+            auctions.c.end_time
+        ).select_from(reg_join).where(auction_registrations.c.user_id == user_id)
+
+        for row in conn.execute(reg_query):
+            if row.start_time and since_time < row.start_time <= now:
+                notifications.append({
+                    'id': f"start:{row.auction_id}:{int(row.start_time.timestamp())}",
+                    'type': 'auction_started',
+                    'auction_id': row.auction_id,
+                    'message': f"Auction started: {row.title}",
+                    'time': row.start_time.isoformat(),
+                    'read': False,
+                })
+            if row.end_time and since_time < row.end_time <= now:
+                notifications.append({
+                    'id': f"end:{row.auction_id}:{int(row.end_time.timestamp())}",
+                    'type': 'auction_ended',
+                    'auction_id': row.auction_id,
+                    'message': f"Auction ended: {row.title}",
+                    'time': row.end_time.isoformat(),
+                    'read': False,
+                })
+
+        # Outbid notifications
+        user_last_bid = (
+            select(
+                bids.c.auction_id,
+                func.max(bids.c.bid_time).label('user_last_bid_time')
+            )
+            .where(bids.c.bidder_id == user_id)
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
+
+        latest_bid = (
+            select(
+                bids.c.auction_id,
+                func.max(bids.c.bid_time).label('latest_bid_time')
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
+
+        latest_bid_row = bids.alias('latest_bid_row')
+        outbid_join = (
+            latest_bid
+            .join(latest_bid_row, and_(
+                latest_bid_row.c.auction_id == latest_bid.c.auction_id,
+                latest_bid_row.c.bid_time == latest_bid.c.latest_bid_time
+            ))
+            .join(user_last_bid, user_last_bid.c.auction_id == latest_bid.c.auction_id)
+            .join(auctions, auctions.c.id == latest_bid.c.auction_id)
+        )
+
+        outbid_query = select(
+            latest_bid.c.auction_id,
+            latest_bid.c.latest_bid_time,
+            latest_bid_row.c.bidder_id,
+            latest_bid_row.c.amount,
+            auctions.c.title.label('title')
+        ).select_from(outbid_join).where(
+            and_(
+                latest_bid_row.c.bidder_id != user_id,
+                latest_bid.c.latest_bid_time > user_last_bid.c.user_last_bid_time,
+                latest_bid.c.latest_bid_time > since_time,
+            )
+        )
+
+        for row in conn.execute(outbid_query):
+            notifications.append({
+                'id': f"outbid:{row.auction_id}:{int(row.latest_bid_time.timestamp())}",
+                'type': 'outbid',
+                'auction_id': row.auction_id,
+                'message': f"You've been outbid on {row.title}",
+                'time': row.latest_bid_time.isoformat(),
+                'read': False,
+            })
+
+        # Won notifications
+        max_amount_per_auction = (
+            select(
+                bids.c.auction_id,
+                func.max(bids.c.amount).label('max_amount')
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
+
+        latest_max_bid_time = (
+            select(
+                bids.c.auction_id,
+                func.max(bids.c.bid_time).label('latest_bid_time')
+            )
+            .select_from(
+                bids.join(
+                    max_amount_per_auction,
+                    and_(
+                        bids.c.auction_id == max_amount_per_auction.c.auction_id,
+                        bids.c.amount == max_amount_per_auction.c.max_amount
+                    )
+                )
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
+
+        winning_bids = (
+            select(
+                bids.c.auction_id,
+                bids.c.bidder_id.label('winner_id'),
+                bids.c.bid_time.label('winning_bid_time')
+            )
+            .select_from(
+                bids.join(
+                    max_amount_per_auction,
+                    and_(
+                        bids.c.auction_id == max_amount_per_auction.c.auction_id,
+                        bids.c.amount == max_amount_per_auction.c.max_amount
+                    )
+                )
+                .join(
+                    latest_max_bid_time,
+                    and_(
+                        bids.c.auction_id == latest_max_bid_time.c.auction_id,
+                        bids.c.bid_time == latest_max_bid_time.c.latest_bid_time
+                    )
+                )
+            )
+            .subquery()
+        )
+
+        win_join = winning_bids.join(auctions, auctions.c.id == winning_bids.c.auction_id)
+        win_query = select(
+            winning_bids.c.auction_id,
+            winning_bids.c.winning_bid_time,
+            auctions.c.title.label('title'),
+            auctions.c.end_time
+        ).select_from(win_join).where(
+            and_(
+                winning_bids.c.winner_id == user_id,
+                auctions.c.end_time <= now,
+                auctions.c.end_time > since_time,
+            )
+        )
+
+        for row in conn.execute(win_query):
+            win_time = row.end_time or row.winning_bid_time or now
+            notifications.append({
+                'id': f"win:{row.auction_id}:{int(win_time.timestamp())}",
+                'type': 'won',
+                'auction_id': row.auction_id,
+                'message': f"You won {row.title}",
+                'time': win_time.isoformat(),
+                'read': False,
+            })
+
+    notifications.sort(key=lambda n: n.get('time', ''), reverse=True)
+    return notifications

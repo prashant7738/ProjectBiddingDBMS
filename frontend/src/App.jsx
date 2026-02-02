@@ -76,6 +76,15 @@ function App() {
         />
 
         <Route
+          path="/my-bids"
+          element={
+            <PrivateRoute>
+              <MyItems />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
           path="/create-auction"
           element={
             <PrivateRoute>
