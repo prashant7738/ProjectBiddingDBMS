@@ -69,9 +69,6 @@ const AllAuctions = () => {
 
 useEffect(() => {
   const filtered = auctions.filter((auction) => {
-    // Show auctions that haven't ended yet
-    const isNotEnded = new Date(auction.endTime) > new Date();
-    
     const categoryMatch =
       selectedCategory === "all" || auction.category === selectedCategory;
 
@@ -80,7 +77,8 @@ useEffect(() => {
 
     const searchMatch =
       auction.name?.toLowerCase().includes(searchQuery.toLowerCase()) 
-    return isNotEnded && categoryMatch && countryMatch && searchMatch;
+
+    return categoryMatch && countryMatch && searchMatch;
   });
 
   setFilteredAuctions(filtered);
@@ -88,7 +86,7 @@ useEffect(() => {
   selectedCategory,
   selectedCountry,
   searchQuery,
-    auctions,
+  auctions,
 ]);
 
         const countries = ['all', ...new Set(auctions.map(a => a.country))];

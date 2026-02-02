@@ -85,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'bidding_system',
         'USER': 'postgres',
-        'PASSWORD': '123',
+        'PASSWORD': 'roshan',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
@@ -145,7 +145,7 @@ CHANNEL_LAYERS = {
 DB_CONFIG = {
     "DB_NAME": "bidding_system",
     "DB_USER": "postgres",
-    "DB_PASS": "123", 
+    "DB_PASS": "roshan", 
     "DB_HOST": "127.0.0.1",
     "DB_PORT": "5432",
 }
