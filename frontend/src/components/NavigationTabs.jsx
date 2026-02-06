@@ -14,37 +14,103 @@ const NavigationTabs = () => {
     ];
 
     return (
-        <div className="bg-white shadow-md font-Roboto sticky top-16 md:top-20 z-40">
+        <div className="bg-white shadow-md font-Roboto sticky top-16 md:top-20 z-40 border-b-2 border-gray-100">
+            <style>{`
+                @keyframes slideIn {
+                    from {
+                        transform: scaleX(0);
+                    }
+                    to {
+                        transform: scaleX(1);
+                    }
+                }
+                @keyframes bounce-icon {
+                    0%, 100% {
+                        transform: translateY(0);
+                    }
+                    50% {
+                        transform: translateY(-4px);
+                    }
+                }
+                .nav-tab {
+                    position: relative;
+                    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                .nav-tab::before {
+                    content: '';
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                    background: linear-gradient(90deg, #7c3aed 0%, #6366f1 50%, #8b5cf6 100%);
+                    transform: scaleX(0);
+                    transform-origin: center;
+                    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    border-radius: 2px 2px 0 0;
+                }
+                .nav-tab.active::before {
+                    transform: scaleX(1);
+                    animation: slideIn 0.4s ease-out;
+                }
+                .nav-tab:hover::before {
+                    transform: scaleX(0.7);
+                    background: linear-gradient(90deg, #c4b5fd 0%, #a5b4fc 50%, #ddd6fe 100%);
+                }
+                .nav-tab:hover {
+                    transform: translateY(-2px);
+                }
+                .nav-tab.active {
+                    background: linear-gradient(to bottom, transparent, rgba(124, 58, 237, 0.05));
+                }
+                .nav-tab:hover .nav-icon {
+                    animation: bounce-icon 0.6s ease;
+                }
+                .nav-tab.active .nav-icon {
+                    color: #7c3aed;
+                    filter: drop-shadow(0 2px 4px rgba(124, 58, 237, 0.3));
+                }
+                .nav-tab .nav-label {
+                    transition: all 0.3s ease;
+                }
+                .nav-tab.active .nav-label {
+                    font-weight: 700;
+                    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                }
+                .nav-tab:hover .nav-label {
+                    color: #7c3aed;
+                }
+                .no-scrollbar::-webkit-scrollbar { 
+                    display: none; 
+                }
+                .no-scrollbar { 
+                    -ms-overflow-style: none; 
+                    scrollbar-width: none; 
+                }
+            `}</style>
+            
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Scrollable Container for Mobile */}
-                <div className="flex space-x-4 md:space-x-8 overflow-x-auto no-scrollbar whitespace-nowrap">
+                <div className="flex space-x-2 md:space-x-6 overflow-x-auto no-scrollbar whitespace-nowrap">
                     {tabs.map(tab => (
                         <NavLink 
                             key={tab.id} 
                             to={`/${tab.id}`}
                             className={({ isActive }) =>
-                                `flex items-center space-x-2 py-3 md:py-4 px-1 border-b-2 transition-all flex-shrink-0 ${
-                                    isActive
-                                        ? "border-purple-600 text-purple-600"
-                                        : "border-transparent text-gray-600 hover:text-gray-900 hover:border-gray-300"
-                                }`
+                                `nav-tab ${isActive ? 'active' : ''} flex items-center space-x-2 py-4 md:py-4 px-3 md:px-4 transition-all flex-shrink-0`
                             }
                         >
-                            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="nav-icon w-5 h-5 md:w-6 md:h-6 flex-shrink-0 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tab.icon} />
                             </svg>
-                            {/* Hide long text on very small screens, or keep it and allow scrolling */}
-                            <span className="font-medium text-sm md:text-base">{tab.label}</span>
+                            <span className="nav-label font-semibold text-sm md:text-base">{tab.label}</span>
                         </NavLink>
                     ))}
                 </div>
             </div>
-            
-            {/* Custom CSS to hide scrollbar but keep functionality */}
-            <style dangerouslySetInnerHTML={{ __html: `
-                .no-scrollbar::-webkit-scrollbar { display: none; }
-                .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-            `}} />
         </div>
     );
 };

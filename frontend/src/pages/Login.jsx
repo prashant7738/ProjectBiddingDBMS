@@ -20,7 +20,6 @@ export default function Login() {
     try {
       const res = await loginUser(form);
       console.log('Login response:', res.data);
-      // Small delay to ensure cookies are committed
       await new Promise((r) => setTimeout(r, 120));
       const ok = await refreshProfile();
       if (!ok) {
@@ -37,17 +36,156 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-10 bg-gray-50">
-      <div className="w-full max-w-5xl grid md:grid-cols-2 gap-0 bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-10 bg-gradient-to-br from-purple-50 via-white to-indigo-50 relative overflow-hidden">
+      <style>{`
+        @keyframes float-bubble {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+            opacity: 0.5;
+          }
+          50% {
+            transform: translateY(-20px) scale(1.1);
+            opacity: 0.8;
+          }
+        }
+        @keyframes shimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .floating-bubble {
+          position: absolute;
+          border-radius: 50%;
+          background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(99, 102, 241, 0.1));
+          animation: float-bubble 6s ease-in-out infinite;
+        }
+        .bubble-1 {
+          width: 300px;
+          height: 300px;
+          top: 10%;
+          left: 10%;
+          animation-delay: 0s;
+        }
+        .bubble-2 {
+          width: 200px;
+          height: 200px;
+          top: 60%;
+          right: 10%;
+          animation-delay: 2s;
+        }
+        .bubble-3 {
+          width: 150px;
+          height: 150px;
+          bottom: 20%;
+          left: 60%;
+          animation-delay: 4s;
+        }
+        .login-card {
+          animation: slide-up 0.6s ease-out;
+        }
+        .input-field {
+          transition: all 0.3s ease;
+        }
+        .input-field:focus {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 16px rgba(124, 58, 237, 0.15);
+        }
+        .submit-btn {
+          background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+          background-size: 200% 200%;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          position: relative;
+          overflow: hidden;
+        }
+        .submit-btn::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 0;
+          height: 0;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.3);
+          transform: translate(-50%, -50%);
+          transition: width 0.6s, height 0.6s;
+        }
+        .submit-btn:hover::before {
+          width: 400px;
+          height: 400px;
+        }
+        .submit-btn:hover {
+          background-position: 100% 0;
+          transform: translateY(-3px);
+          box-shadow: 0 12px 24px rgba(124, 58, 237, 0.4);
+        }
+        .submit-btn:active {
+          transform: translateY(-1px);
+        }
+        .brand-side {
+          background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #8b5cf6 100%);
+          position: relative;
+          overflow: hidden;
+        }
+        .brand-side::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+          background-size: 200% 200%;
+          animation: shimmer 3s linear infinite;
+        }
+        .link-hover {
+          position: relative;
+          transition: all 0.3s ease;
+        }
+        .link-hover::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          width: 0;
+          height: 2px;
+          background: linear-gradient(90deg, #7c3aed, #6366f1);
+          transition: width 0.3s ease;
+        }
+        .link-hover:hover::after {
+          width: 100%;
+        }
+      `}</style>
+
+      {/* Floating Background Bubbles */}
+      <div className="floating-bubble bubble-1"></div>
+      <div className="floating-bubble bubble-2"></div>
+      <div className="floating-bubble bubble-3"></div>
+
+      <div className="login-card w-full max-w-5xl grid md:grid-cols-2 gap-0 bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10">
         {/* Visual / Brand side */}
-        <div className="relative hidden md:flex items-center justify-center bg-linear-to-r from-purple-500 to-indigo-600 p-8">
-          <div className="absolute inset-0 opacity-20">
+        <div className="brand-side relative hidden md:flex items-center justify-center p-8">
+          <div className="absolute inset-0 opacity-10">
             <img src={assets.hero_img} alt="Auction" className="w-full h-full object-cover" />
           </div>
           <div className="relative z-10 text-white text-center max-w-sm">
-            <img src={assets.logo} alt="Logo" className="mx-auto mb-6 w-40" />
-            <h2 className="text-3xl font-bold mb-3">Welcome back</h2>
-            <p className="text-white/90">Sign in to continue bidding, track your items, and see your wins.</p>
+            <img src={assets.logo} alt="Logo" className="mx-auto mb-6 w-40 drop-shadow-2xl" />
+            <h2 className="text-4xl font-black mb-4 drop-shadow-lg">Welcome back</h2>
+            <p className="text-white/90 text-lg font-medium">Sign in to continue bidding, track your items, and see your wins.</p>
+            <div className="mt-8 flex justify-center space-x-2">
+              <div className="w-3 h-3 bg-white rounded-full opacity-50"></div>
+              <div className="w-3 h-3 bg-white rounded-full"></div>
+              <div className="w-3 h-3 bg-white rounded-full opacity-50"></div>
+            </div>
           </div>
         </div>
 
@@ -57,14 +195,16 @@ export default function Login() {
             <img src={assets.logo} alt="Logo" className="w-36" />
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Sign in to your account</h1>
-          <p className="text-gray-500 mb-8">
-            New here? <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">Create an account</Link>
+          <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            Sign in to your account
+          </h1>
+          <p className="text-gray-600 mb-8 text-lg">
+            New here? <Link to="/register" className="link-hover text-purple-600 hover:text-purple-700 font-bold">Create an account</Link>
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Email</label>
               <div className="relative">
                 <input
                   id="email"
@@ -74,14 +214,17 @@ export default function Login() {
                   required
                   value={form.email}
                   onChange={handleChange}
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="you@example.com"
                 />
+                <svg className="absolute right-4 top-4 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                </svg>
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <label htmlFor="password" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Password</label>
               <div className="relative">
                 <input
                   id="password"
@@ -91,28 +234,44 @@ export default function Login() {
                   required
                   value={form.password}
                   onChange={handleChange}
-                  className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="••••••••"
                 />
+                <svg className="absolute right-4 top-4 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
               </div>
             </div>
 
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">
-                {error}
+              <div className="rounded-xl border-2 border-red-200 bg-red-50 text-red-700 px-5 py-4 text-sm font-semibold flex items-center space-x-2">
+                <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <span>{error}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-xl bg-linear-to-r from-purple-600 to-indigo-600 text-white font-medium py-3.5 shadow-lg hover:opacity-95 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="submit-btn w-full text-white font-bold py-4 shadow-xl hover:opacity-95 transition disabled:opacity-60 disabled:cursor-not-allowed rounded-xl relative overflow-hidden"
             >
-              {submitting ? 'Signing in…' : 'Sign in'}
+              <span className="relative z-10">
+                {submitting ? (
+                  <span className="flex items-center justify-center space-x-2">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Signing in…</span>
+                  </span>
+                ) : 'Sign in'}
+              </span>
             </button>
 
-            <div className="text-center text-sm text-gray-500">
-              By continuing you agree to our <span className="underline">Terms</span> and <span className="underline">Privacy</span>.
+            <div className="text-center text-sm text-gray-500 font-medium">
+              By continuing you agree to our <span className="underline cursor-pointer hover:text-purple-600">Terms</span> and <span className="underline cursor-pointer hover:text-purple-600">Privacy</span>.
             </div>
           </form>
         </div>

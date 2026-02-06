@@ -30,11 +30,9 @@ export default function Register() {
       await registerUser(payload);
       setSuccess('User registered successfully. Logging you in...');
       
-      // Auto-login after successful registration
       await new Promise((r) => setTimeout(r, 120));
       await loginUser({ email: form.email, password: form.password });
       
-      // Refresh profile to update auth context
       await new Promise((r) => setTimeout(r, 120));
       await refreshProfile();
       
@@ -47,17 +45,168 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-10 bg-gray-50">
-      <div className="w-full max-w-5xl grid md:grid-cols-2 gap-0 bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-10 bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative overflow-hidden">
+      <style>{`
+        @keyframes float-bubble {
+          0%, 100% {
+            transform: translateY(0) scale(1);
+            opacity: 0.5;
+          }
+          50% {
+            transform: translateY(-20px) scale(1.1);
+            opacity: 0.8;
+          }
+        }
+        @keyframes shimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+        @keyframes slide-up {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes check-mark {
+          0% {
+            stroke-dashoffset: 100;
+          }
+          100% {
+            stroke-dashoffset: 0;
+          }
+        }
+        .floating-bubble {
+          position: absolute;
+          border-radius: 50%;
+          background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+          animation: float-bubble 6s ease-in-out infinite;
+        }
+        .bubble-1 {
+          width: 300px;
+          height: 300px;
+          top: 10%;
+          left: 10%;
+          animation-delay: 0s;
+        }
+        .bubble-2 {
+          width: 200px;
+          height: 200px;
+          top: 60%;
+          right: 10%;
+          animation-delay: 2s;
+        }
+        .bubble-3 {
+          width: 150px;
+          height: 150px;
+          bottom: 20%;
+          left: 60%;
+          animation-delay: 4s;
+        }
+        .register-card {
+          animation: slide-up 0.6s ease-out;
+        }
+        .input-field {
+          transition: all 0.3s ease;
+        }
+        .input-field:focus {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 16px rgba(99, 102, 241, 0.15);
+        }
+        .submit-btn {
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+          background-size: 200% 200%;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          position: relative;
+          overflow: hidden;
+        }
+        .submit-btn::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 0;
+          height: 0;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.3);
+          transform: translate(-50%, -50%);
+          transition: width 0.6s, height 0.6s;
+        }
+        .submit-btn:hover::before {
+          width: 400px;
+          height: 400px;
+        }
+        .submit-btn:hover {
+          background-position: 100% 0;
+          transform: translateY(-3px);
+          box-shadow: 0 12px 24px rgba(99, 102, 241, 0.4);
+        }
+        .submit-btn:active {
+          transform: translateY(-1px);
+        }
+        .brand-side {
+          background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #7c3aed 100%);
+          position: relative;
+          overflow: hidden;
+        }
+        .brand-side::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+          background-size: 200% 200%;
+          animation: shimmer 3s linear infinite;
+        }
+        .link-hover {
+          position: relative;
+          transition: all 0.3s ease;
+        }
+        .link-hover::after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 0;
+          width: 0;
+          height: 2px;
+          background: linear-gradient(90deg, #6366f1, #8b5cf6);
+          transition: width 0.3s ease;
+        }
+        .link-hover:hover::after {
+          width: 100%;
+        }
+        .success-checkmark {
+          stroke-dasharray: 100;
+          animation: check-mark 0.5s ease-out forwards;
+        }
+      `}</style>
+
+      {/* Floating Background Bubbles */}
+      <div className="floating-bubble bubble-1"></div>
+      <div className="floating-bubble bubble-2"></div>
+      <div className="floating-bubble bubble-3"></div>
+
+      <div className="register-card w-full max-w-5xl grid md:grid-cols-2 gap-0 bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10">
         {/* Visual / Brand side */}
-        <div className="relative hidden md:flex items-center justify-center bg-linear-to-r from-purple-500 to-indigo-600 p-8">
-          <div className="absolute inset-0 opacity-20">
+        <div className="brand-side relative hidden md:flex items-center justify-center p-8">
+          <div className="absolute inset-0 opacity-10">
             <img src={assets.hero_img} alt="Auction" className="w-full h-full object-cover" />
           </div>
           <div className="relative z-10 text-white text-center max-w-sm">
-            <img src={assets.logo} alt="Logo" className="mx-auto mb-6 w-40" />
-            <h2 className="text-3xl font-bold mb-3">Create your account</h2>
-            <p className="text-white/90">Join the auction community and start bidding in minutes.</p>
+            <img src={assets.logo} alt="Logo" className="mx-auto mb-6 w-40 drop-shadow-2xl" />
+            <h2 className="text-4xl font-black mb-4 drop-shadow-lg">Create your account</h2>
+            <p className="text-white/90 text-lg font-medium">Join the auction community and start bidding in minutes.</p>
+            <div className="mt-8 flex justify-center space-x-2">
+              <div className="w-3 h-3 bg-white rounded-full opacity-50"></div>
+              <div className="w-3 h-3 bg-white rounded-full"></div>
+              <div className="w-3 h-3 bg-white rounded-full opacity-50"></div>
+            </div>
           </div>
         </div>
 
@@ -67,14 +216,16 @@ export default function Register() {
             <img src={assets.logo} alt="Logo" className="w-36" />
           </div>
 
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">Create an account</h1>
-          <p className="text-gray-500 mb-8">
-            Already have an account? <Link to="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">Sign in</Link>
+          <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            Create an account
+          </h1>
+          <p className="text-gray-600 mb-8 text-lg">
+            Already have an account? <Link to="/login" className="link-hover text-indigo-600 hover:text-indigo-700 font-bold">Sign in</Link>
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+              <label htmlFor="name" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Name</label>
               <input
                 id="name"
                 name="name"
@@ -83,13 +234,13 @@ export default function Register() {
                 required
                 value={form.name}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="Your name"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+              <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Email</label>
               <input
                 id="email"
                 name="email"
@@ -98,13 +249,13 @@ export default function Register() {
                 required
                 value={form.email}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <label htmlFor="password" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Password</label>
               <input
                 id="password"
                 name="password"
@@ -113,13 +264,13 @@ export default function Register() {
                 required
                 value={form.password}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="Create a password"
               />
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">Confirm password</label>
+              <label htmlFor="confirmPassword" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Confirm password</label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
@@ -128,33 +279,49 @@ export default function Register() {
                 required
                 value={form.confirmPassword}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 placeholder="Repeat your password"
               />
             </div>
 
             {error && (
-              <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">
-                {error}
+              <div className="rounded-xl border-2 border-red-200 bg-red-50 text-red-700 px-5 py-4 text-sm font-semibold flex items-center space-x-2">
+                <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+                <span>{error}</span>
               </div>
             )}
 
             {success && (
-              <div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 text-sm">
-                {success}
+              <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50 text-emerald-700 px-5 py-4 text-sm font-semibold flex items-center space-x-2">
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path className="success-checkmark" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>{success}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-xl bg-linear-to-r from-purple-600 to-indigo-600 text-white font-medium py-3.5 shadow-lg hover:opacity-95 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="submit-btn w-full text-white font-bold py-4 shadow-xl hover:opacity-95 transition disabled:opacity-60 disabled:cursor-not-allowed rounded-xl relative overflow-hidden"
             >
-              {submitting ? 'Creating account…' : 'Create account'}
+              <span className="relative z-10">
+                {submitting ? (
+                  <span className="flex items-center justify-center space-x-2">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Creating account…</span>
+                  </span>
+                ) : 'Create account'}
+              </span>
             </button>
 
-            <div className="text-center text-sm text-gray-500">
-              By continuing you agree to our <span className="underline">Terms</span> and <span className="underline">Privacy</span>.
+            <div className="text-center text-sm text-gray-500 font-medium">
+              By continuing you agree to our <span className="underline cursor-pointer hover:text-indigo-600">Terms</span> and <span className="underline cursor-pointer hover:text-indigo-600">Privacy</span>.
             </div>
           </form>
         </div>

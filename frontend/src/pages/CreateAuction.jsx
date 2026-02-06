@@ -98,40 +98,136 @@ export default function CreateAuction() {
   };
 
   if (loading) {
-    return <div className="p-6">Loading…</div>;
+    return (
+      <div className="min-h-[calc(100vh-80px)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="loading-spinner mb-4 mx-auto"></div>
+          <p className="text-gray-600 font-semibold">Loading…</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user) {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-700">
-          You must be logged in to create an auction.
+        <div className="rounded-2xl border-2 border-red-200 bg-red-50 p-8 text-red-700 text-center">
+          <svg className="w-16 h-16 mx-auto mb-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <p className="text-xl font-bold">You must be logged in to create an auction.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[calc(100vh-80px)] bg-gray-50 py-10 px-4">
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div className="px-8 py-6 border-b border-gray-100">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Create Auction</h1>
-          <p className="text-gray-500 mt-1">Publish a new auction for bidders to join.</p>
+    <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-purple-50 via-white to-indigo-50 py-10 px-4">
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes shimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+        .create-card {
+          animation: fadeInUp 0.6s ease-out;
+        }
+        .input-field {
+          transition: all 0.3s ease;
+        }
+        .input-field:focus {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 16px rgba(124, 58, 237, 0.12);
+        }
+        .submit-btn {
+          background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+          background-size: 200% 200%;
+          transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          position: relative;
+          overflow: hidden;
+        }
+        .submit-btn::before {
+          content: '';
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 0;
+          height: 0;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.3);
+          transform: translate(-50%, -50%);
+          transition: width 0.6s, height 0.6s;
+        }
+        .submit-btn:hover::before {
+          width: 400px;
+          height: 400px;
+        }
+        .submit-btn:hover {
+          background-position: 100% 0;
+          transform: translateY(-3px);
+          box-shadow: 0 12px 24px rgba(124, 58, 237, 0.4);
+        }
+        .submit-btn:active {
+          transform: translateY(-1px);
+        }
+        .loading-spinner {
+          border: 4px solid rgba(124, 58, 237, 0.1);
+          border-top: 4px solid #7c3aed;
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .image-upload-zone {
+          transition: all 0.3s ease;
+          background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+        }
+        .image-upload-zone:hover {
+          background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+          border-color: #7c3aed;
+        }
+      `}</style>
+
+      <div className="create-card max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-purple-100">
+        <div className="px-8 py-8 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-indigo-50">
+          <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            Create Auction
+          </h1>
+          <p className="text-gray-600 mt-2 font-semibold">Publish a new auction for bidders to join.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Seller ID</label>
+              <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Seller ID</label>
               <input
                 type="text"
                 value={user.id || ''}
                 readOnly
-                className="w-full rounded-xl border border-gray-200 bg-gray-100 px-4 py-3 text-gray-700"
+                className="w-full rounded-xl border-2 border-gray-200 bg-gray-100 px-5 py-3 text-gray-700 font-semibold"
               />
             </div>
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <label htmlFor="title" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                Title <span className="text-red-500">*</span>
+              </label>
               <input
                 id="title"
                 name="title"
@@ -140,13 +236,15 @@ export default function CreateAuction() {
                 value={form.title}
                 onChange={handleChange}
                 placeholder="Antique vase"
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <label htmlFor="description" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+              Description <span className="text-red-500">*</span>
+            </label>
             <textarea
               id="description"
               name="description"
@@ -155,13 +253,15 @@ export default function CreateAuction() {
               value={form.description}
               onChange={handleChange}
               placeholder="Describe the item, its condition, and provenance."
-              className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 mb-2">Category ID</label>
+              <label htmlFor="category_id" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                Category ID <span className="text-red-500">*</span>
+              </label>
               <input
                 id="category_id"
                 name="category_id"
@@ -171,12 +271,14 @@ export default function CreateAuction() {
                 value={form.category_id}
                 onChange={handleChange}
                 placeholder="1"
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
 
             <div>
-              <label htmlFor="starting_price" className="block text-sm font-medium text-gray-700 mb-2">Starting Price</label>
+              <label htmlFor="starting_price" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                Starting Price <span className="text-red-500">*</span>
+              </label>
               <input
                 id="starting_price"
                 name="starting_price"
@@ -187,75 +289,113 @@ export default function CreateAuction() {
                 value={form.starting_price}
                 onChange={handleChange}
                 placeholder="500"
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
+            
             <div>
-              <label htmlFor="start_time" className="block text-sm font-medium text-gray-700 mb-2">Start Time <span className="text-gray-500 text-xs">(optional - defaults to now)</span></label>
+              <label htmlFor="start_time" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+                Start Time <span className="text-gray-500 text-xs normal-case">(optional)</span>
+              </label>
               <input
                 id="start_time"
                 name="start_time"
                 type="datetime-local"
                 value={form.start_time}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="end_time" className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
-              <input
-                id="end_time"
-                name="end_time"
-                type="datetime-local"
-                required
-                value={form.end_time}
-                onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">Image</label>
-            <div className="flex flex-col md:flex-row md:items-center gap-4">
-              <input
-                id="image"
-                name="image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="w-full rounded-xl border border-dashed border-gray-300 bg-white px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              {imagePreview && (
-                <img
-                  src={imagePreview}
-                  alt="Preview"
-                  className="h-20 w-20 rounded-xl object-cover border border-gray-200"
+            <label htmlFor="end_time" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+              End Time <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="end_time"
+              name="end_time"
+              type="datetime-local"
+              required
+              value={form.end_time}
+              onChange={handleChange}
+              className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="image" className="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">
+              Image
+            </label>
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
+              <label className="image-upload-zone flex-1 cursor-pointer">
+                <input
+                  id="image"
+                  name="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
                 />
+                <div className="border-2 border-dashed border-gray-300 rounded-2xl px-6 py-8 text-center hover:border-purple-500 transition-all">
+                  <svg className="w-12 h-12 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <p className="text-sm font-semibold text-gray-600">
+                    {form.image ? form.image.name : 'Click to upload or drag and drop'}
+                  </p>
+                </div>
+              </label>
+              {imagePreview && (
+                <div className="relative group">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="h-32 w-32 rounded-2xl object-cover border-4 border-purple-200 shadow-lg"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-50 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <span className="text-white text-sm font-semibold">Preview</span>
+                  </div>
+                </div>
               )}
             </div>
           </div>
 
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">
-              {error}
+            <div className="rounded-xl border-2 border-red-200 bg-red-50 text-red-700 px-5 py-4 text-sm font-semibold flex items-center space-x-2">
+              <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 px-4 py-3 text-sm">
-              {success}
+            <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50 text-emerald-700 px-5 py-4 text-sm font-semibold flex items-center space-x-2">
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>{success}</span>
             </div>
           )}
 
-          <div className="flex justify-end">
+          <div className="flex justify-end pt-4">
             <button
               type="submit"
               disabled={submitting}
-              className="rounded-xl bg-linear-to-r from-purple-600 to-indigo-600 text-white font-medium px-8 py-3 shadow-lg hover:opacity-95 transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="submit-btn text-white font-bold px-10 py-4 shadow-xl hover:opacity-95 transition disabled:opacity-60 disabled:cursor-not-allowed rounded-xl relative overflow-hidden"
             >
-              {submitting ? 'Creating…' : 'Create Auction'}
+              <span className="relative z-10">
+                {submitting ? (
+                  <span className="flex items-center justify-center space-x-2">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Creating…</span>
+                  </span>
+                ) : 'Create Auction'}
+              </span>
             </button>
           </div>
         </form>
