@@ -51,6 +51,7 @@ const Home = () => {
                         : [];
                 if (isMounted) {
                     setAuctions(list.map(normalizeAuction));
+                    console.log('Loaded auctions:', list);
                 }
             } catch (err) {
                 if (isMounted) {

@@ -16,6 +16,17 @@ const AuctionCard = ({ auction, onClick }) => {
     const bidCountValue = auction.bidCount ?? auction.bid_count ?? 0;
     const sellerNameValue = auction.sellerName ?? auction.seller_name ?? auction.seller?.name ?? '';
     const countryValue = auction.country ?? '';
+      const handleCardClick = (e) => {
+    // Scroll to top
+    window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+    });
+
+    // Execute the passed onClick prop if it exists
+    if (onClick) onClick(e);
+};
+
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -208,7 +219,7 @@ const AuctionCard = ({ auction, onClick }) => {
                         </div>
                     </div>
                 </div>
-                
+                <div onClick={handleCardClick}>
                 <Link 
                     className="flex justify-center items-center w-full gradient-bg text-white py-3.5 rounded-xl font-bold tracking-wide transition-all duration-300 shadow-md"  
                     to={`/auctionPage/${auction.id}`}
@@ -221,7 +232,7 @@ const AuctionCard = ({ auction, onClick }) => {
                             Join Live Auction
                         </>
                     ) : 'View Details'}
-                </Link>
+                </Link></div>
             </div>
         </div>
     );
