@@ -19,7 +19,7 @@ const normalizeAuction = (raw) => {
     const startingBid = raw?.starting_price ?? raw?.startingPrice ?? 0;
     const name = raw?.title ?? raw?.name ?? 'Untitled Auction';
     const category = raw?.category_name ?? raw?.category ?? 'general';
-    const country = raw?.country ?? 'Unknown';
+    
     const bidCount = raw?.bid_count ?? raw?.bidCount ?? 0;
     const image = getMediaUrl(raw?.image_url ?? raw?.image ?? '');
     const description = raw?.description ?? '';
@@ -37,7 +37,6 @@ const normalizeAuction = (raw) => {
         isLive,
         startTime,
         endTime,
-        country,
         description,
         bidCount,
         registered,
@@ -653,7 +652,7 @@ const AuctionPage = () => {
                                 <span className="text-sm font-semibold text-purple-600 uppercase tracking-wide">
                                     {activeAuction.category}
                                 </span>
-                                <span className="text-sm text-gray-600">{activeAuction.country}</span>
+                            
                             </div>
 
                             <h1 className="text-3xl font-bold text-gray-900 mb-4">{activeAuction.name}</h1>

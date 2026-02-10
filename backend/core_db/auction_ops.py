@@ -1,7 +1,7 @@
 from sqlalchemy import insert , select, and_, update, func
 from django.utils import timezone
 from .engine import engine
-from .schemas import auctions, auction_registrations, users, bids
+from .schemas import auctions, auction_registrations, users, bids, categories
 
 
 def _winning_bids_subquery():
@@ -160,7 +160,73 @@ def get_auction_by_id(auction_id):
 
 def get_auctions_by_seller(seller_id):
     with engine.connect() as conn:
-        query = select(auctions).where(auctions.c.seller_id == seller_id)
+        bid_counts = (
+            select(
+                bids.c.auction_id,
+                func.count(bids.c.id).label('bid_count')
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
+        
+        j = (
+            auctions
+            .outerjoin(categories, auctions.c.category_id == categories.c.id)
+            .outerjoin(bid_counts, auctions.c.id == bid_counts.c.auction_id)
+        )
+        
+        query = (
+            select(
+                auctions,
+                categories.c.name.label('category_name'),
+                bid_counts.c.bid_count
+            )
+            .select_from(j)
+            .where(auctions.c.seller_id == seller_id)
+            .order_by(auctions.c.start_time.desc())
+        )
+        result = conn.execute(query)
+        return [dict(row._mapping) for row in result]
+
+
+def get_all_auctions_admin():
+    with engine.connect() as conn:
+        seller = users.alias('seller')
+        winner = users.alias('winner')
+        winning_bids = _winning_bids_subquery()
+        bid_counts = (
+            select(
+                bids.c.auction_id,
+                func.count(bids.c.id).label('bid_count')
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
+
+        j = (
+            auctions
+            .join(seller, auctions.c.seller_id == seller.c.id)
+            .outerjoin(categories, auctions.c.category_id == categories.c.id)
+            .outerjoin(winning_bids, auctions.c.id == winning_bids.c.auction_id)
+            .outerjoin(winner, winning_bids.c.winner_id == winner.c.id)
+            .outerjoin(bid_counts, auctions.c.id == bid_counts.c.auction_id)
+        )
+
+        query = (
+            select(
+                auctions,
+                seller.c.name.label('seller_name'),
+                seller.c.email.label('seller_email'),
+                seller.c.balance.label('seller_balance'),
+                winner.c.name.label('winner_name'),
+                winner.c.email.label('winner_email'),
+                winner.c.balance.label('winner_balance'),
+                categories.c.name.label('category_name'),
+                bid_counts.c.bid_count
+            )
+            .select_from(j)
+        )
+
         result = conn.execute(query)
         return [dict(row._mapping) for row in result]
     
@@ -180,6 +246,36 @@ def close_expired_auctions():
         conn.commit()
         # TO return how many auctions has been closed out
         return result.rowcount 
+
+
+def delete_auction(auction_id):
+    with engine.connect() as conn:
+        stmt = auctions.delete().where(auctions.c.id == auction_id)
+        result = conn.execute(stmt)
+        conn.commit()
+        return result.rowcount
+
+
+def update_auction(auction_id, **kwargs):
+    """
+    Update auction fields. Only updates provided fields.
+    kwargs can include: title, description, category_id, starting_price, end_time, image_url
+    """
+    with engine.connect() as conn:
+        # Only update fields that are provided
+        update_data = {k: v for k, v in kwargs.items() if v is not None}
+        
+        if not update_data:
+            return None
+        
+        stmt = update(auctions).where(auctions.c.id == auction_id).values(**update_data)
+        result = conn.execute(stmt)
+        conn.commit()
+        
+        if result.rowcount > 0:
+            # Return updated auction
+            return get_auction_by_id(auction_id)
+        return None
 
 
 def register_user_for_auction(user_id, auction_id):

@@ -20,6 +20,7 @@ import WonItems from './pages/WonItems';
 import MyItems from './pages/MyItems'
 import Results from './pages/Results';
 import PriceResults from './pages/PriceResults';
+import MyAuctions from './pages/MyAuctions';
 
 function App() {
   const location = useLocation();
@@ -109,6 +110,15 @@ function App() {
             element={
               <PrivateRoute>
                 <CreateAuction />
+              </PrivateRoute>
+            }
+          />
+
+          <Route
+            path="/my-auctions"
+            element={
+              <PrivateRoute>
+                <MyAuctions />
               </PrivateRoute>
             }
           />

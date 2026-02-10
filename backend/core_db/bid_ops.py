@@ -53,6 +53,16 @@ def place_bid(bidder_id , auction_id , bid_amount):
             if bid_amount <= current_highest:
                 return f"Error : bid amount should be higher than {current_highest}"
             
+            # Check if user has enough balance
+            user_q = select(users).where(users.c.id == bidder_id)
+            user = conn.execute(user_q).first()
+            if not user:
+                return "Error: User not found"
+            
+            user_balance = Decimal(str(user.balance or 0))
+            if user_balance < bid_amount:
+                return f"Error: Insufficient balance. Your balance: Rs {user_balance}, Required: Rs {bid_amount}"
+            
             # Finally Insert this bid into record
             conn.execute(insert(bids).values(
                 auction_id = auction_id,

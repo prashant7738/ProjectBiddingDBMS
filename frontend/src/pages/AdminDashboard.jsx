@@ -1,18 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuctions, getMediaUrl } from '../api/auth';
+import { getAdminAuctions, deleteAdminAuction, getAdminUsers, updateAdminUserBalance, getMediaUrl } from '../api/auth';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('auctions');
   const [auctions, setAuctions] = useState([]);
   const [filteredAuctions, setFilteredAuctions] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedAuction, setSelectedAuction] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showEditBalanceModal, setShowEditBalanceModal] = useState(false);
+  const [newBalance, setNewBalance] = useState('');
   const [stats, setStats] = useState({
     total: 0,
     live: 0,
@@ -26,8 +32,12 @@ export default function AdminDashboard() {
       navigate('/admin/login');
       return;
     }
-    loadAuctions();
-  }, [navigate]);
+    if (activeTab === 'auctions') {
+      loadAuctions();
+    } else if (activeTab === 'users') {
+      loadUsers();
+    }
+  }, [navigate, activeTab]);
 
   const normalizeAuction = (raw) => {
     const startTime = raw?.start_time ? new Date(raw.start_time) : new Date();
@@ -46,10 +56,12 @@ export default function AdminDashboard() {
       title: raw?.title ?? 'Untitled Auction',
       sellerName: raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? 'Unknown',
       sellerId: raw?.seller_id ?? raw?.seller?.id ?? 'N/A',
-      category: raw?.category_name ?? raw?.category ?? 'general',
       image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
-      currentBid: raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0,
-      startingPrice: raw?.starting_price ?? 0,
+      sellerEmail: raw?.seller_email ?? raw?.sellerEmail ?? 'N/A',
+      sellerBalance: raw?.seller_balance ?? raw?.sellerBalance ?? null,
+      category: raw?.category_name ?? raw?.category ?? 'general',
+      currentBid: Number(raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0),
+      startingPrice: Number(raw?.starting_price ?? 0),
       isLive,
       isUpcoming,
       isEnded,
@@ -58,7 +70,9 @@ export default function AdminDashboard() {
       description: raw?.description ?? '',
       bidCount: raw?.bid_count ?? 0,
       winnerName: raw?.winner_name ?? raw?.winner?.name ?? 'N/A',
-      winnerId: raw?.winner_id ?? raw?.winner?.id ?? null
+      winnerId: raw?.winner_id ?? raw?.winner?.id ?? null,
+      winnerEmail: raw?.winner_email ?? raw?.winnerEmail ?? null,
+      winnerBalance: raw?.winner_balance ?? raw?.winnerBalance ?? null
     };
   };
 
@@ -66,7 +80,7 @@ export default function AdminDashboard() {
     setLoading(true);
     setError('');
     try {
-      const res = await getAuctions();
+      const res = await getAdminAuctions();
       const list = Array.isArray(res.data)
         ? res.data
         : Array.isArray(res.data?.results)
@@ -85,11 +99,77 @@ export default function AdminDashboard() {
         ended: normalized.filter(a => a.isEnded).length
       });
     } catch (err) {
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUser');
+        navigate('/admin/login');
+        return;
+      }
       setError(err.response?.data?.error || 'Failed to load auctions.');
     } finally {
       setLoading(false);
     }
   };
+
+  const loadUsers = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await getAdminUsers();
+      const list = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.results)
+          ? res.data.results
+          : [];
+      
+      setUsers(list);
+      setFilteredUsers(list);
+    } catch (err) {
+      if (err.response?.status === 401 || err.response?.status === 403) {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminUser');
+        navigate('/admin/login');
+        return;
+      }
+      setError(err.response?.data?.error || 'Failed to load users.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateBalance = async () => {
+    if (!selectedUser || !newBalance) return;
+    
+    try {
+      const res = await updateAdminUserBalance(selectedUser.id, parseFloat(newBalance));
+      const updatedUser = res.data;
+      
+      // Update users list
+      const updatedUsers = users.map(u => u.id === updatedUser.id ? updatedUser : u);
+      setUsers(updatedUsers);
+      setFilteredUsers(updatedUsers);
+      
+      setShowEditBalanceModal(false);
+      setSelectedUser(null);
+      setNewBalance('');
+    } catch (err) {
+      console.error('Error updating balance:', err);
+      alert(err.response?.data?.error || 'Failed to update balance');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'users') {
+      let filtered = users;
+      if (searchQuery) {
+        filtered = filtered.filter(u =>
+          u.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          u.email?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      setFilteredUsers(filtered);
+    }
+  }, [searchQuery, users, activeTab]);
 
   useEffect(() => {
     let filtered = auctions;
@@ -122,11 +202,15 @@ export default function AdminDashboard() {
 
   const handleDeleteAuction = async (auctionId) => {
     try {
-      // TODO: Replace with actual delete API call
-      // await deleteAuction(auctionId);
-      
-      // Simulate deletion
-      setAuctions(auctions.filter(a => a.id !== auctionId));
+      await deleteAdminAuction(auctionId);
+      const next = auctions.filter(a => a.id !== auctionId);
+      setAuctions(next);
+      setStats({
+        total: next.length,
+        live: next.filter(a => a.isLive).length,
+        upcoming: next.filter(a => a.isUpcoming).length,
+        ended: next.filter(a => a.isEnded).length
+      });
       setShowDeleteModal(false);
       setSelectedAuction(null);
     } catch (err) {
@@ -262,6 +346,39 @@ export default function AdminDashboard() {
       </header>
 
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Tabs */}
+        <div className="mb-8 bg-slate-800/90 backdrop-blur-xl rounded-2xl p-2 border border-purple-500/30 shadow-xl inline-flex">
+          <button
+            onClick={() => setActiveTab('auctions')}
+            className={`px-6 py-3 rounded-xl font-bold transition-all ${
+              activeTab === 'auctions'
+                ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white shadow-lg'
+                : 'text-purple-300 hover:text-white hover:bg-slate-700/50'
+            }`}
+          >
+            <svg className="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            Auctions
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-6 py-3 rounded-xl font-bold transition-all ${
+              activeTab === 'users'
+                ? 'bg-gradient-to-r from-purple-500 to-purple-700 text-white shadow-lg'
+                : 'text-purple-300 hover:text-white hover:bg-slate-700/50'
+            }`}
+          >
+            <svg className="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+            Users
+          </button>
+        </div>
+
+        {/* Auctions Section */}
+        {activeTab === 'auctions' && (
+          <>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="stat-card bg-slate-800/90 backdrop-blur-xl rounded-2xl p-6 border border-purple-500/30 shadow-xl">
@@ -460,6 +577,107 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+          </>
+        )}
+
+        {/* Users Section */}
+        {activeTab === 'users' && (
+          <>
+            {/* Search Bar */}
+            <div className="bg-slate-800/90 backdrop-blur-xl rounded-2xl p-6 mb-6 border border-purple-500/30 shadow-xl">
+              <label className="block text-sm font-bold text-purple-300 mb-2 uppercase tracking-wide">Search Users</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search by name or email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-5 py-3 pl-12 bg-slate-700/50 border-2 border-purple-500/30 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                />
+                <svg className="absolute left-4 top-3.5 w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Users Table */}
+            <div className="bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-purple-500/30 shadow-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-purple-500/30 bg-slate-700/50">
+                <h2 className="text-xl font-black text-white">User Management</h2>
+              </div>
+
+              {loading ? (
+                <div className="flex items-center justify-center py-20">
+                  <div className="text-center">
+                    <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-purple-300 font-semibold">Loading users…</p>
+                  </div>
+                </div>
+              ) : error ? (
+                <div className="p-8 text-center">
+                  <svg className="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-red-400 font-semibold">{error}</p>
+                </div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="p-8 text-center">
+                  <svg className="w-16 h-16 text-purple-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  <p className="text-purple-300 font-semibold">No users found</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-slate-700/50">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-xs font-black text-purple-300 uppercase tracking-wider">ID</th>
+                        <th className="px-6 py-4 text-left text-xs font-black text-purple-300 uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-4 text-left text-xs font-black text-purple-300 uppercase tracking-wider">Email</th>
+                        <th className="px-6 py-4 text-left text-xs font-black text-purple-300 uppercase tracking-wider">Balance</th>
+                        <th className="px-6 py-4 text-left text-xs font-black text-purple-300 uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-purple-500/20">
+                      {filteredUsers.map((user) => (
+                        <tr key={user.id} className="table-row">
+                          <td className="px-6 py-4">
+                            <p className="text-white font-semibold">#{user.id}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-white font-bold">{user.name}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-purple-300">{user.email}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <p className="text-green-400 font-bold text-lg">₹{Number(user.balance || 0).toLocaleString()}</p>
+                          </td>
+                          <td className="px-6 py-4">
+                            <button
+                              onClick={() => {
+                                setSelectedUser(user);
+                                setNewBalance(user.balance?.toString() || '0');
+                                setShowEditBalanceModal(true);
+                              }}
+                              className="action-btn p-2 bg-green-600 hover:bg-green-700 rounded-lg text-white"
+                              title="Edit Balance"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </main>
 
       {/* Delete Confirmation Modal */}
@@ -537,6 +755,10 @@ export default function AdminDashboard() {
                   <p className="text-purple-300 text-sm font-bold mb-1">Seller</p>
                   <p className="text-white font-semibold">{selectedAuction.sellerName}</p>
                   <p className="text-purple-300 text-xs">ID: {selectedAuction.sellerId}</p>
+                  <p className="text-purple-300 text-xs">Email: {selectedAuction.sellerEmail}</p>
+                  {selectedAuction.sellerBalance !== null && (
+                    <p className="text-purple-300 text-xs">Balance: ${Number(selectedAuction.sellerBalance).toLocaleString()}</p>
+                  )}
                 </div>
                 <div className="bg-slate-700/50 p-4 rounded-xl border border-purple-500/20">
                   <p className="text-purple-300 text-sm font-bold mb-1">Current Bid</p>
@@ -565,12 +787,88 @@ export default function AdminDashboard() {
                   <p className="text-green-300 text-sm font-bold mb-1">Winner</p>
                   <p className="text-white font-semibold">{selectedAuction.winnerName}</p>
                   <p className="text-green-300 text-xs">ID: {selectedAuction.winnerId}</p>
+                  {selectedAuction.winnerEmail && (
+                    <p className="text-green-300 text-xs">Email: {selectedAuction.winnerEmail}</p>
+                  )}
+                  {selectedAuction.winnerBalance !== null && (
+                    <p className="text-green-300 text-xs">Balance: ${Number(selectedAuction.winnerBalance).toLocaleString()}</p>
+                  )}
                 </div>
               )}
 
               <div className="bg-slate-700/50 p-4 rounded-xl border border-purple-500/20">
                 <p className="text-purple-300 text-sm font-bold mb-2">Description</p>
                 <p className="text-white">{selectedAuction.description || 'No description provided'}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Balance Modal */}
+      {showEditBalanceModal && selectedUser && (
+        <div className="modal-overlay fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="modal-content bg-slate-800 rounded-2xl p-8 max-w-md w-full border border-purple-500/30 shadow-2xl">
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-black text-white">Edit User Balance</h3>
+                <button
+                  onClick={() => {
+                    setShowEditBalanceModal(false);
+                    setSelectedUser(null);
+                    setNewBalance('');
+                  }}
+                  className="p-2 hover:bg-slate-700 rounded-lg transition-all"
+                >
+                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-slate-700/50 p-4 rounded-xl border border-purple-500/20">
+                  <p className="text-purple-300 text-sm mb-1">User</p>
+                  <p className="text-white font-bold">{selectedUser.name}</p>
+                  <p className="text-purple-300 text-sm">{selectedUser.email}</p>
+                </div>
+
+                <div className="bg-slate-700/50 p-4 rounded-xl border border-purple-500/20">
+                  <p className="text-purple-300 text-sm mb-1">Current Balance</p>
+                  <p className="text-green-400 font-bold text-2xl">₹{Number(selectedUser.balance || 0).toLocaleString()}</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-purple-300 mb-2">New Balance (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newBalance}
+                    onChange={(e) => setNewBalance(e.target.value)}
+                    className="w-full px-4 py-3 bg-slate-700/50 border-2 border-purple-500/30 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Enter new balance"
+                  />
+                </div>
+
+                <div className="flex space-x-4 mt-6">
+                  <button
+                    onClick={() => {
+                      setShowEditBalanceModal(false);
+                      setSelectedUser(null);
+                      setNewBalance('');
+                    }}
+                    className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpdateBalance}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white font-bold rounded-xl transition-all shadow-lg"
+                  >
+                    Update Balance
+                  </button>
+                </div>
               </div>
             </div>
           </div>

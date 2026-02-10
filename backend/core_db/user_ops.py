@@ -38,3 +38,39 @@ def authenticate_user(email , typed_pass):
         if result and verify_password(typed_pass , result.password):
             return dict(result._mapping)
         return None
+
+
+def get_all_users():
+    """Get all users for admin panel."""
+    with engine.connect() as conn:
+        query = select(users).order_by(users.c.id)
+        result = conn.execute(query)
+        return [dict(row._mapping) for row in result]
+
+
+def update_user_balance(user_id, new_balance):
+    """Update user balance (admin only)."""
+    from sqlalchemy import update
+    with engine.connect() as conn:
+        # Check if user exists
+        user_query = select(users).where(users.c.id == user_id)
+        user = conn.execute(user_query).first()
+        if not user:
+            return None
+        
+        # Update balance
+        stmt = update(users).where(users.c.id == user_id).values(balance=new_balance)
+        conn.execute(stmt)
+        conn.commit()
+        
+        # Return updated user
+        updated = conn.execute(user_query).first()
+        return dict(updated._mapping)
+
+
+def get_user_balance(user_id):
+    """Get user's current balance."""
+    with engine.connect() as conn:
+        query = select(users.c.balance).where(users.c.id == user_id)
+        result = conn.execute(query).first()
+        return float(result.balance) if result else None

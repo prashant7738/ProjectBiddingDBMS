@@ -24,7 +24,7 @@ def seed_categories():
             {"name": "Electronics"},
             {"name": "Home & Garden"},
             {"name": "Fashion"},
-            {"name": "Collectibles"}
+            {"name": "Others"}
         ]
         conn.execute(insert(categories), items)
         conn.commit()

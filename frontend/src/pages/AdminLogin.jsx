@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { assets } from '../assets/assets';
+import { loginAdmin } from '../api/auth';
 
 export default function AdminLogin() {
   const [form, setForm] = useState({ email: '', password: '' });
@@ -16,21 +17,11 @@ export default function AdminLogin() {
     setError('');
     
     try {
-      // TODO: Replace with actual admin login API call
-      // const res = await loginAdmin(form);
-      
-      // For now, simulate admin login
-      if (form.email === 'admin@auction.com' && form.password === 'admin123') {
-        localStorage.setItem('adminToken', 'admin-token-placeholder');
-        localStorage.setItem('adminUser', JSON.stringify({ 
-          email: form.email, 
-          name: 'Admin', 
-          role: 'admin' 
-        }));
-        navigate('/admin/dashboard');
-      } else {
-        setError('Invalid admin credentials');
-      }
+      const res = await loginAdmin(form);
+      const adminUser = res.data?.user || { email: form.email, name: 'Admin', role: 'admin' };
+      localStorage.setItem('adminToken', 'admin-session');
+      localStorage.setItem('adminUser', JSON.stringify(adminUser));
+      navigate('/admin/dashboard');
     } catch (err) {
       setError(err.response?.data?.error || 'Invalid credentials');
     } finally {

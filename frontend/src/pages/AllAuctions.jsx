@@ -137,9 +137,9 @@ const AllAuctions = () => {
                         >
                             <option value="all">All Categories</option>
                             <option value="Electronics">Electronics</option>
-                            <option value="Jewelry">Jewelry</option>
-                            <option value="Art">Art</option>
-                            <option value="Collectibles">Collectibles</option>
+                            <option value="Home & Garden">Home & Garden</option>
+                            <option value="Fashion">Fashion</option>
+                            <option value="Others">Others</option>
                         </select>
                     </div>
 

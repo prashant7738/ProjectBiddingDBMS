@@ -214,31 +214,20 @@ export default function CreateAuction() {
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">Seller ID</label>
-              <input
-                type="text"
-                value={user.id || ''}
-                readOnly
-                className="w-full rounded-xl border-2 border-gray-200 bg-gray-100 px-5 py-3 text-gray-700 font-semibold"
-              />
-            </div>
-            <div>
-              <label htmlFor="title" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="title"
-                name="title"
-                type="text"
-                required
-                value={form.title}
-                onChange={handleChange}
-                placeholder="Antique vase"
-                className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
+          <div>
+            <label htmlFor="title" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
+              Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="title"
+              name="title"
+              type="text"
+              required
+              value={form.title}
+              onChange={handleChange}
+              placeholder="iPhone 17 Pro Max"
+              className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
           </div>
 
           <div>
@@ -260,19 +249,22 @@ export default function CreateAuction() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label htmlFor="category_id" className="block text-sm font-bold text-gray-700 mb-2 uppercase tracking-wide">
-                Category ID <span className="text-red-500">*</span>
+                Category <span className="text-red-500">*</span>
               </label>
-              <input
+              <select
                 id="category_id"
                 name="category_id"
-                type="number"
-                min="1"
                 required
                 value={form.category_id}
                 onChange={handleChange}
-                placeholder="1"
                 className="input-field w-full rounded-xl border-2 border-gray-200 bg-white px-5 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
+              >
+                <option value="">Select Category</option>
+                <option value="1">Electronics</option>
+                <option value="2">Home & Garden</option>
+                <option value="3">Fashion</option>
+                <option value="4">Others</option>
+              </select>
             </div>
 
             <div>

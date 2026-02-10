@@ -20,10 +20,12 @@ export default function Profile() {
       <h1 className="text-3xl font-bold mb-6">User Profile</h1>
       
       <div className="bg-gray-100 p-6 rounded-lg">
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">User ID</label>
-          <p className="text-lg font-semibold text-gray-900">{user.id || 'N/A'}</p>
-        </div>
+        {user?.name && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+            <p className="text-lg font-semibold text-gray-900">{user.name}</p>
+          </div>
+        )}
 
         {user?.email && (
           <div className="mb-4">
@@ -32,12 +34,11 @@ export default function Profile() {
           </div>
         )}
 
-        {user?.name && (
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-            <p className="text-lg font-semibold text-gray-900">{user.name}</p>
-          </div>
-        )}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Account Balance</label>
+          <p className="text-2xl font-bold text-green-600">₹{Number(user.balance || 0).toLocaleString()}</p>
+          <p className="text-sm text-gray-500 mt-1">Available for bidding</p>
+        </div>
       </div>
 
       {error && <p className="text-red-600 mt-4">{error}</p>}

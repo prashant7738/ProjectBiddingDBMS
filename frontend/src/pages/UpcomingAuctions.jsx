@@ -138,9 +138,10 @@ useEffect(() => {
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         >
                             <option value="all">All Categories</option>
-                            <option value="art">Art</option>
-                            <option value="jewelry">Jewelry</option>
-                            <option value="furniture">Furniture</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="Home & Garden">Home & Garden</option>
+                            <option value="Fashion">Fashion</option>
+                            <option value="Others">Others</option>
                         </select>
                     </div>
                 </div>

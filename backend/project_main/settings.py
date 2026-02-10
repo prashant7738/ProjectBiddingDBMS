@@ -85,7 +85,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'bidding_system',
         'USER': 'postgres',
-        'PASSWORD': 'roshan',
+        'PASSWORD': '123',
         'HOST': '127.0.0.1',
         'PORT': '5432',
     }
@@ -145,7 +145,7 @@ CHANNEL_LAYERS = {
 DB_CONFIG = {
     "DB_NAME": "bidding_system",
     "DB_USER": "postgres",
-    "DB_PASS": "roshan", 
+    "DB_PASS": "123", 
     "DB_HOST": "127.0.0.1",
     "DB_PORT": "5432",
 }
@@ -181,3 +181,9 @@ CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_HTTPONLY = True  # Prevents JS from reading the cookie
 
 CSRF_COOKIE_HTTPONLY = False
+
+# Admin allowlist for admin-only API access
+ADMIN_EMAILS = [
+    'adminprashant@gmail.com',
+]
+ADMIN_USER_IDS = []

@@ -16,7 +16,7 @@ class AuctionSerializer(serializers.Serializer):
     seller_id = serializers.IntegerField()
     seller_name = serializers.CharField(required=False, allow_null=True)
     winner_name = serializers.CharField(required=False, allow_null=True)
-    category_id = serializers.IntegerField()
+    category_id = serializers.IntegerField(required=False, allow_null=True)
     title = serializers.CharField()
     description = serializers.CharField()
     image_url = serializers.CharField(required=False, allow_null=True, allow_blank=True)
@@ -25,6 +25,28 @@ class AuctionSerializer(serializers.Serializer):
     start_time = serializers.DateTimeField()
     end_time = serializers.DateTimeField()
     is_active = serializers.BooleanField()
+
+
+class AdminAuctionSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    seller_id = serializers.IntegerField()
+    seller_name = serializers.CharField(required=False, allow_null=True)
+    seller_email = serializers.EmailField(required=False, allow_null=True)
+    seller_balance = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    winner_name = serializers.CharField(required=False, allow_null=True)
+    winner_email = serializers.EmailField(required=False, allow_null=True)
+    winner_balance = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True)
+    category_id = serializers.IntegerField()
+    category_name = serializers.CharField(required=False, allow_null=True)
+    title = serializers.CharField()
+    description = serializers.CharField()
+    image_url = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    starting_price = serializers.DecimalField(max_digits=12, decimal_places=2)
+    current_highest_bid = serializers.DecimalField(max_digits=12, decimal_places=2)
+    start_time = serializers.DateTimeField()
+    end_time = serializers.DateTimeField()
+    is_active = serializers.BooleanField()
+    bid_count = serializers.IntegerField(required=False, allow_null=True)
     
     
 class BidSerializer(serializers.Serializer):

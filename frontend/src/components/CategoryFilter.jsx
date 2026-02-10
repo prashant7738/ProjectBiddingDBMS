@@ -6,10 +6,11 @@ const CategoryFilter = () => {
     const { selectedCategory, setSelectedCategory } = useContext(AppContext);
 
     const categories = [
-        { id: 'all', label: 'All Categories', icon: '🎨', gradient: 'from-purple-400 to-pink-400' },
-        { id: 'art', label: 'Art', icon: '🎨', gradient: 'from-blue-400 to-cyan-400' },
-        { id: 'jewelry', label: 'Jewelry', icon: '💎', gradient: 'from-yellow-400 to-orange-400' },
-        { id: 'furniture', label: 'Furniture', icon: '🪑', gradient: 'from-green-400 to-emerald-400' }
+        { id: 'all', label: 'All Categories', icon: '�', gradient: 'from-purple-400 to-pink-400' },
+        { id: 'Electronics', label: 'Electronics', icon: '📱', gradient: 'from-blue-400 to-cyan-400' },
+        { id: 'Home & Garden', label: 'Home & Garden', icon: '🏡', gradient: 'from-green-400 to-emerald-400' },
+        { id: 'Fashion', label: 'Fashion', icon: '👗', gradient: 'from-pink-400 to-rose-400' },
+        { id: 'Others', label: 'Others', icon: '🎨', gradient: 'from-yellow-400 to-orange-400' }
     ];
 
     return (

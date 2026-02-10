@@ -1,8 +1,9 @@
 from django.urls import path
 from .views import (AuctionListView, EndedAuctionListView, PlaceBidView, MyAuctionView, MyBidsView, CreateAuction, 
                    ProfileView, RegisterForAuctionView, AuctionAccessView, AuctionRegisteredUsersView, 
-                   AuctionDetailView, AuctionBidHistoryView, WonItemsView, NotificationsView)
-from .auth_views import LoginView, RegisterView, LogoutView, TokenRefreshView
+                   AuctionDetailView, AuctionBidHistoryView, WonItemsView, NotificationsView, 
+                   AdminAuctionListView, AdminAuctionDeleteView, AdminUserListView, AdminUserUpdateView)
+from .auth_views import LoginView, RegisterView, LogoutView, TokenRefreshView, AdminLoginView
 
 urlpatterns = [
     path('create-auction/', CreateAuction.as_view(), name='auction-create'),
@@ -19,8 +20,13 @@ urlpatterns = [
     path('win-items/<int:user_id>/', WonItemsView.as_view(), name='won-items'),
     path('notifications/<int:user_id>/', NotificationsView.as_view(), name='notifications'),
     path('login/', LoginView.as_view(), name='api-login'),
+    path('admin/login/', AdminLoginView.as_view(), name='api-admin-login'),
     path('register/', RegisterView.as_view(), name='api-register'),
     path('logout/', LogoutView.as_view(), name='api-logout'),
     path('profile/', ProfileView.as_view(), name='profile'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('admin/auctions/', AdminAuctionListView.as_view(), name='admin-auction-list'),
+    path('admin/auctions/<int:auction_id>/', AdminAuctionDeleteView.as_view(), name='admin-auction-delete'),
+    path('admin/users/', AdminUserListView.as_view(), name='admin-user-list'),
+    path('admin/users/<int:user_id>/', AdminUserUpdateView.as_view(), name='admin-user-update'),
 ]

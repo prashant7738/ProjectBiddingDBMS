@@ -1,7 +1,8 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from core_db.auction_ops import get_active_auctions , get_ended_auctions, get_auctions_by_seller, create_auction, register_user_for_auction, is_user_registered_for_auction, get_auction_registrations, get_auction_by_id
-from .serializers import AuctionSerializer ,BidSerializer
+from core_db.auction_ops import get_active_auctions , get_ended_auctions, get_auctions_by_seller, create_auction, register_user_for_auction, is_user_registered_for_auction, get_auction_registrations, get_auction_by_id, get_all_auctions_admin, delete_auction, update_auction
+from core_db.user_ops import get_all_users, update_user_balance
+from .serializers import AuctionSerializer ,BidSerializer, AdminAuctionSerializer, UserSerializer
 from rest_framework import status
 from core_db.bid_ops import place_bid, get_user_bidding_history, get_won_items, get_user_notifications
 from django.core.files.storage import default_storage
@@ -17,6 +18,7 @@ from .paginations import StandardResultsSetPagination
 from .authenticate import SQLAlchemyJWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from .permissions import IsAdminUser
 
 
 # To create Auction
@@ -151,6 +153,61 @@ class MyAuctionView(APIView):
         
         return Response(serializer.data)
     
+    def delete(self, request, user_id):
+        """Delete a specific auction by auction_id passed in request body"""
+        auction_id = request.data.get('auction_id')
+        
+        if not auction_id:
+            return Response({"error": "auction_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verify the auction belongs to this seller
+        auction = get_auction_by_id(auction_id)
+        if not auction:
+            return Response({"error": "Auction not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        if auction['seller_id'] != user_id:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        
+        deleted = delete_auction(auction_id)
+        if deleted:
+            return Response({"message": "Auction deleted successfully"}, status=status.HTTP_200_OK)
+        return Response({"error": "Failed to delete auction"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    def patch(self, request, user_id):
+        """Update auction details"""
+        auction_id = request.data.get('auction_id')
+        
+        if not auction_id:
+            return Response({"error": "auction_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Verify the auction belongs to this seller
+        auction = get_auction_by_id(auction_id)
+        if not auction:
+            return Response({"error": "Auction not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        if auction['seller_id'] != user_id:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Prepare update data
+        update_data = {}
+        if 'title' in request.data:
+            update_data['title'] = request.data['title']
+        if 'description' in request.data:
+            update_data['description'] = request.data['description']
+        if 'category_id' in request.data:
+            update_data['category_id'] = request.data['category_id']
+        if 'starting_price' in request.data:
+            update_data['starting_price'] = request.data['starting_price']
+        if 'end_time' in request.data:
+            update_data['end_time'] = request.data['end_time']
+        
+        updated_auction = update_auction(auction_id, **update_data)
+        if updated_auction:
+            serializer = AuctionSerializer(updated_auction)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response({"error": "Failed to update auction"}, status=status.HTTP_400_BAD_REQUEST)
+    
 # view to see all the bids that a user once bidded in a lifetime
 class MyBidsView(APIView):
     
@@ -182,7 +239,14 @@ class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({'id': request.user.id, 'email': request.user.email , 'name': request.user.name})
+        from core_db.user_ops import get_user_balance
+        balance = get_user_balance(request.user.id)
+        return Response({
+            'id': request.user.id, 
+            'email': request.user.email, 
+            'name': request.user.name,
+            'balance': balance
+        })
 
 
 # Register user for an auction
@@ -266,6 +330,66 @@ class AuctionBidHistoryView(APIView):
         
         bids = get_auction_bid_history(auction_id)
         return Response(bids, status=status.HTTP_200_OK)
+
+
+class AdminAuctionListView(APIView):
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        paginator = StandardResultsSetPagination()
+        data = get_all_auctions_admin()
+        result_page = paginator.paginate_queryset(data, request)
+        serializer = AdminAuctionSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class AdminAuctionDeleteView(APIView):
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, auction_id):
+        deleted = delete_auction(auction_id)
+        if deleted:
+            return Response({"message": "Auction deleted"}, status=status.HTTP_200_OK)
+        return Response({"error": "Auction not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class AdminUserListView(APIView):
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        paginator = StandardResultsSetPagination()
+        data = get_all_users()
+        result_page = paginator.paginate_queryset(data, request)
+        serializer = UserSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class AdminUserUpdateView(APIView):
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def patch(self, request, user_id):
+        new_balance = request.data.get('balance')
+        
+        if new_balance is None:
+            return Response({"error": "Balance is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            new_balance = float(new_balance)
+            if new_balance < 0:
+                return Response({"error": "Balance cannot be negative"}, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError):
+            return Response({"error": "Invalid balance value"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user = update_user_balance(user_id, new_balance)
+        if not user:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # Notifications polling endpoint

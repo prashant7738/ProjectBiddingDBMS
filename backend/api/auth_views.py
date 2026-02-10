@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 from core_db.user_ops import authenticate_user, register_user
+from .admin_utils import is_admin_user
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -121,6 +122,56 @@ class LoginView(APIView):
         return Response({"error":"Invalid Credentials"},status=status.HTTP_401_UNAUTHORIZED)
 
 
+class AdminLoginView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        user = authenticate_user(email, password)
+
+        if not user:
+            return Response({"error": "Invalid Credentials"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if not is_admin_user(user.get('id'), user.get('email')):
+            return Response({"error": "Admin access required"}, status=status.HTTP_403_FORBIDDEN)
+
+        refresh = RefreshToken()
+        refresh['user_id'] = user['id']
+        refresh['email'] = user['email']
+        refresh['name'] = user['name']
+
+        response = Response({
+            'user': {'id': user['id'], 'email': user['email'], 'name': user['name'], 'role': 'admin'}
+        })
+
+        access_token_lifetime = 3600
+        refresh_token_lifetime = 604800
+
+        response.set_cookie(
+            key='access_token',
+            value=str(refresh.access_token),
+            max_age=access_token_lifetime,
+            httponly=True,
+            secure=False,
+            samesite='Lax',
+            path='/',
+            domain=None
+        )
+
+        response.set_cookie(
+            key='refresh_token',
+            value=str(refresh),
+            max_age=refresh_token_lifetime,
+            httponly=True,
+            secure=False,
+            samesite='Lax',
+            path='/',
+            domain=None
+        )
+
+        return response
+
+
 class RegisterView(APIView):
     def post(self, request):
         name = request.data.get("name")
@@ -135,8 +186,8 @@ class RegisterView(APIView):
             )
         
         try:
-            # Register the user with initial balance of 0.0
-            user_id = register_user(name, email, password, initial_balance=0.0)
+            # Register the user with initial balance of 5000.0 (Rs 5000)
+            user_id = register_user(name, email, password, initial_balance=5000.0)
             
             return Response({
                 "message": "User registered successfully",
