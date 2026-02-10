@@ -66,9 +66,8 @@ const AuctionPage = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: 0, behavior: 'instant' });
     }, []);
-   
 
     useEffect(() => {
         let isMounted = true;
@@ -85,8 +84,6 @@ const AuctionPage = () => {
                 const normalized = list.map(normalizeAuction);
                 if (isMounted) {
                     setAuctions(normalized);
-                    console.log('Loaded auctions:', list);
-                   
                     if (id) {
                         const match = normalized.find((a) => String(a.id) === String(id));
                         if (match) {
@@ -501,13 +498,7 @@ const AuctionPage = () => {
     const handlePlaceBid = async () => {
         setBidError('');
         
-        // Check if user is the auction creator
-        if (activeAuction?.created_by === user?.id || activeAuction?.creator_id === user?.id) {
-            setBidError('You cannot bid on your own auction.');
-            return;
-        }
-        
-        // Validate input
+        // Only validate input format, backend handles all business logic
         if (!userBid || userBid.trim() === '') {
             setBidError('Please enter a bid amount.');
             return;
@@ -519,7 +510,21 @@ const AuctionPage = () => {
             return;
         }
         
-        // Always use HTTP API for reliability
+        const socket = wsRef.current;
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            // Try WebSocket first, but wait for response
+            socket.send(JSON.stringify({ type: 'place_bid', amount: bidAmount }));
+            // **Update user's own bid immediately**
+    setUserCurrentBid({
+        amount: bidAmount,
+        time: 'Just now'
+    });
+            setUserBid('');
+            // Don't update UI - wait for WebSocket response via handleBidUpdate
+            return;
+        }
+
+        // Fallback to HTTP API - WAIT FOR RESPONSE before updating UI
         try {
             const res = await placeBid({
                 bidder_id: user.id,
@@ -527,71 +532,31 @@ const AuctionPage = () => {
                 amount: bidAmount,
             });
             
-            console.log('Bid placed successfully:', res.data);
-            
-            // Update current bid from response - Remove decimal places if whole number
+            // Only update UI if backend confirms success
             const updatedBid = res.data?.amount ?? bidAmount;
-            const updatedCurrent = res.data?.current_bid ?? res.data?.current_highest_bid ?? updatedBid;
-            
-            // Format to remove .00 if it's a whole number
-            const formatBid = (num) => {
-                return num % 1 === 0 ? Math.floor(num) : num;
-            };
-            
-            const formattedBid = formatBid(updatedBid);
-            const formattedCurrent = formatBid(updatedCurrent);
-            
-            // Update all relevant states
-            setCurrentBid(formattedCurrent);
+            const updatedCurrent = res.data?.current_bid ?? updatedBid;
             setUserCurrentBid({
-                amount: formattedBid,
-                bidder_id: user.id,
-                bidder_name: user.name
-            });
-            
-            // Update bid history
+    amount: updatedBid,
+    time: 'Just now'
+});
             setBidHistory((prev) => [
                 {
                     bidder: user.name || 'You',
-                    amount: formattedBid,
+                    amount: updatedBid,
                     time: 'Just now',
                 },
                 ...prev,
             ]);
-            
-            // Update selected item
-            setSelectedItem((prev) => 
-                prev && prev.id === activeAuction.id 
-                    ? { 
-                        ...prev, 
-                        currentBid: formattedCurrent,
-                        bidCount: (prev.bidCount || 0) + 1
-                    } 
-                    : prev
-            );
-            
-            // Update auctions list
-            setAuctions((prev) =>
-                prev.map((a) =>
-                    a.id === activeAuction.id
-                        ? { 
-                            ...a, 
-                            currentBid: formattedCurrent,
-                            bidCount: (a.bidCount || 0) + 1
-                        }
-                        : a
-                )
-            );
-            
-            // Clear input and show animation
             setUserBid('');
+
             const bidElement = document.getElementById('current-bid');
             if (bidElement) {
                 bidElement.classList.add('bid-animation');
                 setTimeout(() => bidElement.classList.remove('bid-animation'), 500);
             }
         } catch (err) {
-            console.error('Bid placement error:', err.response?.data || err.message);
+            // Backend handles all validation errors (auth, registration, bid amount, etc.)
+            // Don't update UI - keep it as is
             setBidError(err.response?.data?.error || 'Failed to place bid.');
         }
     };
@@ -809,22 +774,15 @@ const AuctionPage = () => {
                                             bidHistory.map((bid, index) => (
                                                 <div
                                                     key={index}
-                                                    className="flex justify-between items-center p-3 bg-gray-50 rounded-lg"
+                                                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                                                 >
                                                     <div>
-                                                        <p className="font-semibold text-gray-800">{bid.bidder}</p>
-                                                        <p className="text-xs text-gray-500">{bid.time}</p>
+                                                        <p className="font-semibold text-gray-900">{bid.bidder}</p>
+                                                        <p className="text-sm text-gray-500">{bid.time}</p>
                                                     </div>
-                                                    <div className="flex items-center gap-4">
-                                                        <p className="font-bold text-lg text-blue-600">$ {bid.amount}</p>
-                                                        
-                                                        {/* Only show "Your Bid" badge if user is the bidder, NOT place bid option */}
-                                                        {user && bid.bidder_id === user.id && (
-                                                            <span className="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-full font-semibold">
-                                                                Your Bid
-                                                            </span>
-                                                        )}
-                                                    </div>
+                                                    <p className="text-lg font-bold text-purple-600">
+                                                        ${bid.amount.toLocaleString()}
+                                                    </p>
                                                 </div>
                                             ))
                                         ) : (

@@ -1,11 +1,10 @@
 import React, { useEffect, useState, useContext } from 'react'
-import CategoryFilter from '../components/CategoryFilter'
 import AuctionCard from '../components/AuctionCard';
 import { getAuctions, getMediaUrl } from '../api/auth';
 import { AppContext } from '../context/AppContext';
 
 const Home = () => {
-    const { setSelectedItem } = useContext(AppContext);
+    const { setSelectedItem, selectedCategory, setSelectedCategory } = useContext(AppContext);
     const [auctions, setAuctions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -67,7 +66,26 @@ const Home = () => {
         return () => { isMounted = false; };
     }, []);
 
-    const liveAuctions = auctions.filter(a => a.isLive);
+    const categories = [
+        { id: 'all', name: 'All', icon: '🎯', gradient: 'from-purple-500 to-pink-500' },
+        { id: 'Electronics', name: 'Electronics', icon: '📱', gradient: 'from-blue-500 to-cyan-500' },
+        { id: 'Jewelry', name: 'Jewelry', icon: '💎', gradient: 'from-pink-500 to-rose-500' },
+        { id: 'Art', name: 'Art', icon: '🎨', gradient: 'from-orange-500 to-red-500' },
+        { id: 'Collectibles', name: 'Collectibles', icon: '🏆', gradient: 'from-yellow-500 to-amber-500' },
+    ];
+
+    const hotAuctions = auctions.filter(a => a.isLive);
+    
+    // Ending Soon - auctions ending in the next 24 hours
+    const endingSoon = auctions.filter(a => {
+        const timeLeft = new Date(a.endTime) - new Date();
+        return a.isLive && timeLeft > 0 && timeLeft < 24 * 60 * 60 * 1000;
+    }).sort((a, b) => new Date(a.endTime) - new Date(b.endTime));
+
+    // Filtered auctions based on selected category
+    const filteredAuctions = selectedCategory === 'all' 
+        ? auctions 
+        : auctions.filter(a => a.category === selectedCategory);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -129,33 +147,53 @@ const Home = () => {
                     background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
                     border: 2px dashed #7c3aed;
                 }
+                .category-scroll::-webkit-scrollbar {
+                    display: none;
+                }
+                .category-scroll {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+                .explore-scroll::-webkit-scrollbar {
+                    height: 8px;
+                }
+                .explore-scroll::-webkit-scrollbar-track {
+                    background: #f3f4f6;
+                    border-radius: 10px;
+                }
+                .explore-scroll::-webkit-scrollbar-thumb {
+                    background: #7c3aed;
+                    border-radius: 10px;
+                }
+                .explore-scroll::-webkit-scrollbar-thumb:hover {
+                    background: #6366f1;
+                }
             `}</style>
 
-            <CategoryFilter />
 
-            {/* Live Auctions */}
+            {/* Hot Auctions */}
             <section className="mb-12">
                 <div className="section-header flex items-center justify-between mb-8">
                     <h2 className="text-4xl md:text-5xl font-black text-gray-900 flex items-center">
                         <span className="fire-icon text-5xl md:text-6xl mr-4">🔥</span>
-                        <span className="gradient-text">Live Auctions</span>
+                        <span className="gradient-text">Hot Auctions</span>
                     </h2>
-                    {liveAuctions.length > 0 && (
+                    {hotAuctions.length > 0 && (
                         <div className="bg-gradient-to-r from-purple-100 to-indigo-100 px-4 py-2 rounded-full">
-                            <span className="text-purple-700 font-bold text-sm">{liveAuctions.length} Live Now</span>
+                            <span className="text-purple-700 font-bold text-sm">{hotAuctions.length} Live Now</span>
                         </div>
                     )}
                 </div>
 
-                {loading && liveAuctions.length === 0 ? (
+                {loading && hotAuctions.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="loading-spinner mb-4"></div>
                         <p className="text-gray-600 font-semibold">Loading auctions…</p>
                     </div>
-                ) : liveAuctions.length === 0 ? (
+                ) : hotAuctions.length === 0 ? (
                     <div className="empty-state rounded-2xl p-12 text-center">
                         <div className="text-7xl mb-6">😴</div>
-                        <h3 className="text-2xl font-bold text-gray-800 mb-3">No Live Auctions</h3>
+                        <h3 className="text-2xl font-bold text-gray-800 mb-3">No Hot Auctions</h3>
                         <p className="text-gray-600 text-lg font-medium">Check back soon for exciting new auctions!</p>
                     </div>
                 ) : error ? (
@@ -167,7 +205,7 @@ const Home = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {liveAuctions.map((auction, index) => (
+                        {hotAuctions.slice(0, 6).map((auction, index) => (
                             <div 
                                 key={auction.id}
                                 style={{ 
@@ -182,6 +220,70 @@ const Home = () => {
                         ))}
                     </div>
                 )}
+            </section>
+
+            {/* Ending Soon */}
+            {endingSoon.length > 0 && (
+                <section className="mb-12">
+                    <div className="section-header flex items-center justify-between mb-8">
+                        <h2 className="text-3xl md:text-4xl font-black text-gray-900 flex items-center">
+                            <span className="text-4xl md:text-5xl mr-4">⏰</span>
+                            <span className="bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
+                                Ending Soon
+                            </span>
+                        </h2>
+                        <div className="bg-gradient-to-r from-red-100 to-orange-100 px-4 py-2 rounded-full">
+                            <span className="text-red-700 font-bold text-sm">Last Chance!</span>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {endingSoon.slice(0, 3).map((auction, index) => (
+                            <div 
+                                key={auction.id}
+                                style={{ 
+                                    animation: `fadeInUp 0.6s ease-out ${index * 0.1}s backwards`
+                                }}
+                            >
+                                <AuctionCard
+                                    auction={auction}
+                                    onClick={() => setSelectedItem(auction)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
+
+            {/* Explore - Horizontal Scroll */}
+            <section className="mb-12">
+                <div className="section-header mb-8">
+                    <h2 className="text-3xl md:text-4xl font-black text-gray-900 flex items-center">
+                        <span className="text-4xl md:text-5xl mr-4">🔍</span>
+                        <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                            Explore More
+                        </span>
+                    </h2>
+                </div>
+
+                <div className="overflow-x-auto explore-scroll pb-4">
+                    <div className="flex gap-6 min-w-max">
+                        {filteredAuctions.slice(0, 10).map((auction, index) => (
+                            <div 
+                                key={auction.id}
+                                className="w-80 flex-shrink-0"
+                                style={{ 
+                                    animation: `fadeInUp 0.6s ease-out ${index * 0.05}s backwards`
+                                }}
+                            >
+                                <AuctionCard
+                                    auction={auction}
+                                    onClick={() => setSelectedItem(auction)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </section>
         </div>
     );

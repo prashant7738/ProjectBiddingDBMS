@@ -1,4 +1,7 @@
 @import "tailwindcss";
+
+
+
  .notification-badge {
             animation: bounce 2s infinite;
         }

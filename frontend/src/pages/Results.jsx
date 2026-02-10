@@ -2,16 +2,15 @@ import React from 'react'
 import AuctionCard from '../components/AuctionCard';
 import { useEffect, useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
-import { getAuctions, getMediaUrl } from '../api/auth';
+import { getEndedAuctions, getMediaUrl } from '../api/auth';
 
-const AllAuctions = () => {
+const Results = () => {
     const { selectedCategory, selectedCountry, setSelectedItem, searchQuery } = useContext(AppContext);
     const { setSelectedCategory, setSelectedCountry } = useContext(AppContext);
     const [filteredAuctions, setFilteredAuctions] = useState([]);
     const [auctions, setAuctions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all'); // all, live, upcoming, ended
 
     const normalizeAuction = (raw) => {
         const startTime = raw?.start_time ? new Date(raw.start_time) : new Date();
@@ -26,9 +25,11 @@ const AllAuctions = () => {
             id: raw?.id ?? raw?.auction_id,
             name: raw?.title ?? 'Untitled Auction',
             sellerName: raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? '',
+            winnerName: raw?.winner_name ?? raw?.winnerName ?? raw?.winner?.name ?? 'No Winner',
             category: raw?.category_name ?? raw?.category ?? 'general',
             image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
             currentBid: raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0,
+            winningBid: raw?.winning_bid ?? raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0,
             startingBid: raw?.starting_price ?? 0,
             isLive,
             startTime,
@@ -46,7 +47,7 @@ const AllAuctions = () => {
             setLoading(true);
             setError('');
             try {
-                const res = await getAuctions();
+                const res = await getEndedAuctions();
                 const list = Array.isArray(res.data)
                     ? res.data
                     : Array.isArray(res.data?.results)
@@ -57,7 +58,7 @@ const AllAuctions = () => {
                 }
             } catch (err) {
                 if (isMounted) {
-                    setError(err.response?.data?.error || 'Failed to load auctions.');
+                    setError(err.response?.data?.error || 'Failed to load auction results.');
                 }
             } finally {
                 if (isMounted) {
@@ -71,18 +72,9 @@ const AllAuctions = () => {
 
     useEffect(() => {
         const filtered = auctions.filter((auction) => {
-            const now = new Date();
+            // Show only auctions that have ended
+            const isEnded = new Date(auction.endTime) <= new Date();
             
-            // Status filter logic
-            let statusMatch = true;
-            if (statusFilter === 'live') {
-                statusMatch = auction.isLive && new Date(auction.startTime) <= now && new Date(auction.endTime) > now;
-            } else if (statusFilter === 'upcoming') {
-                statusMatch = new Date(auction.startTime) > now;
-            } else if (statusFilter === 'ended') {
-                statusMatch = new Date(auction.endTime) <= now;
-            }
-
             const categoryMatch =
                 selectedCategory === "all" || auction.category === selectedCategory;
 
@@ -91,13 +83,12 @@ const AllAuctions = () => {
 
             const searchMatch =
                 auction.name?.toLowerCase().includes(searchQuery.toLowerCase());
-
-            return statusMatch && categoryMatch && countryMatch && searchMatch;
+            
+            return isEnded && categoryMatch && countryMatch && searchMatch;
         });
 
         setFilteredAuctions(filtered);
     }, [
-        statusFilter,
         selectedCategory,
         selectedCountry,
         searchQuery,
@@ -108,26 +99,15 @@ const AllAuctions = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Filters */}
-            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Auctions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Status Filter */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                            <option value="all">All Auctions</option>
-                            <option value="live">Live Only</option>
-                            <option value="upcoming">Upcoming Only</option>
-                            <option value="ended">Ended Only</option>
-                        </select>
-                    </div>
+            {/* Header */}
+            <div className="mb-8">
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Auction Results</h1>
+                <p className="text-gray-600">View completed auctions and their winners</p>
+            </div>
 
-                    {/* Category Filter */}
+            {/* Filters */}
+            <div className="mb-8 p-4 bg-white rounded-lg shadow-md">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                         <select
@@ -142,8 +122,6 @@ const AllAuctions = () => {
                             <option value="Collectibles">Collectibles</option>
                         </select>
                     </div>
-
-                    {/* Country Filter */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
                         <select
@@ -161,41 +139,37 @@ const AllAuctions = () => {
                 </div>
             </div>
 
-            {/* Results */}
+            {/* Results Count */}
             <div className="mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">
-                    {filteredAuctions.length} Auctions Found
+                    {filteredAuctions.length} Results Found
                 </h2>
             </div>
 
             {loading ? (
-                <p className="text-gray-600">Loading auctions…</p>
-            ) : error ? (
-                <p className="text-red-600">{error}</p>
+                <p className="text-gray-600">Loading results…</p>
             ) : filteredAuctions.length === 0 ? (
                 <div className="text-center py-12">
-                    <p className="text-gray-500 text-lg">No auctions found matching your filters.</p>
-                    <button 
-                        onClick={() => {
-                            setStatusFilter('all');
-                            setSelectedCategory('all');
-                            setSelectedCountry('all');
-                        }}
-                        className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
-                    >
-                        Clear Filters
-                    </button>
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p className="text-gray-500 text-lg mt-4">No completed auctions yet.</p>
+                    <p className="text-gray-400 text-sm mt-2">Check back later for auction results!</p>
                 </div>
+            ) : error ? (
+                <p className="text-red-600">{error}</p>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredAuctions.map(auction => (
-                        <AuctionCard
-                            key={auction.id}
-                            auction={auction}
-                            onClick={() => {
-                                setSelectedItem(auction);
-                            }}
-                        />
+                        <div key={auction.id} className="relative">
+                            <AuctionCard
+                                auction={auction}
+                                onClick={() => {
+                                    setSelectedItem(auction);
+                                }}
+                            />
+                    
+                        </div>
                     ))}
                 </div>
             )}
@@ -203,4 +177,4 @@ const AllAuctions = () => {
     );
 }
 
-export default AllAuctions;
+export default Results;

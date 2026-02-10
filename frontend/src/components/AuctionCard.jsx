@@ -16,17 +16,17 @@ const AuctionCard = ({ auction, onClick }) => {
     const bidCountValue = auction.bidCount ?? auction.bid_count ?? 0;
     const sellerNameValue = auction.sellerName ?? auction.seller_name ?? auction.seller?.name ?? '';
     const countryValue = auction.country ?? '';
-      const handleCardClick = (e) => {
-    // Scroll to top
-    window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-    });
+    
+    const handleCardClick = (e) => {
+        // Scroll to top
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+        });
 
-    // Execute the passed onClick prop if it exists
-    if (onClick) onClick(e);
-};
-
+        // Execute the passed onClick prop if it exists
+        if (onClick) onClick(e);
+    };
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -68,6 +68,16 @@ const AuctionCard = ({ auction, onClick }) => {
                     0%, 100% { transform: translateY(0px); }
                     50% { transform: translateY(-10px); }
                 }
+                @keyframes bid-pulse {
+                    0%, 100% { 
+                        transform: scale(1);
+                        box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.4);
+                    }
+                    50% { 
+                        transform: scale(1.05);
+                        box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.6);
+                    }
+                }
                 .item-image {
                     width: 100%;
                     height: 100%;
@@ -88,6 +98,9 @@ const AuctionCard = ({ auction, onClick }) => {
                 @keyframes pulse {
                     0%, 100% { opacity: 1; }
                     50% { opacity: 0.5; }
+                }
+                .bid-badge {
+                    animation: bid-pulse 2s ease-in-out infinite;
                 }
                 .countdown {
                     font-variant-numeric: tabular-nums;
@@ -165,6 +178,7 @@ const AuctionCard = ({ auction, onClick }) => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 
+                {/* Status Badge - Top Left */}
                 {(() => {
                     if (isLiveValue) {
                         return (
@@ -185,8 +199,12 @@ const AuctionCard = ({ auction, onClick }) => {
                     }
                     return null;
                 })()}
-                
-                <div className="absolute top-4 right-4 seller-badge px-4 py-2 rounded-full text-sm font-semibold text-gray-800 shadow-md">
+            
+                {/* Seller/Country Badge - Bottom Left */}
+                <div className="absolute bottom-4 left-4 seller-badge px-4 py-2 rounded-full text-sm font-semibold text-gray-800 shadow-md flex items-center gap-1.5">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
                     {sellerNameValue || countryValue || 'Unknown'}
                 </div>
             </div>
@@ -197,7 +215,11 @@ const AuctionCard = ({ auction, onClick }) => {
                         <span className="category-badge text-xs font-bold text-purple-700 uppercase tracking-wider px-3 py-1.5 rounded-lg">
                             {categoryValue}
                         </span>
-                        <span className="text-xs text-gray-500 font-medium bg-gray-100 px-3 py-1.5 rounded-full">
+                        {/* Additional bid count indicator in card body */}
+                        <span className="text-xs text-purple-600 font-bold bg-purple-50 px-3 py-1.5 rounded-full flex items-center gap-1">
+                            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
+                            </svg>
                             {bidCountValue} {bidCountValue === 1 ? 'bid' : 'bids'}
                         </span>
                     </div>
@@ -220,19 +242,20 @@ const AuctionCard = ({ auction, onClick }) => {
                     </div>
                 </div>
                 <div onClick={handleCardClick}>
-                <Link 
-                    className="flex justify-center items-center w-full gradient-bg text-white py-3.5 rounded-xl font-bold tracking-wide transition-all duration-300 shadow-md"  
-                    to={`/auctionPage/${auction.id}`}
-                >
-                    {isLiveValue ? (
-                        <>
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                            </svg>
-                            Join Live Auction
-                        </>
-                    ) : 'View Details'}
-                </Link></div>
+                    <Link 
+                        className="flex justify-center items-center w-full gradient-bg text-white py-3.5 rounded-xl font-bold tracking-wide transition-all duration-300 shadow-md"  
+                        to={`/auctionPage/${auction.id}`}
+                    >
+                        {isLiveValue ? (
+                            <>
+                                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                                </svg>
+                                Join Live Auction
+                            </>
+                        ) : 'View Details'}
+                    </Link>
+                </div>
             </div>
         </div>
     );

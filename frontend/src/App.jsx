@@ -18,7 +18,8 @@ import PrivateRoute from './components/PrivateRoute';
 import AuctionPage from './components/AuctionPage';
 import WonItems from './pages/WonItems';
 import MyItems from './pages/MyItems'
-
+import Results from './pages/Results';
+import PriceResults from './pages/PriceResults';
 
 function App() {
   const location = useLocation();
@@ -113,7 +114,8 @@ function App() {
           />
 
           {/* Public Routes - Not wrapped with PrivateRoute */}
-          <Route path="/ended-auctions" element={<EndedAuctions />} />
+          <Route path='/results' element={<PriceResults/>}/>
+          
           <Route path='/auctionPage/:id' element={<AuctionPage/>} />
 
           {/* Auth pages */}
