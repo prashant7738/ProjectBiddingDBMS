@@ -90,8 +90,8 @@ def get_active_auctions():
     """
     with engine.connect() as conn:
         now = timezone.now()
-        j = auctions.join(users, auctions.c.seller_id == users.c.id)
-        query = select(auctions, users.c.name.label('seller_name')).select_from(j).where(
+        j = auctions.join(users, auctions.c.seller_id == users.c.id).outerjoin(categories, auctions.c.category_id == categories.c.id)
+        query = select(auctions, users.c.name.label('seller_name'), categories.c.name.label('category_name')).select_from(j).where(
             and_(
                 auctions.c.end_time > now,
                 auctions.c.is_active == True
@@ -113,6 +113,7 @@ def get_ended_auctions():
         j = (
             auctions
             .join(seller, auctions.c.seller_id == seller.c.id)
+            .outerjoin(categories, auctions.c.category_id == categories.c.id)
             .outerjoin(winning_bids, auctions.c.id == winning_bids.c.auction_id)
             .outerjoin(winner, winning_bids.c.winner_id == winner.c.id)
         )
@@ -120,7 +121,8 @@ def get_ended_auctions():
             select(
                 auctions,
                 seller.c.name.label('seller_name'),
-                winner.c.name.label('winner_name')
+                winner.c.name.label('winner_name'),
+                categories.c.name.label('category_name')
             )
             .select_from(j)
             .where(auctions.c.end_time <= now)
@@ -141,6 +143,7 @@ def get_auction_by_id(auction_id):
         j = (
             auctions
             .join(seller, auctions.c.seller_id == seller.c.id)
+            .outerjoin(categories, auctions.c.category_id == categories.c.id)
             .outerjoin(winning_bids, auctions.c.id == winning_bids.c.auction_id)
             .outerjoin(winner, winning_bids.c.winner_id == winner.c.id)
         )
@@ -148,7 +151,8 @@ def get_auction_by_id(auction_id):
             select(
                 auctions,
                 seller.c.name.label('seller_name'),
-                winner.c.name.label('winner_name')
+                winner.c.name.label('winner_name'),
+                categories.c.name.label('category_name')
             )
             .select_from(j)
             .where(auctions.c.id == auction_id)

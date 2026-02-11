@@ -2,11 +2,20 @@ import React from 'react'
 import AuctionCard from '../components/AuctionCard';
 import { useEffect, useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
-import { getAuctions, getMediaUrl } from '../api/auth';
+import { getAuctions, getEndedAuctions, getMediaUrl } from '../api/auth';
+
+// Category mapping based on database
+export const CATEGORIES = {
+    0: 'All Categories',
+    1: 'Electronics',
+    2: 'Home & Garden',
+    3: 'Fashion',
+    4: 'Others'
+};
 
 const AllAuctions = () => {
-    const { selectedCategory, selectedCountry, setSelectedItem, searchQuery } = useContext(AppContext);
-    const { setSelectedCategory, setSelectedCountry } = useContext(AppContext);
+    const { selectedCategory, setSelectedItem, searchQuery } = useContext(AppContext);
+    const { setSelectedCategory } = useContext(AppContext);
     const [filteredAuctions, setFilteredAuctions] = useState([]);
     const [auctions, setAuctions] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -26,14 +35,13 @@ const AllAuctions = () => {
             id: raw?.id ?? raw?.auction_id,
             name: raw?.title ?? 'Untitled Auction',
             sellerName: raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? '',
-            category: raw?.category_name ?? raw?.category ?? 'general',
+            categoryId: raw?.category_id ?? 0,
             image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
             currentBid: raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0,
             startingBid: raw?.starting_price ?? 0,
             isLive,
             startTime,
             endTime,
-            country: raw?.country ?? 'Unknown',
             description: raw?.description ?? '',
             bidCount: raw?.bid_count ?? 0,
             registered: raw?.registered ?? false,
@@ -46,14 +54,32 @@ const AllAuctions = () => {
             setLoading(true);
             setError('');
             try {
-                const res = await getAuctions();
-                const list = Array.isArray(res.data)
-                    ? res.data
-                    : Array.isArray(res.data?.results)
-                        ? res.data.results
+                // Fetch both active and ended auctions
+                const [activeRes, endedRes] = await Promise.all([
+                    getAuctions(),
+                    getEndedAuctions()
+                ]);
+                
+                const activeList = Array.isArray(activeRes.data)
+                    ? activeRes.data
+                    : Array.isArray(activeRes.data?.results)
+                        ? activeRes.data.results
                         : [];
+                        
+                const endedList = Array.isArray(endedRes.data)
+                    ? endedRes.data
+                    : Array.isArray(endedRes.data?.results)
+                        ? endedRes.data.results
+                        : [];
+                
+                // Combine both lists
+                const allAuctions = [...activeList, ...endedList];
+                
                 if (isMounted) {
-                    setAuctions(list.map(normalizeAuction));
+                    const normalized = allAuctions.map(normalizeAuction);
+                    console.log('Raw API response:', allAuctions[0]);
+                    console.log('Normalized auction:', normalized[0]);
+                    setAuctions(normalized);
                 }
             } catch (err) {
                 if (isMounted) {
@@ -70,6 +96,7 @@ const AllAuctions = () => {
     }, []);
 
     useEffect(() => {
+        console.log('Filtering with selectedCategory:', selectedCategory);
         const filtered = auctions.filter((auction) => {
             const now = new Date();
             
@@ -84,34 +111,33 @@ const AllAuctions = () => {
             }
 
             const categoryMatch =
-                selectedCategory === "all" || auction.category === selectedCategory;
-
-            const countryMatch =
-                selectedCountry === "all" || auction.country === selectedCountry;
+                selectedCategory === 0 || auction.categoryId === selectedCategory;
 
             const searchMatch =
                 auction.name?.toLowerCase().includes(searchQuery.toLowerCase());
 
-            return statusMatch && categoryMatch && countryMatch && searchMatch;
+            if (auctions.indexOf(auction) === 0) {
+                console.log('First auction - categoryId:', auction.categoryId, 'selectedCategory:', selectedCategory, 'match:', categoryMatch);
+            }
+
+            return statusMatch && categoryMatch && searchMatch;
         });
 
+        console.log('Filtered auctions:', filtered.length, 'of', auctions.length);
         setFilteredAuctions(filtered);
     }, [
         statusFilter,
         selectedCategory,
-        selectedCountry,
         searchQuery,
         auctions,
     ]);
-
-    const countries = ['all', ...new Set(auctions.map(a => a.country))];
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Filters */}
             <div className="bg-white rounded-xl shadow-md p-6 mb-8">
                 <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Auctions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Status Filter */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
@@ -132,28 +158,12 @@ const AllAuctions = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
                         <select
                             value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
+                            onChange={(e) => setSelectedCategory(Number(e.target.value))}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                         >
-                            <option value="all">All Categories</option>
-                            <option value="Electronics">Electronics</option>
-                            <option value="Home & Garden">Home & Garden</option>
-                            <option value="Fashion">Fashion</option>
-                            <option value="Others">Others</option>
-                        </select>
-                    </div>
-
-                    {/* Country Filter */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                        <select
-                            value={selectedCountry}
-                            onChange={(e) => setSelectedCountry(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                            {countries.map(country => (
-                                <option key={country} value={country}>
-                                    {country === 'all' ? 'All Countries' : country}
+                            {Object.entries(CATEGORIES).map(([id, name]) => (
+                                <option key={id} value={id}>
+                                    {name}
                                 </option>
                             ))}
                         </select>
@@ -178,8 +188,7 @@ const AllAuctions = () => {
                     <button 
                         onClick={() => {
                             setStatusFilter('all');
-                            setSelectedCategory('all');
-                            setSelectedCountry('all');
+                            setSelectedCategory(0);
                         }}
                         className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition"
                     >

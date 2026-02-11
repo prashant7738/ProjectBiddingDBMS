@@ -3,9 +3,10 @@ import AuctionCard from '../components/AuctionCard';
 import { useEffect, useState, useContext } from 'react';
 import { AppContext } from '../context/AppContext';
 import { getAuctions, getMediaUrl } from '../api/auth';
+import { CATEGORIES } from './AllAuctions';
 const UpcomingAuctions = () => {
-    const { selectedCategory, selectedCountry, liveFilter, setSelectedItem, searchQuery } = useContext(AppContext);
-    const { setSelectedCategory, setSelectedCountry, setLiveFilter } = useContext(AppContext);
+    const { selectedCategory, liveFilter, setSelectedItem, searchQuery } = useContext(AppContext);
+    const { setLiveFilter } = useContext(AppContext);
     const [filteredAuctions, setFilteredAuctions] = useState([]);
     const [auctions, setAuctions] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -24,14 +25,13 @@ const UpcomingAuctions = () => {
             id: raw?.id ?? raw?.auction_id,
             name: raw?.title ?? 'Untitled Auction',
             sellerName: raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? '',
-            category: raw?.category_name ?? raw?.category ?? 'general',
+            categoryId: raw?.category_id ?? 0,
             image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
             currentBid: raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0,
             startingBid: raw?.starting_price ?? 0,
             isLive,
             startTime,
             endTime,
-            country: raw?.country ?? 'Unknown',
             description: raw?.description ?? '',
             bidCount: raw?.bid_count ?? 0,
             registered: raw?.registered ?? false,
@@ -73,77 +73,55 @@ useEffect(() => {
     const isUpcoming = auction.startTime && new Date(auction.startTime) > new Date();
     
     const categoryMatch =
-      selectedCategory === "all" || auction.category === selectedCategory;
-
-    const countryMatch =
-      selectedCountry === "all" || auction.country === selectedCountry;
+      selectedCategory === 0 || auction.categoryId === selectedCategory;
 
     const searchMatch =
       auction.name?.toLowerCase().includes(searchQuery.toLowerCase()) 
-    return isUpcoming && categoryMatch && countryMatch && searchMatch;
+    return isUpcoming && categoryMatch && searchMatch;
   });
 
   setFilteredAuctions(filtered);
 }, [
   selectedCategory,
-  selectedCountry,
   searchQuery,
     auctions,
 ]);
 
-        const countries = ['all', ...new Set(auctions.map(a => a.country))];
-
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            {/* Filters */}
+            {/* Category Filter */}
             <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Auctions</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Status Filter */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                        <select
-                            value={liveFilter}
-                            onChange={(e) => setLiveFilter(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                            <option value="all">All Auctions</option>
-                            <option value="live">Live Only</option>
-                            <option value="upcoming">Upcoming Only</option>
-                        </select>
-                    </div>
-
-                    {/* Country Filter */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Country</label>
-                        <select
-                            value={selectedCountry}
-                            onChange={(e) => setSelectedCountry(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                            {countries.map(country => (
-                                <option key={country} value={country}>
-                                    {country === 'all' ? 'All Countries' : country}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Category Filter */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                        >
-                            <option value="all">All Categories</option>
-                            <option value="Electronics">Electronics</option>
-                            <option value="Home & Garden">Home & Garden</option>
-                            <option value="Fashion">Fashion</option>
-                            <option value="Others">Others</option>
-                        </select>
-                    </div>
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter by Category</h3>
+                <div className="max-w-xs">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select
+                        value={selectedCategory}
+                        onChange={(e) => setSelectedCategory(Number(e.target.value))}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    >
+                        {Object.entries(CATEGORIES).map(([id, name]) => (
+                            <option key={id} value={id}>
+                                {name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+            
+            {/* Status Filter */}
+            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter by Status</h3>
+                <div className="max-w-xs">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select
+                        value={liveFilter}
+                        onChange={(e) => setLiveFilter(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    >
+                        <option value="all">All Auctions</option>
+                        <option value="live">Live Only</option>
+                        <option value="upcoming">Upcoming Only</option>
+                    </select>
                 </div>
             </div>
 

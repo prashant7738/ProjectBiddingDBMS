@@ -43,6 +43,27 @@ class CreateAuction(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Validate start_time and end_time
+        from datetime import datetime
+        try:
+            if start_time:
+                start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+            else:
+                start_dt = datetime.now()
+            
+            end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+            
+            if start_dt >= end_dt:
+                return Response(
+                    {"error": "Start time must be before end time"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        except (ValueError, AttributeError) as e:
+            return Response(
+                {"error": "Invalid date/time format"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         # Handle image upload
         image_url = None
         if image:
@@ -50,7 +71,6 @@ class CreateAuction(APIView):
             # Get file extension
             ext = Path(image.name).suffix
             # Use timestamp to create unique filename without random suffix
-            from datetime import datetime
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             file_name = f"auctions/auction_{seller_id}_{timestamp}{ext}"
             
@@ -200,6 +220,36 @@ class MyAuctionView(APIView):
             update_data['starting_price'] = request.data['starting_price']
         if 'end_time' in request.data:
             update_data['end_time'] = request.data['end_time']
+        if 'start_time' in request.data:
+            update_data['start_time'] = request.data['start_time']
+        
+        # Validate start_time and end_time if both are being updated
+        from datetime import datetime
+        try:
+            start_time_str = update_data.get('start_time') or auction.get('start_time')
+            end_time_str = update_data.get('end_time') or auction.get('end_time')
+            
+            if start_time_str and end_time_str:
+                if isinstance(start_time_str, str):
+                    start_dt = datetime.fromisoformat(start_time_str.replace('Z', '+00:00'))
+                else:
+                    start_dt = start_time_str
+                    
+                if isinstance(end_time_str, str):
+                    end_dt = datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
+                else:
+                    end_dt = end_time_str
+                
+                if start_dt >= end_dt:
+                    return Response(
+                        {"error": "Start time must be before end time"}, 
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+        except (ValueError, AttributeError) as e:
+            return Response(
+                {"error": "Invalid date/time format"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
         
         updated_auction = update_auction(auction_id, **update_data)
         if updated_auction:

@@ -6,8 +6,7 @@ export  const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
             const { user } = useContext(AuthContext);
-            const [selectedCategory, setSelectedCategory] = useState('all');
-            const [selectedCountry, setSelectedCountry] = useState('all');
+            const [selectedCategory, setSelectedCategory] = useState(0); // 0 means all
             const [liveFilter, setLiveFilter] = useState('all');
             const [searchQuery, setSearchQuery] = useState('');
             const [selectedItem, setSelectedItem] = useState(null);
@@ -69,7 +68,6 @@ export const AppProvider = ({ children }) => {
             return (
                 <AppContext.Provider value={{
                     selectedCategory, setSelectedCategory,
-                    selectedCountry, setSelectedCountry,
                     liveFilter, setLiveFilter,
                     searchQuery, setSearchQuery,
                     selectedItem, setSelectedItem,

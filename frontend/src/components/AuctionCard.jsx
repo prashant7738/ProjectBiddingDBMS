@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { CATEGORIES } from "../pages/AllAuctions";
 
 const AuctionCard = ({ auction, onClick }) => {
     const [timeLeft, setTimeLeft] = useState('');
@@ -12,10 +13,11 @@ const AuctionCard = ({ auction, onClick }) => {
     const currentBidValue = Number(auction.currentBid ?? auction.current_highest_bid ?? auction.starting_price ?? 0);
     const imageValue = auction.image ?? auction.image_url ?? '';
     const nameValue = auction.name ?? auction.title ?? 'Auction';
-    const categoryValue = auction.category ?? auction.category_name ?? 'Category';
+    const categoryId = auction.categoryId ?? auction.category_id ?? 0;
+    const categoryValue = CATEGORIES[categoryId] ?? 'Unknown';
     const bidCountValue = auction.bidCount ?? auction.bid_count ?? 0;
     const sellerNameValue = auction.sellerName ?? auction.seller_name ?? auction.seller?.name ?? '';
-    const countryValue = auction.country ?? '';
+    
     
     const handleCardClick = (e) => {
         // Scroll to top
@@ -34,10 +36,16 @@ const AuctionCard = ({ auction, onClick }) => {
             const diff = endDate ? endDate - now : 0;
             
             if (diff > 0) {
-                const hours = Math.floor(diff / (1000 * 60 * 60));
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                 const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                 const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+                
+                if (days > 0) {
+                    setTimeLeft(`${days}d ${hours}h ${minutes}m`);
+                } else {
+                    setTimeLeft(`${hours}h ${minutes}m ${seconds}s`);
+                }
             } else {
                 setTimeLeft('Ended');
             }
@@ -187,7 +195,7 @@ const AuctionCard = ({ auction, onClick }) => {
                                 LIVE
                             </div>
                         );
-                    } else if (startDate && startDate > new Date()) {
+                    } else if (startDate > new Date()) {
                         return (
                             <div className="absolute top-4 left-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-lg">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,7 +213,7 @@ const AuctionCard = ({ auction, onClick }) => {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    {sellerNameValue || countryValue || 'Unknown'}
+                    {sellerNameValue || 'Unknown'}
                 </div>
             </div>
             
@@ -220,7 +228,7 @@ const AuctionCard = ({ auction, onClick }) => {
                             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
                             </svg>
-                            {bidCountValue} {bidCountValue === 1 ? 'bid' : 'bids'}
+                            {bidCountValue} {(bidCountValue === 1) | (bidCountValue === 0) ? 'bid' : 'bids'}
                         </span>
                     </div>
                     

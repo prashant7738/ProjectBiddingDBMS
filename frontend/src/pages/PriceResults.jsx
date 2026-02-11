@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getEndedAuctions, getMediaUrl } from "../api/auth";
+import { CATEGORIES } from './AllAuctions';
 
 const PriceResults = () => {
     const [priceSearchQuery, setPriceSearchQuery] = useState('');
@@ -19,7 +20,7 @@ const PriceResults = () => {
         return {
             id: raw?.id ?? raw?.auction_id,
             name: raw?.title ?? 'Untitled Auction',
-            category: raw?.category_name ?? raw?.category ?? 'general',
+            categoryId: raw?.category_id ?? 0,
             image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
             estimatedPrice: estimatedPrice,
             finalPrice: finalPrice,
@@ -174,7 +175,7 @@ const PriceResults = () => {
                                         <h3 className="font-semibold text-gray-900 mb-1 truncate">{result.name}</h3>
                                         <div className="flex flex-wrap items-center gap-2 text-sm">
                                             <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                                                {result.category}
+                                                {CATEGORIES[result.categoryId] ?? 'Unknown'}
                                             </span>
                                             <span className="text-gray-500">
                                                 {new Date(result.soldDate).toLocaleDateString()}

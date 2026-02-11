@@ -23,7 +23,7 @@ const MyItems = () => {
       id: raw?.id ?? raw?.auction_id,
       name: raw?.title ?? 'Untitled Auction',
       sellerName: raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? '',
-      category: raw?.category_name ?? raw?.category ?? 'general',
+      categoryId: raw?.category_id ?? 0,
       image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
       currentBid: raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0,
       startingBid: raw?.starting_price ?? 0,

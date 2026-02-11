@@ -1,6 +1,7 @@
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { myAuctions, deleteMyAuction, updateMyAuction, getRegisteredUsers, getMediaUrl } from '../api/auth';
+import { CATEGORIES } from './AllAuctions';
 
 export default function MyAuctions() {
   const { user, loading: authLoading } = useContext(AuthContext);
@@ -192,7 +193,7 @@ export default function MyAuctions() {
                   <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
                     <div>
                       <p className="text-gray-500">Category</p>
-                      <p className="font-semibold text-gray-900">{auction.category_name || 'N/A'}</p>
+                      <p className="font-semibold text-gray-900">{CATEGORIES[auction.category_id] || 'Unknown'}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">Starting Price</p>

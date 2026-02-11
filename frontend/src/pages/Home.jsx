@@ -22,7 +22,7 @@ const Home = () => {
             id: raw?.id ?? raw?.auction_id,
             name: raw?.title ?? 'Untitled Auction',
             sellerName: raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? '',
-            category: raw?.category_name ?? raw?.category ?? 'general',
+            categoryId: raw?.category_id ?? 0,
             image: getMediaUrl(raw?.image_url ?? raw?.image ?? ''),
             currentBid: raw?.current_highest_bid ?? raw?.current_bid ?? raw?.starting_price ?? 0,
             startingBid: raw?.starting_price ?? 0,
@@ -66,15 +66,7 @@ const Home = () => {
         return () => { isMounted = false; };
     }, []);
 
-    const categories = [
-        { id: 'all', name: 'All', icon: '🎯', gradient: 'from-purple-500 to-pink-500' },
-        { id: 'Electronics', name: 'Electronics', icon: '📱', gradient: 'from-blue-500 to-cyan-500' },
-        { id: 'Jewelry', name: 'Jewelry', icon: '💎', gradient: 'from-pink-500 to-rose-500' },
-        { id: 'Art', name: 'Art', icon: '🎨', gradient: 'from-orange-500 to-red-500' },
-        { id: 'Collectibles', name: 'Collectibles', icon: '🏆', gradient: 'from-yellow-500 to-amber-500' },
-    ];
-
-    const hotAuctions = auctions.filter(a => a.isLive);
+    const hotAuctions = auctions.filter(a => a.isLive).sort((a, b) => new Date(b.endTime)- new Date(a.endTime));
     
     // Ending Soon - auctions ending in the next 24 hours
     const endingSoon = auctions.filter(a => {
@@ -83,9 +75,9 @@ const Home = () => {
     }).sort((a, b) => new Date(a.endTime) - new Date(b.endTime));
 
     // Filtered auctions based on selected category
-    const filteredAuctions = selectedCategory === 'all' 
+    const filteredAuctions = selectedCategory === 0 
         ? auctions 
-        : auctions.filter(a => a.category === selectedCategory);
+        : auctions.filter(a => a.categoryId === selectedCategory);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

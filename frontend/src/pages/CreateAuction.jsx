@@ -94,6 +94,7 @@ export default function CreateAuction() {
       setError(err.response?.data?.error || 'Failed to create auction.');
     } finally {
       setSubmitting(false);
+      
     }
   };
 

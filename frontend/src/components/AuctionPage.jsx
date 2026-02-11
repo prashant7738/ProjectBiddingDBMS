@@ -44,6 +44,16 @@ const normalizeAuction = (raw) => {
     };
 };
 
+// Helper function to format currency consistently with 2 decimal places
+const formatCurrency = (amount) => {
+    if (typeof amount !== 'number') {
+        const num = parseFloat(amount);
+        if (isNaN(num)) return '$0.00';
+        return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
 const AuctionPage = () => {
     const { selectedItem, setSelectedItem, userBid, setUserBid } = useContext(AppContext);
     const { user } = useContext(AuthContext);
@@ -352,15 +362,24 @@ const AuctionPage = () => {
 
             if (payload?.amount || payload?.bid?.amount || payload?.data?.bid?.amount) {
                 const bidAmount = payload?.amount ?? payload?.bid?.amount ?? payload?.data?.bid?.amount;
+                const bidderId = payload?.bidder_id ?? payload?.bid?.bidder_id ?? payload?.data?.bid?.bidder_id;
                 const bidderName =
                     payload?.bidder_name
                     || payload?.bidder
-                    || payload?.bidder_id
                     || payload?.bid?.bidder_name
                     || payload?.bid?.bidder
-                    || payload?.bid?.bidder_id
-                    || 'Bidder';
+                    || payload?.data?.bidder_name
+                    || (bidderId ? `Bidder #${bidderId}` : 'Bidder');
                 const bidTime = payload?.time || payload?.created_at || payload?.bid?.time || payload?.bid?.created_at || 'Just now';
+                
+                // Update userCurrentBid if this bid is from the current user
+                if (user?.id && bidderId === user.id) {
+                    setUserCurrentBid({
+                        amount: bidAmount,
+                        time: bidTime
+                    });
+                }
+                
                 setBidHistory((prev) => [
                     {
                         bidder: bidderName,
@@ -372,15 +391,15 @@ const AuctionPage = () => {
             }
 
             if (options.showAlert && Number.isFinite(amount)) {
+                const bidderId = payload?.bidder_id ?? payload?.bid?.bidder_id ?? payload?.data?.bid?.bidder_id;
                 const bidderName =
                     payload?.bidder_name
                     || payload?.bidder
-                    || payload?.bidder_id
                     || payload?.bid?.bidder_name
                     || payload?.bid?.bidder
-                    || payload?.bid?.bidder_id
-                    || 'Someone';
-                setBidAlert(`${bidderName} placed a new bid: $${amount.toLocaleString()}`);
+                    || payload?.data?.bidder_name
+                    || (bidderId ? `Bidder #${bidderId}` : 'Someone');
+                setBidAlert(`${bidderName} placed a new bid: ${formatCurrency(amount)}`);
                 if (alertTimeoutRef.current) {
                     clearTimeout(alertTimeoutRef.current);
                 }
@@ -511,15 +530,11 @@ const AuctionPage = () => {
         
         const socket = wsRef.current;
         if (socket && socket.readyState === WebSocket.OPEN) {
-            // Try WebSocket first, but wait for response
+            // Try WebSocket first
             socket.send(JSON.stringify({ type: 'place_bid', amount: bidAmount }));
-            // **Update user's own bid immediately**
-    setUserCurrentBid({
-        amount: bidAmount,
-        time: 'Just now'
-    });
+            // DO NOT update UI - wait for WebSocket response via handleBidUpdate
+            // Only clear input to provide feedback that bid was submitted
             setUserBid('');
-            // Don't update UI - wait for WebSocket response via handleBidUpdate
             return;
         }
 
@@ -533,11 +548,10 @@ const AuctionPage = () => {
             
             // Only update UI if backend confirms success
             const updatedBid = res.data?.amount ?? bidAmount;
-            const updatedCurrent = res.data?.current_bid ?? updatedBid;
             setUserCurrentBid({
-    amount: updatedBid,
-    time: 'Just now'
-});
+                amount: updatedBid,
+                time: 'Just now'
+            });
             setBidHistory((prev) => [
                 {
                     bidder: user.name || 'You',
@@ -662,13 +676,13 @@ const AuctionPage = () => {
                                 <div className="bg-gray-50 rounded-lg p-4">
                                     <p className="text-sm text-gray-500 mb-1">Starting Bid</p>
                                     <p className="text-xl font-bold text-gray-900">
-                                        ${activeAuction.startingBid.toLocaleString()}
+                                        {formatCurrency(activeAuction.startingBid)}
                                     </p>
                                 </div>
                                 <div className="bg-purple-50 rounded-lg p-4">
                                     <p className="text-sm text-gray-500 mb-1">Current Bid</p>
                                     <p id="current-bid" className="text-xl font-bold text-purple-600">
-                                        ${currentBid.toLocaleString()}
+                                        {formatCurrency(currentBid)}
                                     </p>
                                 </div>
                             </div>
@@ -677,7 +691,7 @@ const AuctionPage = () => {
                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
                                     <p className="text-sm text-gray-500 mb-1">Your Current Bid</p>
                                     <p className="text-xl font-bold text-blue-600">
-                                        ${typeof userCurrentBid.amount === 'number' ? userCurrentBid.amount.toLocaleString() : userCurrentBid.amount}
+                                        {formatCurrency(userCurrentBid.amount)}
                                     </p>
                                 </div>
                             )}
@@ -780,7 +794,7 @@ const AuctionPage = () => {
                                                         <p className="text-sm text-gray-500">{bid.time}</p>
                                                     </div>
                                                     <p className="text-lg font-bold text-purple-600">
-                                                        ${bid.amount.toLocaleString()}
+                                                        {formatCurrency(bid.amount)}
                                                     </p>
                                                 </div>
                                             ))
