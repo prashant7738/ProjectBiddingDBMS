@@ -9,11 +9,10 @@ import dj_database_url
 
 # FOR DOTENV
 from dotenv import load_dotenv
-import os
 
 load_dotenv()  # loads variables from .env
 
-secret = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY")
 
 
 
@@ -81,16 +80,16 @@ ASGI_APPLICATION = 'project_main.asgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'bidding_system',
-        'USER': 'postgres',
-        'PASSWORD': '123',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
-    }
-}
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'bidding_system',
+#         'USER': 'postgres',
+#         'PASSWORD': '123',
+#         'HOST': '127.0.0.1',
+#         'PORT': '5432',
+#     }
+# }
 
 
 # Password validation
@@ -128,6 +127,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
@@ -184,23 +186,24 @@ SESSION_COOKIE_HTTPONLY = True  # Prevents JS from reading the cookie
 CSRF_COOKIE_HTTPONLY = False
 
 # Admin allowlist for admin-only API access
-admin_email = os.getenv('ADMIN_EMAILS')
-admin_id = os.getenv('ADMIN_USER_IDS')
-
-ADMIN_EMAILS = admin_email
-ADMIN_USER_IDS = admin_id
+ADMIN_EMAILS = os.getenv("ADMIN_EMAILS", "").split(",")
+ADMIN_USER_IDS = os.getenv("ADMIN_USER_IDS", "").split(",")
 
 
 
 
 # PRODUCTION READY:
-allowed_hosts = os.getenv('ALLOWED_HOSTS')
-ALLOWED_HOSTS = allowed_hosts # later replace with your domain
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",")
 
 DATABASES = {
     "default": dj_database_url.config(default=os.environ.get("DATABASE_URL"))
 }
 
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
+
+
+# for security block in production 
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
