@@ -27,7 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
 # ALLOWED_HOSTS = []
-ALLOWED_HOSTS='livebiddingnp.onrender.com'
+ALLOWED_HOSTS = ['livebiddingnp.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
