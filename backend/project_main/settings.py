@@ -167,34 +167,27 @@ SIMPLE_JWT = {
 }
 
 # CORS Configuration
-# IS_PRODUCTION = not DEBUG
 IS_PRODUCTION = True
+
+# 1. Allow cookies to be sent in cross-site requests
+SESSION_COOKIE_SAMESITE = 'None'
+CSRF_COOKIE_SAMESITE = 'None'
+
+# 2. Cookies MUST be marked as Secure to allow 'SameSite=None'
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# 3. Explicitly allow credentials in CORS
 CORS_ALLOW_CREDENTIALS = True
 
-# Load CORS allowed origins from environment, with dev defaults
-
-# CORS_ALLOWED_ORIGINS = [
-#     origin.strip() 
-#     for origin in os.getenv(
-#         "CORS_ALLOWED_ORIGINS", 
-#         "http://localhost:5173,http://localhost:5174"
-#     ).split(",") 
-#     if origin.strip()
-# ]
+# 4. Use the specific frontend URL (Do NOT use '*')
 CORS_ALLOWED_ORIGINS = [
-    # "https://your-frontend-link.onrender.com", 
-    "http://localhost:5173", # If testing locally
+    "http://localhost:5173",
+    # "https://your-frontend-deployment.onrender.com",
 ]
 
-
-
-# Dynamic cookie settings based on environment
-SESSION_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
-CSRF_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
-SESSION_COOKIE_HTTPONLY = True  # Prevents JS from reading the cookie
-SESSION_COOKIE_SECURE = IS_PRODUCTION  # True in production (HTTPS), False in dev
-CSRF_COOKIE_SECURE = IS_PRODUCTION
 CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_HTTPONLY = True  # Prevents JS from reading the cookie
 
 # Admin allowlist for admin-only API access
 ADMIN_EMAILS = [e.strip() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()]
