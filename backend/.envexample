@@ -1,9 +1,14 @@
-SECRET_KEY = 
-ADMIN_USER_IDS = 
+SECRET_KEY=your-secret-key-here
+ADMIN_EMAILS=admin@example.com,admin2@example.com
+ADMIN_USER_IDS=1,2
 
-ALLOWED_HOSTS =
+ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com,localhost,127.0.0.1
 
-DATABASE_URL =
+DATABASE_URL=postgresql://user:password@host:port/dbname
+
+CORS_ALLOWED_ORIGINS=https://yourdomain.com,http://localhost:5173,http://localhost:5174
+
+DEBUG=False
 
 
 CORS_ALLOWED_ORIGINS = 

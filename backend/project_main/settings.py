@@ -177,7 +177,7 @@ SIMPLE_JWT = {
 #     'http://localhost:5174',  # Your React app (alternative port)
 # ]
 
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if origin.strip()]
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -188,14 +188,14 @@ SESSION_COOKIE_HTTPONLY = True  # Prevents JS from reading the cookie
 CSRF_COOKIE_HTTPONLY = False
 
 # Admin allowlist for admin-only API access
-ADMIN_EMAILS = os.getenv("ADMIN_EMAILS", "").split(",")
-ADMIN_USER_IDS = os.getenv("ADMIN_USER_IDS", "").split(",")
+ADMIN_EMAILS = [e.strip() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()]
+ADMIN_USER_IDS = [uid.strip() for uid in os.getenv("ADMIN_USER_IDS", "").split(",") if uid.strip()]
 
 
 
 
 # PRODUCTION READY:
-ALLOWED_HOSTS = [h for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h]
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
 
 DATABASES = {
     "default": dj_database_url.config(default=os.environ.get("DATABASE_URL"))
