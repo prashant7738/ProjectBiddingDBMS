@@ -4,6 +4,8 @@ from core_db.auction_ops import get_active_auctions , get_ended_auctions, get_au
 from core_db.user_ops import get_all_users, update_user_balance
 from .serializers import AuctionSerializer ,BidSerializer, AdminAuctionSerializer, UserSerializer
 from rest_framework import status
+from django.conf import settings
+import cloudinary.uploader
 from core_db.bid_ops import place_bid, get_user_bidding_history, get_won_items, get_user_notifications
 
 # for pagination
@@ -31,7 +33,7 @@ class CreateAuction(APIView):
         starting_price = request.data.get('starting_price')
         start_time = request.data.get('start_time')
         end_time = request.data.get('end_time')
-        # image = request.FILES.get('image')  # Disabled - will use Cloudinary later
+        image = request.FILES.get('image')
 
         if not all([seller_id , title , description, category_id, starting_price , end_time]):
             return Response(
@@ -41,13 +43,18 @@ class CreateAuction(APIView):
 
         # Validate start_time and end_time
         from datetime import datetime
+        from django.utils import timezone
         try:
             if start_time:
                 start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
             else:
-                start_dt = datetime.now()
+                start_dt = timezone.now()
             
             end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
+            if timezone.is_naive(start_dt):
+                start_dt = timezone.make_aware(start_dt, timezone.get_current_timezone())
+            if timezone.is_naive(end_dt):
+                end_dt = timezone.make_aware(end_dt, timezone.get_current_timezone())
             
             if start_dt >= end_dt:
                 return Response(
@@ -60,9 +67,30 @@ class CreateAuction(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Image upload disabled - will use Cloudinary later
         image_url = None
-        # TODO: Add Cloudinary integration here
+        if image:
+            cloudinary_config = settings.CLOUDINARY_STORAGE or {}
+            if not all([
+                cloudinary_config.get('CLOUD_NAME'),
+                cloudinary_config.get('API_KEY'),
+                cloudinary_config.get('API_SECRET')
+            ]):
+                return Response(
+                    {"error": "Cloudinary is not configured"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            try:
+                upload_result = cloudinary.uploader.upload(
+                    image,
+                    folder=settings.CLOUDINARY_UPLOAD_FOLDER,
+                    resource_type="image",
+                )
+                image_url = upload_result.get("secure_url") or upload_result.get("url")
+            except Exception:
+                return Response(
+                    {"error": "Image upload failed"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
         result = create_auction(seller_id , title , description, category_id, starting_price , end_time, start_time, image_url)
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { CATEGORIES } from "../pages/AllAuctions";
+import { getMediaUrl } from "../api/auth";
 
 const AuctionCard = ({ auction, onClick }) => {
     const [timeLeft, setTimeLeft] = useState('');
@@ -11,7 +12,7 @@ const AuctionCard = ({ auction, onClick }) => {
     const startDate = startTimeValue ? new Date(startTimeValue) : null;
     const isLiveValue = auction.isLive ?? (startDate && endDate ? startDate <= new Date() && endDate > new Date() : false);
     const currentBidValue = Number(auction.currentBid ?? auction.current_highest_bid ?? auction.starting_price ?? 0);
-    const imageValue = auction.image ?? auction.image_url ?? '';
+    const imageValue = getMediaUrl(auction.image ?? auction.image_url ?? '');
     const nameValue = auction.name ?? auction.title ?? 'Auction';
     const categoryId = auction.categoryId ?? auction.category_id ?? 0;
     const categoryValue = CATEGORIES[categoryId] ?? 'Unknown';

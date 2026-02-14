@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import os
 import dj_database_url
+import cloudinary
 
 
 
@@ -44,6 +45,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',
     'corsheaders',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -130,6 +133,23 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# In Settings.py
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET')
+}
+CLOUDINARY_UPLOAD_FOLDER = os.getenv('CLOUDINARY_UPLOAD_FOLDER', 'auctions')
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE.get('CLOUD_NAME'),
+    api_key=CLOUDINARY_STORAGE.get('API_KEY'),
+    api_secret=CLOUDINARY_STORAGE.get('API_SECRET')
+)
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 
 # Channels
 CHANNEL_LAYERS = {
