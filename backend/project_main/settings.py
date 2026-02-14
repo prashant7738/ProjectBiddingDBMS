@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 load_dotenv()  # loads variables from .env
 
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-key-change-in-production")
 
 
 
@@ -26,7 +26,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS='livebiddingnp.onrender.com'
 
 
 # Application definition
@@ -165,27 +166,34 @@ SIMPLE_JWT = {
     'BLACKLIST_AFTER_ROTATION': True,
 }
 
-# CORS_ALLOW_ALL_ORIGINS = True
-
-# CORS_ALLOWED_ORIGINS = [
-#     'http://localhost:5173',  # Your React app
-#     'http://localhost:5174',  # Your React app (alternative port)
-# ]
-
-# CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if origin.strip()]
-
+# CORS Configuration
+# IS_PRODUCTION = not DEBUG
+IS_PRODUCTION = True
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOW_ALL_ORIGINS = True
+# Load CORS allowed origins from environment, with dev defaults
+
+# CORS_ALLOWED_ORIGINS = [
+#     origin.strip() 
+#     for origin in os.getenv(
+#         "CORS_ALLOWED_ORIGINS", 
+#         "http://localhost:5173,http://localhost:5174"
+#     ).split(",") 
+#     if origin.strip()
+# ]
+CORS_ALLOWED_ORIGINS = [
+    # "https://your-frontend-link.onrender.com", 
+    "http://localhost:5173", # If testing locally
+]
+
+
 
 # Dynamic cookie settings based on environment
-IS_PRODUCTION = not DEBUG
 SESSION_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
 CSRF_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
 SESSION_COOKIE_HTTPONLY = True  # Prevents JS from reading the cookie
 SESSION_COOKIE_SECURE = IS_PRODUCTION  # True in production (HTTPS), False in dev
 CSRF_COOKIE_SECURE = IS_PRODUCTION
-
 CSRF_COOKIE_HTTPONLY = False
 
 # Admin allowlist for admin-only API access
@@ -196,10 +204,15 @@ ADMIN_USER_IDS = [uid.strip() for uid in os.getenv("ADMIN_USER_IDS", "").split("
 
 
 # PRODUCTION READY:
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
+# ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
 
 DATABASES = {
-    "default": dj_database_url.config(default=os.environ.get("DATABASE_URL"))
+    "default": dj_database_url.config(
+        default=os.environ.get(
+            "DATABASE_URL", 
+            "sqlite:///db.sqlite3"
+        )
+    )
 }
 
 
