@@ -145,13 +145,13 @@ CHANNEL_LAYERS = {
 
 
 # Database 
-DB_CONFIG = {
-    "DB_NAME": "bidding_system",
-    "DB_USER": "postgres",
-    "DB_PASS": "123", 
-    "DB_HOST": "127.0.0.1",
-    "DB_PORT": "5432",
-}
+# DB_CONFIG = {
+#     "DB_NAME": "bidding_system",
+#     "DB_USER": "postgres",
+#     "DB_PASS": "123", 
+#     "DB_HOST": "127.0.0.1",
+#     "DB_PORT": "5432",
+# }
 
 
 
