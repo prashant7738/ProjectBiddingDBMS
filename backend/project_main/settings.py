@@ -172,9 +172,11 @@ SIMPLE_JWT = {
 #     'http://localhost:5174',  # Your React app (alternative port)
 # ]
 
-CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if origin.strip()]
+# CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if origin.strip()]
 
 CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Dynamic cookie settings based on environment
 IS_PRODUCTION = not DEBUG
