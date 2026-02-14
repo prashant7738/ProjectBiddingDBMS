@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = os.getenv("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = []
 
@@ -181,9 +181,13 @@ CORS_ALLOWED_ORIGINS = [origin.strip() for origin in os.getenv("CORS_ALLOWED_ORI
 
 CORS_ALLOW_CREDENTIALS = True
 
-SESSION_COOKIE_SAMESITE = 'Lax' # Or 'None' if using HTTPS/Production
-CSRF_COOKIE_SAMESITE = 'Lax'
+# Dynamic cookie settings based on environment
+IS_PRODUCTION = not DEBUG
+SESSION_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
+CSRF_COOKIE_SAMESITE = 'None' if IS_PRODUCTION else 'Lax'
 SESSION_COOKIE_HTTPONLY = True  # Prevents JS from reading the cookie
+SESSION_COOKIE_SECURE = IS_PRODUCTION  # True in production (HTTPS), False in dev
+CSRF_COOKIE_SECURE = IS_PRODUCTION
 
 CSRF_COOKIE_HTTPONLY = False
 
@@ -205,14 +209,13 @@ DATABASES = {
 MIDDLEWARE.insert(1, "whitenoise.middleware.WhiteNoiseMiddleware")
 
 
-# for security block in production 
-SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+# Security settings for production (only applied when DEBUG=False)
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
-SECURE_HSTS_SECONDS = 31536000
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'

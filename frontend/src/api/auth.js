@@ -3,7 +3,7 @@ import axios from 'axios';
 // Shared HTTP client for all API calls
 // Uses HttpOnly cookies for JWT auth - no token storage in JS
 const client = axios.create({
-    baseURL: 'http://localhost:8000/api',
+    baseURL: 'https://livebiddingnp.onrender.com/api',
     withCredentials: true,  // Essential for sending cookies automatically
     headers: {
         'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ export const getNotifications = (id, since) => {
 
 
 // Media URL helper
-const apiRoot = client.defaults.baseURL?.replace(/\/?api\/?$/, '') || 'http://127.0.0.1:8000';
+const apiRoot = client.defaults.baseURL?.replace(/\/?api\/?$/, '') || 'https://livebiddingnp.onrender.com';
 
 export const getMediaUrl = (path) => {
   if (!path) return '';

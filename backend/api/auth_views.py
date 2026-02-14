@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.conf import settings
 
 from core_db.user_ops import authenticate_user, register_user
 from .admin_utils import is_admin_user
@@ -40,8 +41,8 @@ class TokenRefreshView(APIView):
                 value=str(refresh.access_token),
                 max_age=3600,  # 1 hour
                 httponly=True,
-                secure=False,
-                samesite='Lax',
+                secure=settings.SESSION_COOKIE_SECURE,
+                samesite=settings.SESSION_COOKIE_SAMESITE,
                 path='/',
                 domain=None
             )
@@ -52,8 +53,8 @@ class TokenRefreshView(APIView):
                 value=str(refresh),
                 max_age=604800,  # 7 days
                 httponly=True,
-                secure=False,
-                samesite='Lax',
+                secure=settings.SESSION_COOKIE_SECURE,
+                samesite=settings.SESSION_COOKIE_SAMESITE,
                 path='/',
                 domain=None
             )
@@ -100,10 +101,10 @@ class LoginView(APIView):
                 value=str(refresh.access_token),
                 max_age=access_token_lifetime,
                 httponly=True,
-                secure=False,  # Set to True in production with HTTPS
-                samesite='Lax',
+                secure=settings.SESSION_COOKIE_SECURE,
+                samesite=settings.SESSION_COOKIE_SAMESITE,
                 path='/',
-                domain=None  # Allows same-site cookies, will use request.get_host()
+                domain=None
             )
             
             response.set_cookie(
@@ -111,8 +112,8 @@ class LoginView(APIView):
                 value=str(refresh),
                 max_age=refresh_token_lifetime,
                 httponly=True,
-                secure=False,  # Set to True in production with HTTPS
-                samesite='Lax',
+                secure=settings.SESSION_COOKIE_SECURE,
+                samesite=settings.SESSION_COOKIE_SAMESITE,
                 path='/',
                 domain=None
             )
@@ -152,8 +153,8 @@ class AdminLoginView(APIView):
             value=str(refresh.access_token),
             max_age=access_token_lifetime,
             httponly=True,
-            secure=False,
-            samesite='Lax',
+            secure=settings.SESSION_COOKIE_SECURE,
+            samesite=settings.SESSION_COOKIE_SAMESITE,
             path='/',
             domain=None
         )
@@ -163,8 +164,8 @@ class AdminLoginView(APIView):
             value=str(refresh),
             max_age=refresh_token_lifetime,
             httponly=True,
-            secure=False,
-            samesite='Lax',
+            secure=settings.SESSION_COOKIE_SECURE,
+            samesite=settings.SESSION_COOKIE_SAMESITE,
             path='/',
             domain=None
         )
