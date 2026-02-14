@@ -5,10 +5,6 @@ from core_db.user_ops import get_all_users, update_user_balance
 from .serializers import AuctionSerializer ,BidSerializer, AdminAuctionSerializer, UserSerializer
 from rest_framework import status
 from core_db.bid_ops import place_bid, get_user_bidding_history, get_won_items, get_user_notifications
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
-import os
-from pathlib import Path
 
 # for pagination
 from .paginations import StandardResultsSetPagination
@@ -35,7 +31,7 @@ class CreateAuction(APIView):
         starting_price = request.data.get('starting_price')
         start_time = request.data.get('start_time')
         end_time = request.data.get('end_time')
-        image = request.FILES.get('image')  # Get uploaded image
+        # image = request.FILES.get('image')  # Disabled - will use Cloudinary later
 
         if not all([seller_id , title , description, category_id, starting_price , end_time]):
             return Response(
@@ -64,23 +60,9 @@ class CreateAuction(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Handle image upload
+        # Image upload disabled - will use Cloudinary later
         image_url = None
-        if image:
-            # Save image to media/auctions/ directory
-            # Get file extension
-            ext = Path(image.name).suffix
-            # Use timestamp to create unique filename without random suffix
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            file_name = f"auctions/auction_{seller_id}_{timestamp}{ext}"
-            
-            # Delete file if it already exists
-            if default_storage.exists(file_name):
-                default_storage.delete(file_name)
-            
-            image_path = default_storage.save(file_name, ContentFile(image.read()))
-            # Store full URL in database for frontend access
-            image_url = f"/media/{image_path}"
+        # TODO: Add Cloudinary integration here
 
         result = create_auction(seller_id , title , description, category_id, starting_price , end_time, start_time, image_url)
 
