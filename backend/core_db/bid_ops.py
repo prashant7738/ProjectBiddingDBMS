@@ -96,15 +96,30 @@ def get_user_bidding_history(user_id):
             .subquery()
         )
         
+        # Subquery to count bids for each auction
+        bid_counts = (
+            select(
+                bids.c.auction_id,
+                func.count(bids.c.id).label('bid_count')
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
+        
         # Join auctions with the latest bids and seller info
         j = (
             auctions
             .join(latest_bid_per_auction, auctions.c.id == latest_bid_per_auction.c.auction_id)
             .join(users, auctions.c.seller_id == users.c.id)
+            .outerjoin(bid_counts, auctions.c.id == bid_counts.c.auction_id)
         )
         
         query = (
-            select(auctions, users.c.name.label('seller_name'))
+            select(
+                auctions,
+                users.c.name.label('seller_name'),
+                bid_counts.c.bid_count
+            )
             .select_from(j)
             .order_by(auctions.c.start_time.desc())
         )
@@ -187,17 +202,28 @@ def get_won_items(user_id):
                 )
             )
         )
+        
+        bid_counts = (
+            select(
+                bids.c.auction_id,
+                func.count(bids.c.id).label('bid_count')
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
 
         j = (
             auctions
             .join(winning_bids, auctions.c.id == bids.c.auction_id)
             .join(users, auctions.c.seller_id == users.c.id)
+            .outerjoin(bid_counts, auctions.c.id == bid_counts.c.auction_id)
         )
 
         query = (
             select(
                 auctions,
-                users.c.name.label('seller_name')
+                users.c.name.label('seller_name'),
+                bid_counts.c.bid_count
             )
             .select_from(j)
             .where(

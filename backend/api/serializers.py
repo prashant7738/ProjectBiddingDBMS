@@ -25,6 +25,7 @@ class AuctionSerializer(serializers.Serializer):
     start_time = serializers.DateTimeField()
     end_time = serializers.DateTimeField()
     is_active = serializers.BooleanField()
+    bid_count = serializers.IntegerField(required=False, allow_null=True)
 
 
 class AdminAuctionSerializer(serializers.Serializer):

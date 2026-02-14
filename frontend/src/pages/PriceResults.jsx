@@ -81,14 +81,6 @@ const PriceResults = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <style>{`
-                .result-row:hover {
-                    background: linear-gradient(to right, #f9fafb, #f3f4f6);
-                    transform: translateX(4px);
-                    transition: all 0.3s ease;
-                }
-            `}</style>
-
             {/* Header */}
             <div className="mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Price Results</h2>
@@ -188,7 +180,7 @@ const PriceResults = () => {
                                 <div className="col-span-1 md:col-span-2 md:text-right">
                                     <div className="text-sm text-gray-500 md:hidden">Estimated:</div>
                                     <div className="font-semibold text-gray-700">
-                                        ${result.estimatedPrice.toLocaleString()}
+                                        ₹{result.estimatedPrice.toLocaleString()}
                                     </div>
                                 </div>
 
@@ -196,7 +188,7 @@ const PriceResults = () => {
                                 <div className="col-span-1 md:col-span-2 md:text-right">
                                     <div className="text-sm text-gray-500 md:hidden">Final Price:</div>
                                     <div className="font-bold text-green-600 text-lg">
-                                        ${result.finalPrice.toLocaleString()}
+                                        ₹{result.finalPrice.toLocaleString()}
                                     </div>
                                 </div>
 

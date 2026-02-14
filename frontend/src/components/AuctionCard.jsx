@@ -59,125 +59,6 @@ const AuctionCard = ({ auction, onClick }) => {
             onClick={onClick}
             className="group bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-500 ease-out hover:shadow-2xl hover:-translate-y-2 cursor-pointer border border-gray-100 hover:border-purple-200"
         >
-            <style>{`
-                @keyframes shimmer {
-                    0% { background-position: -1000px 0; }
-                    100% { background-position: 1000px 0; }
-                }
-                @keyframes pulse-ring {
-                    0%, 100% { 
-                        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-                    }
-                    50% { 
-                        box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
-                    }
-                }
-                @keyframes float {
-                    0%, 100% { transform: translateY(0px); }
-                    50% { transform: translateY(-10px); }
-                }
-                @keyframes bid-pulse {
-                    0%, 100% { 
-                        transform: scale(1);
-                        box-shadow: 0 4px 14px 0 rgba(124, 58, 237, 0.4);
-                    }
-                    50% { 
-                        transform: scale(1.05);
-                        box-shadow: 0 6px 20px 0 rgba(124, 58, 237, 0.6);
-                    }
-                }
-                .item-image {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
-                }
-                .group:hover .item-image {
-                    transform: scale(1.15) rotate(2deg);
-                }
-                .live-badge {
-                    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-                    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-                    box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.4);
-                }
-                .live-dot {
-                    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-                }
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; }
-                    50% { opacity: 0.5; }
-                }
-                .bid-badge {
-                    animation: bid-pulse 2s ease-in-out infinite;
-                }
-                .countdown {
-                    font-variant-numeric: tabular-nums;
-                    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-                    -webkit-background-clip: text;
-                    -webkit-text-fill-color: transparent;
-                    background-clip: text;
-                    font-weight: 700;
-                }
-                .gradient-bg {
-                    background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #8b5cf6 100%);
-                    background-size: 200% 200%;
-                    transition: all 0.4s ease;
-                }
-                .gradient-bg:hover {
-                    background-position: 100% 0;
-                    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.4);
-                    transform: translateY(-2px);
-                }
-                .gradient-bg:active {
-                    transform: translateY(0);
-                }
-                .price-tag {
-                    position: relative;
-                    overflow: hidden;
-                }
-                .price-tag::before {
-                    content: '';
-                    position: absolute;
-                    top: 0;
-                    left: -100%;
-                    width: 100%;
-                    height: 100%;
-                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-                    transition: left 0.5s;
-                }
-                .group:hover .price-tag::before {
-                    left: 100%;
-                }
-                .category-badge {
-                    background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
-                    position: relative;
-                    overflow: hidden;
-                }
-                .category-badge::before {
-                    content: '';
-                    position: absolute;
-                    top: -50%;
-                    left: -50%;
-                    width: 200%;
-                    height: 200%;
-                    background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, transparent 70%);
-                    opacity: 0;
-                    transition: opacity 0.3s;
-                }
-                .group:hover .category-badge::before {
-                    opacity: 1;
-                }
-                .seller-badge {
-                    backdrop-filter: blur(12px);
-                    background: rgba(255, 255, 255, 0.95);
-                    transition: all 0.3s ease;
-                }
-                .group:hover .seller-badge {
-                    background: rgba(255, 255, 255, 1);
-                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-                }
-            `}</style>
-            
             <div className="relative h-64 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                 <img 
                     src={imageValue} 
@@ -228,7 +109,7 @@ const AuctionCard = ({ auction, onClick }) => {
                             <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M8 5a1 1 0 100 2h5.586l-1.293 1.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L13.586 5H8zM12 15a1 1 0 100-2H6.414l1.293-1.293a1 1 0 10-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L6.414 15H12z" />
                             </svg>
-                            {bidCountValue} {(bidCountValue === 1) | (bidCountValue === 0) ? 'bid' : 'bids'}
+                            {bidCountValue} {bidCountValue === 1 ? 'bid' : 'bids'}
                         </span>
                     </div>
                     
@@ -240,7 +121,7 @@ const AuctionCard = ({ auction, onClick }) => {
                         <div className="price-tag">
                             <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide font-semibold">Current Bid</p>
                             <p className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
-                                ${currentBidValue.toLocaleString()}
+                                ₹{currentBidValue.toLocaleString()}
                             </p>
                         </div>
                         <div className="text-right">

@@ -48,10 +48,10 @@ const normalizeAuction = (raw) => {
 const formatCurrency = (amount) => {
     if (typeof amount !== 'number') {
         const num = parseFloat(amount);
-        if (isNaN(num)) return '$0.00';
-        return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (isNaN(num)) return '₹0.00';
+        return `₹${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
-    return `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `₹${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const AuctionPage = () => {
@@ -601,8 +601,30 @@ const AuctionPage = () => {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {bidAlert && (
-                <div className="mb-4 rounded-lg border border-green-200 bg-green-50 text-green-700 px-4 py-3 text-sm">
-                    {bidAlert}
+                <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 animate-bid-notification">
+                    <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 text-white px-8 py-4 rounded-2xl shadow-2xl border-2 border-white/30 backdrop-blur-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="relative">
+                                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center animate-pulse-ring">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <div>
+                                <div className="text-xs font-semibold uppercase tracking-wider opacity-90 mb-1">NEW BID PLACED!</div>
+                                <div className="text-lg font-black">{bidAlert}</div>
+                            </div>
+                            <button 
+                                onClick={() => setBidAlert('')}
+                                className="ml-4 p-2 hover:bg-white/20 rounded-full transition-all"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
             <Link

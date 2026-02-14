@@ -90,11 +90,33 @@ def get_active_auctions():
     """
     with engine.connect() as conn:
         now = timezone.now()
-        j = auctions.join(users, auctions.c.seller_id == users.c.id).outerjoin(categories, auctions.c.category_id == categories.c.id)
-        query = select(auctions, users.c.name.label('seller_name'), categories.c.name.label('category_name')).select_from(j).where(
-            and_(
-                auctions.c.end_time > now,
-                auctions.c.is_active == True
+        bid_counts = (
+            select(
+                bids.c.auction_id,
+                func.count(bids.c.id).label('bid_count')
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
+        j = (
+            auctions
+            .join(users, auctions.c.seller_id == users.c.id)
+            .outerjoin(categories, auctions.c.category_id == categories.c.id)
+            .outerjoin(bid_counts, auctions.c.id == bid_counts.c.auction_id)
+        )
+        query = (
+            select(
+                auctions,
+                users.c.name.label('seller_name'),
+                categories.c.name.label('category_name'),
+                bid_counts.c.bid_count
+            )
+            .select_from(j)
+            .where(
+                and_(
+                    auctions.c.end_time > now,
+                    auctions.c.is_active == True
+                )
             )
         )
         result = conn.execute(query)
@@ -110,19 +132,29 @@ def get_ended_auctions():
         seller = users.alias('seller')
         winner = users.alias('winner')
         winning_bids = _winning_bids_subquery()
+        bid_counts = (
+            select(
+                bids.c.auction_id,
+                func.count(bids.c.id).label('bid_count')
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
         j = (
             auctions
             .join(seller, auctions.c.seller_id == seller.c.id)
             .outerjoin(categories, auctions.c.category_id == categories.c.id)
             .outerjoin(winning_bids, auctions.c.id == winning_bids.c.auction_id)
             .outerjoin(winner, winning_bids.c.winner_id == winner.c.id)
+            .outerjoin(bid_counts, auctions.c.id == bid_counts.c.auction_id)
         )
         query = (
             select(
                 auctions,
                 seller.c.name.label('seller_name'),
                 winner.c.name.label('winner_name'),
-                categories.c.name.label('category_name')
+                categories.c.name.label('category_name'),
+                bid_counts.c.bid_count
             )
             .select_from(j)
             .where(auctions.c.end_time <= now)
@@ -140,19 +172,29 @@ def get_auction_by_id(auction_id):
         seller = users.alias('seller')
         winner = users.alias('winner')
         winning_bids = _winning_bids_subquery()
+        bid_counts = (
+            select(
+                bids.c.auction_id,
+                func.count(bids.c.id).label('bid_count')
+            )
+            .group_by(bids.c.auction_id)
+            .subquery()
+        )
         j = (
             auctions
             .join(seller, auctions.c.seller_id == seller.c.id)
             .outerjoin(categories, auctions.c.category_id == categories.c.id)
             .outerjoin(winning_bids, auctions.c.id == winning_bids.c.auction_id)
             .outerjoin(winner, winning_bids.c.winner_id == winner.c.id)
+            .outerjoin(bid_counts, auctions.c.id == bid_counts.c.auction_id)
         )
         query = (
             select(
                 auctions,
                 seller.c.name.label('seller_name'),
                 winner.c.name.label('winner_name'),
-                categories.c.name.label('category_name')
+                categories.c.name.label('category_name'),
+                bid_counts.c.bid_count
             )
             .select_from(j)
             .where(auctions.c.id == auction_id)

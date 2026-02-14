@@ -244,77 +244,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -1000px 0; }
-          100% { background-position: 1000px 0; }
-        }
-        @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.3); }
-          50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.5); }
-        }
-        .stat-card {
-          animation: fadeIn 0.6s ease-out;
-          transition: all 0.3s ease;
-        }
-        .stat-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 12px 24px rgba(168, 85, 247, 0.3);
-        }
-        .table-row {
-          transition: all 0.3s ease;
-        }
-        .table-row:hover {
-          background: rgba(168, 85, 247, 0.1);
-          transform: scale(1.01);
-        }
-        .status-badge.live {
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-          color: white;
-          box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-        }
-        .status-badge.upcoming {
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-          color: white;
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-        }
-        .status-badge.ended {
-          background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
-          color: white;
-          box-shadow: 0 4px 12px rgba(107, 114, 128, 0.4);
-        }
-        .action-btn {
-          transition: all 0.3s ease;
-        }
-        .action-btn:hover {
-          transform: scale(1.1);
-        }
-        .modal-overlay {
-          animation: fadeIn 0.3s ease-out;
-        }
-        .modal-content {
-          animation: fadeIn 0.4s ease-out;
-        }
-        .delete-btn {
-          background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-          transition: all 0.3s ease;
-        }
-        .delete-btn:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 16px rgba(239, 68, 68, 0.4);
-        }
-        .grid-bg {
-          background-image: 
-            linear-gradient(rgba(168, 85, 247, 0.05) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(168, 85, 247, 0.05) 1px, transparent 1px);
-          background-size: 50px 50px;
-        }
-      `}</style>
-
       <div className="grid-bg absolute inset-0 opacity-30"></div>
 
       {/* Header */}
@@ -536,7 +465,7 @@ export default function AdminDashboard() {
                         {getStatusBadge(auction)}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-white font-bold text-lg">${auction.currentBid.toLocaleString()}</p>
+                        <p className="text-white font-bold text-lg">₹{auction.currentBid.toLocaleString()}</p>
                       </td>
                       <td className="px-6 py-4">
                         <p className="text-white font-semibold">{auction.bidCount}</p>
@@ -757,16 +686,16 @@ export default function AdminDashboard() {
                   <p className="text-purple-300 text-xs">ID: {selectedAuction.sellerId}</p>
                   <p className="text-purple-300 text-xs">Email: {selectedAuction.sellerEmail}</p>
                   {selectedAuction.sellerBalance !== null && (
-                    <p className="text-purple-300 text-xs">Balance: ${Number(selectedAuction.sellerBalance).toLocaleString()}</p>
+                    <p className="text-purple-300 text-xs">Balance: ₹{Number(selectedAuction.sellerBalance).toLocaleString()}</p>
                   )}
                 </div>
                 <div className="bg-slate-700/50 p-4 rounded-xl border border-purple-500/20">
                   <p className="text-purple-300 text-sm font-bold mb-1">Current Bid</p>
-                  <p className="text-white font-bold text-xl">${selectedAuction.currentBid.toLocaleString()}</p>
+                  <p className="text-white font-bold text-xl">₹{selectedAuction.currentBid.toLocaleString()}</p>
                 </div>
                 <div className="bg-slate-700/50 p-4 rounded-xl border border-purple-500/20">
                   <p className="text-purple-300 text-sm font-bold mb-1">Starting Price</p>
-                  <p className="text-white font-semibold">${selectedAuction.startingPrice.toLocaleString()}</p>
+                  <p className="text-white font-semibold">₹{selectedAuction.startingPrice.toLocaleString()}</p>
                 </div>
                 <div className="bg-slate-700/50 p-4 rounded-xl border border-purple-500/20">
                   <p className="text-purple-300 text-sm font-bold mb-1">Total Bids</p>
