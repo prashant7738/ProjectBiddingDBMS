@@ -27,8 +27,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
-# ALLOWED_HOSTS = []
-ALLOWED_HOSTS = ['livebiddingnp.onrender.com', 'localhost', '127.0.0.1']
+# Use ALLOWED_HOSTS from environment variable, fallback to defaults
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 
 
 # Application definition
@@ -201,9 +201,19 @@ CSRF_COOKIE_SECURE = True
 CORS_ALLOW_CREDENTIALS = True
 
 # 4. Use the specific frontend URL (Do NOT use '*')
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    # "https://your-frontend-deployment.onrender.com",
+    FRONTEND_URL,
+]
+
+# CSRF Trusted Origins
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    FRONTEND_URL,
+    BACKEND_URL,
 ]
 
 CSRF_COOKIE_HTTPONLY = False
