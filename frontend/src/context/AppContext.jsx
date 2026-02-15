@@ -55,7 +55,7 @@ export const AppProvider = ({ children }) => {
                 };
 
                 fetchNotifications();
-                pollRef.current = setInterval(fetchNotifications, 30000);
+                pollRef.current = setInterval(fetchNotifications, 3000);
 
                 return () => {
                     if (pollRef.current) {

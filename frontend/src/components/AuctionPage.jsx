@@ -603,7 +603,7 @@ const AuctionPage = () => {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {bidAlert && (
-                <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 animate-bid-notification">
+                <div className="fixed top-24 left-[45vw] z-50 animate-bid-notification">
                     <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 text-white px-8 py-4 rounded-2xl shadow-2xl border-2 border-white/30 backdrop-blur-sm">
                         <div className="flex items-center gap-4">
                             <div className="relative">
