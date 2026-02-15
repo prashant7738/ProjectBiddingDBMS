@@ -1,9 +1,8 @@
 import { useContext, useEffect, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { getProfile } from '../api/auth';
 
 export default function Profile() {
-  const { user, loading } = useContext(AuthContext);
+  const { user, loading,refreshProfile } = useContext(AuthContext);
   const [error, setError] = useState('');
 
   if (loading) {
@@ -14,7 +13,13 @@ export default function Profile() {
   if (!user) {
     return <div className="p-4 text-red-600">Not authenticated. Please log in.</div>;
   }
+    useEffect(() => {
+    const interval = setInterval(() => {
+      refreshProfile();
+    }, 30000); // 30 seconds
 
+    return () => clearInterval(interval);
+  }, [refreshProfile]);
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">User Profile</h1>

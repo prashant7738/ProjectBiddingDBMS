@@ -42,7 +42,7 @@ export const getAdminAuctions = () => client.get('/admin/auctions/');
 export const deleteAdminAuction = (id) => client.delete(`/admin/auctions/${id}/`);
 
 // Admin user endpoints (protected)
-export const getAdminUsers = () => client.get('/admin/users/');
+export const getAdminUsers = () => client.get('/admin/users/?page_size=100');
 export const updateAdminUserBalance = (userId, balance) => client.patch(`/admin/users/${userId}/`, { balance });
 
 // Bid endpoints (protected - requires login)

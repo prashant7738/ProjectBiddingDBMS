@@ -402,7 +402,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Auctions Table */}
-        <div className="bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-purple-500/30 shadow-xl overflow-hidden">
+        <div className="bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-purple-500/30 shadow-xl overflow-hidden ">
           <div className="px-6 py-4 border-b border-purple-500/30 bg-slate-700/50">
             <h2 className="text-xl font-black text-white">Auction Management</h2>
           </div>
@@ -429,7 +429,7 @@ export default function AdminDashboard() {
               <p className="text-purple-300 font-semibold">No auctions found</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto hide-scrollbar">
               <table className="w-full">
                 <thead className="bg-slate-700/50">
                   <tr>
@@ -557,10 +557,10 @@ export default function AdminDashboard() {
                   <p className="text-purple-300 font-semibold">No users found</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
+                <div className="overflow-x-auto hide-scrollbar">
+                  <table className="w-full  ">
                     <thead className="bg-slate-700/50">
-                      <tr>
+                      <tr >
                         <th className="px-6 py-4 text-left text-xs font-black text-purple-300 uppercase tracking-wider">ID</th>
                         <th className="px-6 py-4 text-left text-xs font-black text-purple-300 uppercase tracking-wider">Name</th>
                         <th className="px-6 py-4 text-left text-xs font-black text-purple-300 uppercase tracking-wider">Email</th>
@@ -568,7 +568,7 @@ export default function AdminDashboard() {
                         <th className="px-6 py-4 text-left text-xs font-black text-purple-300 uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-purple-500/20">
+                    <tbody className="divide-y divide-purple-500/20 hide-scrollbar">
                       {filteredUsers.map((user) => (
                         <tr key={user.id} className="table-row">
                           <td className="px-6 py-4">

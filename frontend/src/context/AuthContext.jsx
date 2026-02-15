@@ -30,6 +30,7 @@ export default function AuthProvider({ children }) {
     refreshProfile();
   }, []);
 
+
   const logout = async () => {
     try {
       await logoutUser();
