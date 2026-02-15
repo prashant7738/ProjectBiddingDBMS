@@ -16,7 +16,7 @@ const NavigationTabs = () => {
     ];
 
     return (
-        <div className="bg-white shadow-md font-Roboto sticky top-19 md:top-24 z-40 border-b-2 border-gray-100">
+        <div className="bg-white shadow-md font-Roboto sticky top-19 md:top-24 z-40 border-b-2 border-gray-100 font-orbitron font-bold ">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Scrollable Container for Mobile */}
                 <div className="flex space-x-2 md:space-x-6 overflow-x-auto no-scrollbar whitespace-nowrap">

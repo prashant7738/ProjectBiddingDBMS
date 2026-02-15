@@ -12,6 +12,23 @@ body{
 .hide-scrollbar::-webkit-scrollbar {
   display: none;  
 }
+
+@font-face {
+    font-family: prata;
+    src: url("./assets/fonts/Prata-Regular.ttf");
+}
+@font-face {
+    font-family: outfit;
+    src: url("./assets/fonts/Outfit-Regular.ttf");
+}
+@font-face {
+  font-family: mozilla;
+  src: url("./assets/fonts/MozillaText-VariableFont_wght.ttf");
+}
+@font-face {
+  font-family: orbitron;
+  src: url("./assets/fonts/Orbitron-VariableFont_wght.ttf");
+}
 @theme {
   --animate-shimmer: shimmer 3s linear infinite;
   --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
@@ -34,6 +51,10 @@ body{
   --animate-check-mark: check-mark 0.6s ease-out;
   --animate-fade-in: fadeIn 0.6s ease-out;
   --animate-bid-notification: bid-notification 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --font-prata:prata,"sans-serif";
+  --font-outfit:outfit,"sans-serif";
+  --font-mozilla:mozilla,"sans-serif";
+  --font-orbitron:orbitron,"sans-serif";
 }
 
 @keyframes shimmer {

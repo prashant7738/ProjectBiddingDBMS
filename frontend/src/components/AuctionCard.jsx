@@ -58,8 +58,8 @@ const AuctionCard = ({ auction, onClick }) => {
     return (
         <div 
             onClick={onClick}
-            className="group bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-500 ease-out hover:shadow-2xl hover:-translate-y-2 cursor-pointer border border-gray-100 hover:border-purple-200"
-        >
+            className="group bg-white rounded-2xl shadow-lg overflow-hidden transition-all duration-500 ease-out hover:shadow-2xl hover:-translate-y-2 cursor-pointer border border-gray-100 hover:border-purple-200 font-mozilla"
+        > 
             <div className="relative h-64 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
                 <img 
                     src={imageValue} 

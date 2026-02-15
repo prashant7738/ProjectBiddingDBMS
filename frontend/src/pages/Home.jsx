@@ -86,7 +86,7 @@ const Home = () => {
                 <div className="section-header flex items-center justify-between mb-8">
                     <h2 className="text-4xl md:text-5xl font-black text-gray-900 flex items-center">
                         <span className="fire-icon text-5xl md:text-6xl mr-4">🔥</span>
-                        <span className="gradient-text">Hot Auctions</span>
+                        <span className="gradient-text font-outfit">Hot Auctions</span>
                     </h2>
                     {hotAuctions.length > 0 && (
                         <div className="bg-gradient-to-r from-purple-100 to-indigo-100 px-4 py-2 rounded-full">
@@ -138,7 +138,7 @@ const Home = () => {
                     <div className="section-header flex items-center justify-between mb-8">
                         <h2 className="text-3xl md:text-4xl font-black text-gray-900 flex items-center">
                             <span className="text-4xl md:text-5xl mr-4">⏰</span>
-                            <span className="bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent">
+                            <span className="bg-gradient-to-r from-red-600 to-orange-600 bg-clip-text text-transparent font-outfit">
                                 Ending Soon
                             </span>
                         </h2>
@@ -170,7 +170,7 @@ const Home = () => {
                 <div className="section-header mb-8">
                     <h2 className="text-3xl md:text-4xl font-black text-gray-900 flex items-center">
                         <span className="text-4xl md:text-5xl mr-4">🔍</span>
-                        <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                        <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent font-outfit">
                             Explore More
                         </span>
                     </h2>

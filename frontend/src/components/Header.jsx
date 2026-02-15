@@ -26,7 +26,7 @@ const Header = () => {
     };
 
     return (
-        <header className="bg-white shadow-lg sticky top-0 z-50 border-b-2 border-purple-100">
+        <header className="bg-white shadow-lg sticky top-0 z-50 border-b-2 border-purple-100 font-prata font-bold ">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Main Nav Row */}
                 <div className="flex items-center justify-between h-20 md:h-25 gap-2">
@@ -64,7 +64,7 @@ const Header = () => {
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                                     </svg>
-                                    <span className="hidden lg:inline font-semibold text-sm">Won Items</span>
+                                    <span className="hidden lg:inline font-semibold text-sm md:text-base">Won Items</span>
                                 </Link>
 
                                 <Link to={'/myitems'}
@@ -73,7 +73,7 @@ const Header = () => {
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                     </svg>
-                                    <span className="hidden lg:inline font-semibold text-sm">My Items</span>
+                                    <span className="hidden lg:inline font-semibold text-sm md:text-base">My Items</span>
                                 </Link>
                             </div>
                         )}
@@ -118,7 +118,7 @@ const Header = () => {
                         {user ? (
                             <div className="relative">
                                 <button className="flex items-center space-x-2 p-1 md:px-3 md:py-2 rounded-xl hover:bg-gradient-to-r hover:from-purple-50 hover:to-indigo-50 transition-all duration-300" onClick={() => setShowOptions(!showOptions)}>
-                                    <div className="w-9 h-9 md:w-11 md:h-11 avatar-gradient rounded-full flex items-center justify-center text-white text-sm md:text-base font-bold shadow-lg">
+                                    <div className="w-9 h-9 md:w-11 md:h-11 avatar-gradient rounded-full flex items-center justify-center text-white text-sm md:text-base font-bold shadow-lg ">
                                         {user?.name?.charAt(0) || 'U'}
                                     </div>
                                     <span className="hidden md:inline font-bold text-gray-800">{user?.name}</span>
@@ -145,10 +145,10 @@ const Header = () => {
                             </div>
                         ) : (
                             <div className="flex items-center space-x-2">
-                                <Link to="/login" className="px-4 py-2 md:px-5 md:py-2.5 text-xs md:text-sm rounded-xl border-2 border-purple-200 text-gray-700 hover:bg-purple-50 hover:border-purple-300 font-bold transition-all duration-300">
+                                <Link to="/login" className="px-4 py-2 md:px-5 md:py-2.5 text-xs md:text-base rounded-xl border-2 border-purple-200 text-gray-700 hover:bg-purple-50 hover:border-purple-300 font-bold transition-all duration-300">
                                     Sign in
                                 </Link>
-                                <Link to="/register" className="px-4 py-2 md:px-5 md:py-2.5 text-xs md:text-sm rounded-xl btn-gradient-blue text-white font-bold shadow-lg">
+                                <Link to="/register" className="px-4 py-2 md:px-5 md:py-2.5 text-xs md:text-base rounded-xl btn-gradient-blue text-white font-bold shadow-lg">
                                     Register
                                 </Link>
                             </div>
