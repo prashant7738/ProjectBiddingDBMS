@@ -12,12 +12,12 @@ import star_dull_icon from './star_dull_icon.png'
 import star_icon from './star_icon.png'
 import support_img from './support_img.png'
 import menu_icon from './menu_icon.png'
-
 import cross_icon from './cross_icon.png'
+import hero_img from './mainlogo.png'
 
 export const assets = {
     logo,
-    
+    hero_img,
     cart_icon,
     dropdown_icon,
     exchange_icon,

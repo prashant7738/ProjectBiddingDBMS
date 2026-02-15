@@ -29,12 +29,12 @@ const Header = () => {
         <header className="bg-white shadow-lg sticky top-0 z-50 border-b-2 border-purple-100">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Main Nav Row */}
-                <div className="flex items-center justify-between h-16 md:h-20 gap-2">
+                <div className="flex items-center justify-between h-20 md:h-25 gap-2">
                     
                     {/* Logo */}
                     <div className="shrink-0 cursor-pointer flex items-center">
                         <Link to={'/'} onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }) }}>
-                            <img src={assets.logo} className='h-16  md:h-20 w-auto logo-img' alt="Logo" />
+                            <img src={assets.hero_img} className='h-20  md:h-27 w-auto logo-img' alt="Logo" />
                         </Link>
                     </div>
 

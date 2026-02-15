@@ -26,6 +26,7 @@ const normalizeAuction = (raw) => {
     const registered = raw?.registered ?? false;
     const winnerName = raw?.winner_name ?? raw?.winnerName ?? raw?.winner?.name ?? '';
     const id = raw?.id ?? raw?.auction_id;
+    const sellerName = raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? '';  
 
     return {
         id,
@@ -41,6 +42,7 @@ const normalizeAuction = (raw) => {
         bidCount,
         registered,
         winnerName,
+        sellerName
     };
 };
 

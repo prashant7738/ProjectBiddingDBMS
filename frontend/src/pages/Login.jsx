@@ -45,13 +45,11 @@ export default function Login() {
       <div className="login-card w-full max-w-5xl grid md:grid-cols-2 gap-0 bg-white rounded-3xl shadow-2xl overflow-hidden relative z-10">
         {/* Visual / Brand side */}
         <div className="brand-side relative hidden md:flex items-center justify-center p-8">
-          <div className="absolute inset-0 opacity-10">
-            <img src={assets.hero_img} alt="Auction" className="w-full h-full object-cover" />
-          </div>
-          <div className="relative z-10 text-white text-center max-w-sm">
-            <img src={assets.logo} alt="Logo" className="mx-auto mb-6 w-40 drop-shadow-2xl" />
-            <h2 className="text-4xl font-black mb-4 drop-shadow-lg">Welcome back</h2>
-            <p className="text-white/90 text-lg font-medium">Sign in to continue bidding, track your items, and see your wins.</p>
+        
+          <div className="relative z-10 text-white text-center max-w-sm flex items-center justify-center">
+            <img src={assets.hero_img} alt="Logo" className="mx-auto mb-6 w-70  drop-shadow-2xl" />
+    
+           
             <div className="mt-8 flex justify-center space-x-2">
               <div className="w-3 h-3 bg-white rounded-full opacity-50"></div>
               <div className="w-3 h-3 bg-white rounded-full"></div>
