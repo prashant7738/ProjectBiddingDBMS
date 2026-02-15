@@ -36,7 +36,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-10 bg-gradient-to-br from-purple-50 via-white to-indigo-50 relative overflow-hidden">
+    <div className="min-h-[calc(125vh)] flex items-center justify-center px-4 py-10 bg-gradient-to-br from-purple-50 via-white to-indigo-50 relative overflow-hidden">
       {/* Floating Background Bubbles */}
       <div className="floating-bubble bubble-1"></div>
       <div className="floating-bubble bubble-2"></div>
@@ -61,7 +61,7 @@ export default function Login() {
         {/* Form side */}
         <div className="p-8 md:p-12">
           <div className="md:hidden flex items-center justify-center mb-8">
-            <img src={assets.logo} alt="Logo" className="w-36" />
+            <img src={assets.hero_img} alt="Logo" className="w-36" />
           </div>
 
           <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3 bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">

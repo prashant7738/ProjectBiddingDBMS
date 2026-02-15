@@ -45,7 +45,7 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center px-4 py-10 bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative overflow-hidden">
+    <div className="min-h-[calc(125vh)] flex items-center justify-center px-4 py-10 bg-gradient-to-br from-indigo-50 via-white to-purple-50 relative overflow-hidden">
       {/* Floating Background Bubbles */}
       <div className="floating-bubble bubble-1"></div>
       <div className="floating-bubble bubble-2"></div>

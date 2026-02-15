@@ -30,9 +30,9 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-10 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-[125vh] flex items-center justify-center px-4 py-10 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
       {/* Animated Grid Background */}
-      <div className="grid-bg absolute inset-0 opacity-20"></div>
+      <div className=" grid-bg absolute inset-0 opacity-20"></div>
 
       {/* Floating Particles */}
       <div className="floating-particle particle-1"></div>
