@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+body{
+  zoom: 0.8;
+}
 @theme {
   --animate-shimmer: shimmer 3s linear infinite;
   --animate-pulse-glow: pulse-glow 2s ease-in-out infinite;
