@@ -98,6 +98,7 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
                 "type": "bid_update",
                 "auction_id": self.auction_id,
                 "bidder_id": self.user.id,
+                "bidder_name": self.user.name,
                 "amount": amount,
                 "current_highest_bid": float(auction.get("current_highest_bid") if auction else amount),
             }
@@ -105,7 +106,7 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
                 self.group_name,
                 {"type": "broadcast_bid", "payload": payload},
             )
-            print(f"✅ Bid placed successfully by user {self.user.id}: ${amount}")
+            print(f"✅ Bid placed successfully by user {self.user.id} ({self.user.name}): ${amount}")
         else:
             print(f"❌ Bid rejected for user {self.user.id}: {result}")
             # Send error with current auction state so client can correct UI

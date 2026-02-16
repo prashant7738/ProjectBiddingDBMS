@@ -420,7 +420,7 @@ class AdminUserListView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        paginator = StandardResultsSetPagination()
+        # paginator = StandardResultsSetPagination()
         data = get_all_users()
         result_page = paginator.paginate_queryset(data, request)
         serializer = UserSerializer(result_page, many=True)
