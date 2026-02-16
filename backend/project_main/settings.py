@@ -26,7 +26,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False") == "True"
-
 # Use ALLOWED_HOSTS from environment variable, fallback to defaults
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 
@@ -81,19 +80,6 @@ WSGI_APPLICATION = 'project_main.wsgi.application'
 ASGI_APPLICATION = 'project_main.asgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/6.0/ref/settings/#databases
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'bidding_system',
-#         'USER': 'postgres',
-#         'PASSWORD': '123',
-#         'HOST': '127.0.0.1',
-#         'PORT': '5432',
-#     }
-# }
 
 
 # Password validation
@@ -158,9 +144,27 @@ CHANNEL_LAYERS = {
     }
 }
 
+# # Local Database
+# DATABASE_URL = os.getenv("DATABASE_URL")
+
+# if DATABASE_URL:
+#     DATABASES = {
+#         "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+#     }
+# else:
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.postgresql',
+#             'NAME': 'bidding_system',
+#             'USER': 'postgres',
+#             'PASSWORD': '123',
+#             'HOST': '127.0.0.1',
+#             'PORT': '5432',
+#         }
+#     }
 
 
-# Database 
+# # Local Database 
 # DB_CONFIG = {
 #     "DB_NAME": "bidding_system",
 #     "DB_USER": "postgres",
@@ -187,15 +191,16 @@ SIMPLE_JWT = {
 }
 
 # CORS Configuration
-IS_PRODUCTION = True
+IS_PRODUCTION = os.getenv("IS_PRODUCTION", "False") == "True"
 
 # 1. Allow cookies to be sent in cross-site requests
-SESSION_COOKIE_SAMESITE = 'None'
-CSRF_COOKIE_SAMESITE = 'None'
+# For local dev over http, use Lax to avoid Secure+None rejection.
+SESSION_COOKIE_SAMESITE = 'Lax' if DEBUG else 'None'
+CSRF_COOKIE_SAMESITE = 'Lax' if DEBUG else 'None'
 
 # 2. Cookies MUST be marked as Secure to allow 'SameSite=None'
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 # 3. Explicitly allow credentials in CORS
 CORS_ALLOW_CREDENTIALS = True
@@ -227,7 +232,7 @@ ADMIN_USER_IDS = [uid.strip() for uid in os.getenv("ADMIN_USER_IDS", "").split("
 
 
 # PRODUCTION READY:
-# ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
 
 DATABASES = {
     "default": dj_database_url.config(
