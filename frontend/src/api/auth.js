@@ -3,7 +3,8 @@ import axios from 'axios';
 // Shared HTTP client for all API calls
 // Uses HttpOnly cookies for JWT auth - no token storage in JS
 const client = axios.create({
-    baseURL: import.meta.env.VITE_API_URL,
+    // baseURL: import.meta.env.VITE_API_URL,
+    baseURL: "http://localhost:8000/api/",
     withCredentials: true,  // Essential for sending cookies automatically
     headers: {
         'Content-Type': 'application/json',
