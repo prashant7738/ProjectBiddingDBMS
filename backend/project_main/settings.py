@@ -209,17 +209,18 @@ CORS_ALLOW_CREDENTIALS = True
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    FRONTEND_URL,
-]
+# CORS Allowed Origins - only include production URLs
+CORS_ALLOWED_ORIGINS = [FRONTEND_URL] if FRONTEND_URL else []
+
+# Add localhost only in development mode
+if DEBUG:
+    CORS_ALLOWED_ORIGINS.append("http://localhost:5173")
 
 # CSRF Trusted Origins
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    FRONTEND_URL,
-    BACKEND_URL,
-]
+CSRF_TRUSTED_ORIGINS = [FRONTEND_URL, BACKEND_URL] if FRONTEND_URL else []
+
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS.append("http://localhost:5173")
 
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_HTTPONLY = True  # Prevents JS from reading the cookie
