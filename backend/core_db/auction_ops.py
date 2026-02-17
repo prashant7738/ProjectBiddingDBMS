@@ -281,17 +281,60 @@ def get_all_auctions_admin():
 def close_expired_auctions():
     with engine.connect() as conn:
         now = timezone.now()
-        stmt = update(auctions).where(
-            and_(
-                auctions.c.end_time < now,
-                 auctions.c.is_active == True
-                 )
-        ).values(is_active = False)
-        
-        result = conn.execute(stmt)
-        conn.commit()
-        # TO return how many auctions has been closed out
-        return result.rowcount 
+        winning_bids = _winning_bids_subquery()
+
+        ended_query = (
+            select(
+                auctions.c.id,
+                auctions.c.seller_id,
+                winning_bids.c.winner_id,
+                winning_bids.c.winning_amount
+            )
+            .select_from(
+                auctions.outerjoin(winning_bids, auctions.c.id == winning_bids.c.auction_id)
+            )
+            .where(
+                and_(
+                    auctions.c.end_time < now,
+                    auctions.c.is_active == True
+                )
+            )
+        )
+
+        closed_count = 0
+        with conn.begin():
+            for row in conn.execute(ended_query):
+                auction_id = row.id
+                seller_id = row.seller_id
+                winner_id = row.winner_id
+                winning_amount = row.winning_amount
+
+                # Settle balances if there is a winner
+                if winner_id and winning_amount:
+                    buyer_balance = conn.execute(
+                        select(users.c.balance).where(users.c.id == winner_id)
+                    ).scalar()
+
+                    if buyer_balance is not None and buyer_balance >= winning_amount:
+                        conn.execute(
+                            update(users)
+                            .where(users.c.id == winner_id)
+                            .values(balance=users.c.balance - winning_amount)
+                        )
+                        conn.execute(
+                            update(users)
+                            .where(users.c.id == seller_id)
+                            .values(balance=users.c.balance + winning_amount)
+                        )
+
+                conn.execute(
+                    update(auctions)
+                    .where(auctions.c.id == auction_id)
+                    .values(is_active=False)
+                )
+                closed_count += 1
+
+        return closed_count
 
 
 def delete_auction(auction_id):

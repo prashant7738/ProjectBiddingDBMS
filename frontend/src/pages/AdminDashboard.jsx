@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAdminAuctions, deleteAdminAuction, getAdminUsers, updateAdminUserBalance, deleteAdminUser, getMediaUrl } from '../api/auth';
+import { getAdminAuctions, deleteAdminAuction, getAdminUsers, updateAdminUserBalance, deleteAdminUser, closeExpiredAuctions, getMediaUrl } from '../api/auth';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -20,6 +20,8 @@ export default function AdminDashboard() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditBalanceModal, setShowEditBalanceModal] = useState(false);
   const [newBalance, setNewBalance] = useState('');
+  const [closingExpired, setClosingExpired] = useState(false);
+  const [closeExpiredMessage, setCloseExpiredMessage] = useState('');
   const [stats, setStats] = useState({
     total: 0,
     live: 0,
@@ -135,6 +137,21 @@ export default function AdminDashboard() {
       setError(err.response?.data?.error || 'Failed to load users.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCloseExpired = async () => {
+    setClosingExpired(true);
+    setCloseExpiredMessage('');
+    try {
+      const res = await closeExpiredAuctions();
+      const count = res.data?.closed_count ?? 0;
+      setCloseExpiredMessage(`Closed ${count} expired auction${count === 1 ? '' : 's'}.`);
+      await loadAuctions();
+    } catch (err) {
+      setCloseExpiredMessage(err.response?.data?.error || 'Failed to close expired auctions.');
+    } finally {
+      setClosingExpired(false);
     }
   };
 
@@ -326,6 +343,23 @@ export default function AdminDashboard() {
         {/* Auctions Section */}
         {activeTab === 'auctions' && (
           <>
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="text-sm text-purple-200 font-semibold">
+            Run settlement to close ended auctions and transfer balances.
+          </div>
+          <div className="flex items-center gap-3">
+            {closeExpiredMessage && (
+              <span className="text-sm font-semibold text-emerald-300">{closeExpiredMessage}</span>
+            )}
+            <button
+              onClick={handleCloseExpired}
+              disabled={closingExpired}
+              className="px-5 py-2.5 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg transition disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {closingExpired ? 'Closing…' : 'Close Expired Auctions'}
+            </button>
+          </div>
+        </div>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="stat-card bg-slate-800/90 backdrop-blur-xl rounded-2xl p-6 border border-purple-500/30 shadow-xl">

@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from core_db.auction_ops import get_active_auctions , get_ended_auctions, get_auctions_by_seller, create_auction, register_user_for_auction, is_user_registered_for_auction, get_auction_registrations, get_auction_by_id, get_all_auctions_admin, delete_auction, update_auction
+from core_db.auction_ops import get_active_auctions , get_ended_auctions, get_auctions_by_seller, create_auction, register_user_for_auction, is_user_registered_for_auction, get_auction_registrations, get_auction_by_id, get_all_auctions_admin, delete_auction, update_auction, close_expired_auctions
 from core_db.user_ops import get_all_users, update_user_balance, delete_user_by_id
 from .serializers import AuctionSerializer ,BidSerializer, AdminAuctionSerializer, UserSerializer
 from rest_framework import status
@@ -439,6 +439,15 @@ class AdminAuctionDeleteView(APIView):
         if deleted:
             return Response({"message": "Auction deleted"}, status=status.HTTP_200_OK)
         return Response({"error": "Auction not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class AdminCloseExpiredAuctionsView(APIView):
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def post(self, request):
+        closed_count = close_expired_auctions()
+        return Response({"closed_count": closed_count}, status=status.HTTP_200_OK)
 
 
 class AdminUserListView(APIView):

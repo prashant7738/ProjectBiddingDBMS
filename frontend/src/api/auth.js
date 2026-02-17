@@ -42,6 +42,7 @@ export const getEndedAuctions = () => client.get('/auctions/ended/');
 // Admin auction endpoints (protected)
 export const getAdminAuctions = () => client.get('/admin/auctions/');
 export const deleteAdminAuction = (id) => client.delete(`/admin/auctions/${id}/`);
+export const closeExpiredAuctions = () => client.post('/admin/auctions/close-expired/');
 
 // Admin user endpoints (protected)
 export const getAdminUsers = () => client.get('/admin/users/?page_size=100');
