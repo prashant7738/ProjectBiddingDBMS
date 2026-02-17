@@ -35,8 +35,8 @@ const Footer = () => {
                                     <ul className="space-y-2 text-gray-400">
                                         <li>
                                             <Link 
-                                                to="/upcoming" 
-                                                onClick={() => handleCategoryClick('Electronics')}
+                                                to="/all-auctions" 
+                                                onClick={() => handleCategoryClick(1)}
                                                 className="hover:text-white transition-colors"
                                             >
                                                 📱 Electronics
@@ -44,8 +44,8 @@ const Footer = () => {
                                         </li>
                                         <li>
                                             <Link 
-                                                to="/upcoming" 
-                                                onClick={() => handleCategoryClick('Home & Garden')}
+                                                to="/all-auctions" 
+                                                onClick={() => handleCategoryClick(2)}
                                                 className="hover:text-white transition-colors"
                                             >
                                                 🏡 Home & Garden
@@ -53,8 +53,8 @@ const Footer = () => {
                                         </li>
                                         <li>
                                             <Link 
-                                                to="/upcoming" 
-                                                onClick={() => handleCategoryClick('Fashion')}
+                                                to="/all-auctions" 
+                                                onClick={() => handleCategoryClick(3)}
                                                 className="hover:text-white transition-colors"
                                             >
                                                 👗 Fashion
@@ -62,8 +62,8 @@ const Footer = () => {
                                         </li>
                                         <li>
                                             <Link 
-                                                to="/upcoming" 
-                                                onClick={() => handleCategoryClick('Others')}
+                                                to="/all-auctions" 
+                                                onClick={() => handleCategoryClick(4)}
                                                 className="hover:text-white transition-colors"
                                             >
                                                 🎨 Others
@@ -75,7 +75,7 @@ const Footer = () => {
                                     <h4 className="font-semibold mb-4">Follow Us</h4>
                                     <div className="flex space-x-4">
                                         <a 
-                                            href="https://facebook.com" 
+                                            href="https://www.facebook.com/roshan.poudel.301303" 
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors cursor-pointer"
@@ -85,7 +85,7 @@ const Footer = () => {
                                             </svg>
                                         </a>
                                         <a 
-                                            href="https://twitter.com" 
+                                            href="https://x.com/PrashantK7738" 
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors cursor-pointer"
@@ -95,7 +95,7 @@ const Footer = () => {
                                             </svg>
                                         </a>
                                         <a 
-                                            href="https://linkedin.com" 
+                                            href="https://www.linkedin.com/in/prashantkafle33/" 
                                             target="_blank" 
                                             rel="noopener noreferrer"
                                             className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-purple-600 transition-colors cursor-pointer"

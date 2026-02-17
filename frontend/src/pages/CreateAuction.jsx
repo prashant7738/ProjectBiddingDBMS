@@ -1,9 +1,11 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext.jsx';
 import { createAuction } from '../api/auth.js';
 
 export default function CreateAuction() {
   const { user, loading } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -16,6 +18,7 @@ export default function CreateAuction() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const imagePreview = useMemo(() => {
     if (!form.image) return '';
@@ -81,6 +84,7 @@ export default function CreateAuction() {
       const payload = buildPayload();
       await createAuction(payload);
       setSuccess('Auction created successfully.');
+      setShowSuccessModal(true);
       setForm({
         title: '',
         description: '',
@@ -311,6 +315,34 @@ export default function CreateAuction() {
           </div>
         </form>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-4 transform animate-scaleIn">
+            <div className="text-center">
+              <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-emerald-100 mb-6">
+                <svg className="h-12 w-12 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">Auction Created!</h3>
+              <p className="text-gray-600 mb-6 font-semibold">
+                Your auction has been successfully created and is now live.
+              </p>
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  navigate('/');
+                }}
+                className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold px-8 py-4 rounded-xl hover:opacity-95 transition shadow-lg"
+              >
+                Go to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,6 +5,9 @@ from core_db.user_ops import get_all_users, update_user_balance, delete_user_by_
 from .serializers import AuctionSerializer ,BidSerializer, AdminAuctionSerializer, UserSerializer
 from rest_framework import status
 from django.conf import settings
+from django.core.files.storage import default_storage
+import os
+import uuid
 import cloudinary.uploader
 from core_db.bid_ops import place_bid, get_user_bidding_history, get_won_items, get_user_notifications
 
@@ -69,28 +72,42 @@ class CreateAuction(APIView):
 
         image_url = None
         if image:
-            cloudinary_config = settings.CLOUDINARY_STORAGE or {}
-            if not all([
-                cloudinary_config.get('CLOUD_NAME'),
-                cloudinary_config.get('API_KEY'),
-                cloudinary_config.get('API_SECRET')
-            ]):
-                return Response(
-                    {"error": "Cloudinary is not configured"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-            try:
-                upload_result = cloudinary.uploader.upload(
-                    image,
-                    folder=settings.CLOUDINARY_UPLOAD_FOLDER,
-                    resource_type="image",
-                )
-                image_url = upload_result.get("secure_url") or upload_result.get("url")
-            except Exception:
-                return Response(
-                    {"error": "Image upload failed"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            if settings.DEBUG:
+                ext = os.path.splitext(image.name)[1]
+                filename = f"{uuid.uuid4().hex}{ext}"
+                folder = settings.CLOUDINARY_UPLOAD_FOLDER
+                relative_path = f"{folder}/{filename}"
+                try:
+                    saved_path = default_storage.save(relative_path, image)
+                    image_url = default_storage.url(saved_path)
+                except Exception:
+                    return Response(
+                        {"error": "Image upload failed"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+            else:
+                cloudinary_config = settings.CLOUDINARY_STORAGE or {}
+                if not all([
+                    cloudinary_config.get('CLOUD_NAME'),
+                    cloudinary_config.get('API_KEY'),
+                    cloudinary_config.get('API_SECRET')
+                ]):
+                    return Response(
+                        {"error": "Cloudinary is not configured"},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                try:
+                    upload_result = cloudinary.uploader.upload(
+                        image,
+                        folder=settings.CLOUDINARY_UPLOAD_FOLDER,
+                        resource_type="image",
+                    )
+                    image_url = upload_result.get("secure_url") or upload_result.get("url")
+                except Exception:
+                    return Response(
+                        {"error": "Image upload failed"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
 
         result = create_auction(seller_id , title , description, category_id, starting_price , end_time, start_time, image_url)
 
