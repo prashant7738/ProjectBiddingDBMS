@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()  # loads variables from .env
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-dev-key-change-in-production")
+CRON_SECRET = os.getenv("CRON_SECRET", "")
 
 
 

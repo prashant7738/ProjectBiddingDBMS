@@ -1,0 +1,15 @@
+name: Keep Render Alive
+on:
+  schedule:
+    # This runs every 14 minutes (Render sleeps at 15)
+    - cron: '*/14 * * * *'
+  workflow_dispatch: # This allows you to run it manually to test
+
+jobs:
+  ping_server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send keep-alive request
+        run: |
+          curl -i -H "X-Cron-Key: ${{ secrets.CRON_SECRET }}" \
+          https://livebiddingnp.onrender.com/api/keep-alive/
