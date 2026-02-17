@@ -1,4 +1,3 @@
-
 from pathlib import Path
 from datetime import timedelta
 
@@ -25,9 +24,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# Debug converted to boolen by comaparing with env variable (cause it is string)
 DEBUG = os.getenv("DEBUG", "False") == "True"
-# Use ALLOWED_HOSTS from environment variable, fallback to defaults
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 
 
 # Application definition
@@ -76,6 +74,7 @@ TEMPLATES = [
     },
 ]
 
+# WSGI used by tranditional sychronous servers like (Gunicorn) but ASGI is used by modern async-capable server like (Daphne, Uvicorn) needed for websocket/channel
 WSGI_APPLICATION = 'project_main.wsgi.application'
 ASGI_APPLICATION = 'project_main.asgi.application'
 
@@ -114,13 +113,12 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/6.0/howto/static-files/
-
+# This only matter for production only 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# In Settings.py
+# For image upload -- cloudinary setup
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
@@ -134,7 +132,14 @@ cloudinary.config(
     api_secret=CLOUDINARY_STORAGE.get('API_SECRET')
 )
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# For testing using default storage but for hosting we are using cloudinary
+
+if DEBUG:
+    DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = BASE_DIR / "media"
+else:
+    DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 
 # Channels
@@ -143,36 +148,6 @@ CHANNEL_LAYERS = {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
     }
 }
-
-# # Local Database
-# DATABASE_URL = os.getenv("DATABASE_URL")
-
-# if DATABASE_URL:
-#     DATABASES = {
-#         "default": dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-#     }
-# else:
-#     DATABASES = {
-#         'default': {
-#             'ENGINE': 'django.db.backends.postgresql',
-#             'NAME': 'bidding_system',
-#             'USER': 'postgres',
-#             'PASSWORD': '123',
-#             'HOST': '127.0.0.1',
-#             'PORT': '5432',
-#         }
-#     }
-
-
-# # Local Database 
-# DB_CONFIG = {
-#     "DB_NAME": "bidding_system",
-#     "DB_USER": "postgres",
-#     "DB_PASS": "123", 
-#     "DB_HOST": "127.0.0.1",
-#     "DB_PORT": "5432",
-# }
-
 
 
 
@@ -219,8 +194,8 @@ if DEBUG:
 # CSRF Trusted Origins
 CSRF_TRUSTED_ORIGINS = [FRONTEND_URL, BACKEND_URL]
 
-# if DEBUG:
-#     CSRF_TRUSTED_ORIGINS.append("http://localhost:5173")
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS.append("http://localhost:5173")
 
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_HTTPONLY = True  # Prevents JS from reading the cookie
@@ -235,11 +210,12 @@ ADMIN_USER_IDS = [uid.strip() for uid in os.getenv("ADMIN_USER_IDS", "").split("
 # PRODUCTION READY:
 ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "").split(",") if h.strip()]
 
+# ALL IN ONE CODE FOR CONNECTING TO DATABASE
+
 DATABASES = {
     "default": dj_database_url.config(
         default=os.environ.get(
-            "DATABASE_URL", 
-            "sqlite:///db.sqlite3"
+            "DATABASE_URL"
         )
     )
 }
