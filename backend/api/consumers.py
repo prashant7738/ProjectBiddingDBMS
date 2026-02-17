@@ -94,11 +94,13 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
 
         if result.startswith("Success"):
             auction = await database_sync_to_async(get_auction_by_id)(self.auction_id)
+            username = self._resolve_username()
             payload = {
                 "type": "bid_update",
                 "auction_id": self.auction_id,
                 "bidder_id": self.user.id,
-                "bidder_name": self.user.name,
+                "bidder_name": username,
+                "username": username,
                 "amount": amount,
                 "current_highest_bid": float(auction.get("current_highest_bid") if auction else amount),
             }
@@ -152,3 +154,10 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
 
     def _to_iso(self, value):
         return value.isoformat() if value else None
+
+    def _resolve_username(self):
+        if getattr(self.user, "name", None):
+            return self.user.name
+        if getattr(self.user, "email", None):
+            return self.user.email.split("@")[0]
+        return f"Bidder #{self.user.id}"

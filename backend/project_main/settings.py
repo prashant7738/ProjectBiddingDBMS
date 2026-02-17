@@ -202,7 +202,7 @@ SESSION_COOKIE_HTTPONLY = True  # Prevents JS from reading the cookie
 
 # Admin allowlist for admin-only API access
 ADMIN_EMAILS = [e.strip() for e in os.getenv("ADMIN_EMAILS", "").split(",") if e.strip()]
-ADMIN_USER_IDS = [uid.strip() for uid in os.getenv("ADMIN_USER_IDS", "").split(",") if uid.strip()]
+ADMIN_USER_IDS = [int(uid.strip()) for uid in os.getenv("ADMIN_USER_IDS", "").split(",") if uid.strip()]
 
 
 

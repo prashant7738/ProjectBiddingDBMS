@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAdminAuctions, deleteAdminAuction, getAdminUsers, updateAdminUserBalance, getMediaUrl } from '../api/auth';
+import { getAdminAuctions, deleteAdminAuction, getAdminUsers, updateAdminUserBalance, deleteAdminUser, getMediaUrl } from '../api/auth';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -16,6 +16,7 @@ export default function AdminDashboard() {
   const [selectedAuction, setSelectedAuction] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showEditBalanceModal, setShowEditBalanceModal] = useState(false);
   const [newBalance, setNewBalance] = useState('');
@@ -216,6 +217,20 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error('Error deleting auction:', err);
       alert('Failed to delete auction');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    try {
+      await deleteAdminUser(userId);
+      const updatedUsers = users.filter(u => u.id !== userId);
+      setUsers(updatedUsers);
+      setFilteredUsers(updatedUsers);
+      setShowDeleteUserModal(false);
+      setSelectedUser(null);
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      alert(err.response?.data?.error || 'Failed to delete user');
     }
   };
 
@@ -584,19 +599,33 @@ export default function AdminDashboard() {
                             <p className="text-green-400 font-bold text-lg">₹{Number(user.balance || 0).toLocaleString()}</p>
                           </td>
                           <td className="px-6 py-4">
-                            <button
-                              onClick={() => {
-                                setSelectedUser(user);
-                                setNewBalance(user.balance?.toString() || '0');
-                                setShowEditBalanceModal(true);
-                              }}
-                              className="action-btn p-2 bg-green-600 hover:bg-green-700 rounded-lg text-white"
-                              title="Edit Balance"
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                            </button>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setNewBalance(user.balance?.toString() || '0');
+                                  setShowEditBalanceModal(true);
+                                }}
+                                className="action-btn p-2 bg-green-600 hover:bg-green-700 rounded-lg text-white"
+                                title="Edit Balance"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedUser(user);
+                                  setShowDeleteUserModal(true);
+                                }}
+                                className="action-btn p-2 bg-red-600 hover:bg-red-700 rounded-lg text-white"
+                                title="Delete User"
+                              >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -798,6 +827,42 @@ export default function AdminDashboard() {
                     Update Balance
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Confirmation Modal */}
+      {showDeleteUserModal && selectedUser && (
+        <div className="modal-overlay fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="modal-content bg-slate-800 rounded-2xl p-8 max-w-md w-full border-2 border-red-500/30 shadow-2xl">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-black text-white mb-2">Delete User</h3>
+              <p className="text-gray-300 mb-6">
+                Are you sure you want to delete user "<span className="font-bold text-white">{selectedUser.name}</span>"? This action cannot be undone and will also delete all their bids and auctions.
+              </p>
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => {
+                    setShowDeleteUserModal(false);
+                    setSelectedUser(null);
+                  }}
+                  className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteUser(selectedUser.id)}
+                  className="delete-btn flex-1 px-6 py-3 text-white font-bold rounded-xl"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>

@@ -1,6 +1,6 @@
 # This is where all User Work are done.
 
-from sqlalchemy import insert , select
+from sqlalchemy import insert , select, delete
 from passlib.hash import pbkdf2_sha256  # Professional hashing algorithm
 from .engine import engine
 from .schemas import users
@@ -74,3 +74,17 @@ def get_user_balance(user_id):
         query = select(users.c.balance).where(users.c.id == user_id)
         result = conn.execute(query).first()
         return float(result.balance) if result else None
+
+
+def delete_user_by_id(user_id):
+    """Delete user by id. Returns True if deleted, else False."""
+    with engine.connect() as conn:
+        exists_query = select(users.c.id).where(users.c.id == user_id)
+        existing = conn.execute(exists_query).first()
+        if not existing:
+            return False
+
+        stmt = delete(users).where(users.c.id == user_id)
+        conn.execute(stmt)
+        conn.commit()
+        return True

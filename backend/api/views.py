@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from core_db.auction_ops import get_active_auctions , get_ended_auctions, get_auctions_by_seller, create_auction, register_user_for_auction, is_user_registered_for_auction, get_auction_registrations, get_auction_by_id, get_all_auctions_admin, delete_auction, update_auction
-from core_db.user_ops import get_all_users, update_user_balance
+from core_db.user_ops import get_all_users, update_user_balance, delete_user_by_id
 from .serializers import AuctionSerializer ,BidSerializer, AdminAuctionSerializer, UserSerializer
 from rest_framework import status
 from django.conf import settings
@@ -420,7 +420,7 @@ class AdminUserListView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
     def get(self, request):
-        # paginator = StandardResultsSetPagination()
+        paginator = StandardResultsSetPagination()
         data = get_all_users()
         result_page = paginator.paginate_queryset(data, request)
         serializer = UserSerializer(result_page, many=True)
@@ -450,6 +450,16 @@ class AdminUserUpdateView(APIView):
         
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, user_id):
+        if getattr(request.user, 'id', None) == user_id:
+            return Response({"error": "Admin cannot delete their own account"}, status=status.HTTP_400_BAD_REQUEST)
+
+        deleted = delete_user_by_id(user_id)
+        if not deleted:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        return Response({"message": "User deleted"}, status=status.HTTP_200_OK)
 
 
 # Notifications polling endpoint

@@ -45,6 +45,7 @@ export const deleteAdminAuction = (id) => client.delete(`/admin/auctions/${id}/`
 // Admin user endpoints (protected)
 export const getAdminUsers = () => client.get('/admin/users/?page_size=100');
 export const updateAdminUserBalance = (userId, balance) => client.patch(`/admin/users/${userId}/`, { balance });
+export const deleteAdminUser = (userId) => client.delete(`/admin/users/${userId}/`);
 
 // Bid endpoints (protected - requires login)
 export const placeBid = (data) => client.post('/bids/place/', data);    // { bidder_id, auction_id, amount }

@@ -354,7 +354,7 @@ const AuctionPage = () => {
 
             if (Array.isArray(payload?.bids)) {
                 const history = payload.bids.map((bid) => ({
-                    bidder: bid.bidder_name || bid.bidder || (bid.bidder_id ? `Bidder #${bid.bidder_id}` : 'Bidder'),
+                    bidder: bid.username || bid.bidder_name || bid.bidder || (bid.bidder_id ? `Bidder #${bid.bidder_id}` : 'Bidder'),
                     amount: bid.amount ?? 0,
                     time: bid.time || bid.created_at || 'Just now',
                 }));
@@ -365,7 +365,7 @@ const AuctionPage = () => {
             if (payload?.amount || payload?.bid?.amount || payload?.data?.bid?.amount) {
                 const bidAmount = payload?.amount ?? payload?.bid?.amount ?? payload?.data?.bid?.amount;
                 const bidderId = payload?.bidder_id ?? payload?.bid?.bidder_id ?? payload?.data?.bid?.bidder_id;
-                const bidderName = payload?.bidder_name || (bidderId ? `Bidder #${bidderId}` : 'Bidder');
+                const bidderName = payload?.username || payload?.bidder_name || (bidderId ? `Bidder #${bidderId}` : 'Bidder');
                 const bidTime = payload?.time || payload?.created_at || payload?.bid?.time || payload?.bid?.created_at || 'Just now';
                 
                 // Update userCurrentBid if this bid is from the current user
@@ -388,7 +388,7 @@ const AuctionPage = () => {
 
             if (options.showAlert && Number.isFinite(amount)) {
                 const bidderId = payload?.bidder_id ?? payload?.bid?.bidder_id ?? payload?.data?.bid?.bidder_id;
-                const bidderName = payload?.bidder_name || (bidderId ? `Bidder #${bidderId}` : 'Someone');
+                const bidderName = payload?.username || payload?.bidder_name || (bidderId ? `Bidder #${bidderId}` : 'Someone');
                 setBidAlert(`${bidderName} placed a new bid: ${formatCurrency(amount)}`);
                 if (alertTimeoutRef.current) {
                     clearTimeout(alertTimeoutRef.current);
