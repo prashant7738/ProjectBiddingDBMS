@@ -114,14 +114,28 @@ class CreateAuction(APIView):
         return Response({"message": result, "image_url": image_url} , status=status.HTTP_201_CREATED)
 
 
+# class KeepAliveView(APIView):
+#     def get(self, request):
+#         secret = settings.CRON_SECRET
+#         header_value = request.headers.get("X-Cron-Key", "")
+#         if not secret or header_value != secret:
+#             return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+#         return Response({"status": "ok"}, status=status.HTTP_200_OK)
+
+
 class KeepAliveView(APIView):
     def get(self, request):
         secret = settings.CRON_SECRET
+        # Get the header (Django converts headers to uppercase internally: HTTP_X_CRON_KEY)
         header_value = request.headers.get("X-Cron-Key", "")
+        
+        # Log it so you can see it in Render's logs (helpful for debugging)
+        print(f"Debug: Expected {secret}, Received {header_value}")
+
         if not secret or header_value != secret:
             return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+            
         return Response({"status": "ok"}, status=status.HTTP_200_OK)
-
 
 
 
