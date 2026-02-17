@@ -25,6 +25,10 @@ def place_bid(bidder_id , auction_id , bid_amount):
             if not auction:
                 return "Error : Auction Not Found"
             
+            # Prevent sellers from bidding on their own auctions
+            if str(auction.seller_id) == str(bidder_id):
+                return "Error: Sellers cannot bid on their own auctions"
+
             # Check if auction times are set properly
             if not auction.start_time or not auction.end_time:
                 return "ERROR : Auction times are not properly configured"

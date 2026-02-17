@@ -341,6 +341,19 @@ class RegisterForAuctionView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        auction = get_auction_by_id(auction_id)
+        if not auction:
+            return Response(
+                {"error": "Auction not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        if str(auction.get('seller_id')) == str(user_id):
+            return Response(
+                {"error": "Sellers cannot register for their own auctions"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         result = register_user_for_auction(user_id, auction_id)
         
         if "Success" in result:
