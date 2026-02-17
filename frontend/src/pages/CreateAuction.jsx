@@ -123,7 +123,7 @@ export default function CreateAuction() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-80px)]  py-10 px-4">
+    <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-purple-50 via-white to-indigo-50 py-10 px-4">
       <div className="create-card max-w-4xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border border-purple-100">
         <div className="px-8 py-8 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-indigo-50">
           <h1 className="text-3xl md:text-4xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">

@@ -6,6 +6,8 @@ import Footer from './components/Footer';
 import AdminRoute from './components/AdminRoute';
 import Home from './pages/Home';
 import AllAuctions from './pages/AllAuctions';
+import UpcomingAuctions from './pages/UpcomingAuctions';
+import EndedAuctions from './pages/EndedAuctions';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
@@ -69,7 +71,12 @@ function App() {
             }
           />
 
-         
+          <Route
+            path="/upcoming"
+            element={
+                <UpcomingAuctions />
+            }
+          />
 
           <Route
             path="/wonitems"

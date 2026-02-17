@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import { Link } from 'react-router-dom'
 import { myBids, getMediaUrl } from '../api/auth'
 import { AuthContext } from '../context/AuthContext'
@@ -9,9 +9,6 @@ const MyItems = () => {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  
-  // Track the last fetched user ID to prevent duplicate fetches
-  const lastFetchedUserId = useRef(null)
 
   const normalizeAuction = (raw) => {
     const startTime = raw?.start_time ? new Date(raw.start_time) : new Date()
@@ -42,15 +39,13 @@ const MyItems = () => {
 
   useEffect(() => {
     const fetchMyBids = async () => {
-      // Skip if no user ID or if we already fetched for this user
-      if (!user?.id || lastFetchedUserId.current === user.id) {
-        if (!user?.id) setLoading(false)
+      if (!user?.id) {
+        setLoading(false)
         return
       }
 
       try {
         setLoading(true)
-        setError(null)
         const response = await myBids(user.id)
         const list = Array.isArray(response.data)
           ? response.data
@@ -58,7 +53,6 @@ const MyItems = () => {
             ? response.data.results
             : []
         setItems(list.map(normalizeAuction))
-        lastFetchedUserId.current = user.id // Mark as fetched
       } catch (err) {
         console.error('Error fetching my bids:', err)
         setError('Failed to load your bidding items')
@@ -68,7 +62,7 @@ const MyItems = () => {
     }
 
     fetchMyBids()
-  }, [user?.id]) // Only re-run when user ID actually changes
+  }, [user?.id])
 
   if (loading) {
     return (

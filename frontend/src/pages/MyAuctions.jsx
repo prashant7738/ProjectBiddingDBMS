@@ -141,7 +141,7 @@ export default function MyAuctions() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-80px)] py-10 px-4">
+    <div className="min-h-[calc(100vh-80px)] bg-gradient-to-br from-purple-50 via-white to-indigo-50 py-10 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
