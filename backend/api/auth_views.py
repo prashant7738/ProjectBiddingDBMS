@@ -232,14 +232,12 @@ class LogoutView(APIView):
             'access_token',
             path='/',
             samesite=settings.SESSION_COOKIE_SAMESITE,
-            secure=settings.SESSION_COOKIE_SECURE,
             domain=None
         )
         response.delete_cookie(
             'refresh_token',
             path='/',
             samesite=settings.SESSION_COOKIE_SAMESITE,
-            secure=settings.SESSION_COOKIE_SECURE,
             domain=None
         )
         
