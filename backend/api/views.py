@@ -408,16 +408,12 @@ class AuctionRegisteredUsersView(APIView):
 
 # Get bid history for a specific auction
 class AuctionBidHistoryView(APIView):
-    
-    authentication_classes = [SQLAlchemyJWTAuthentication]
-    permission_classes = [IsAuthenticated]
-    
     def get(self, request, auction_id):
         """
         Get all bids for a specific auction.
         """
         from core_db.bid_ops import get_auction_bid_history
-        
+
         bids = get_auction_bid_history(auction_id)
         return Response(bids, status=status.HTTP_200_OK)
 

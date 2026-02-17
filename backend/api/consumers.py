@@ -14,6 +14,8 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         self.auction_id = int(self.scope['url_route']['kwargs']['auction_id'])
         self.group_name = f"auction_{self.auction_id}"
+        self.user = None
+        self.can_bid = False
 
         # Try cookie first, then query parameter as fallback
         token = self._get_token_from_cookies()
@@ -21,30 +23,26 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
             token = self._get_token_from_query()
         
         if not token:
-            print("❌ No token found in cookies or query")
-            await self.close(code=4401)
-            return
+            print("ℹ️ No token found; allowing read-only connection")
         else:
             print(f"✅ Token found: {token[:20]}...")
+            try:
+                self.user = await self._get_user_from_token(token)
+                print(f"✅ User authenticated: {self.user.id}")
+            except exceptions.AuthenticationFailed:
+                print("❌ Token validation failed")
+                await self.close(code=4401)
+                return
 
-        try:
-            self.user = await self._get_user_from_token(token)
-            print(f"✅ User authenticated: {self.user.id}")
-        except exceptions.AuthenticationFailed:
-            print("❌ Token validation failed")
-            await self.close(code=4401)
-            return
-
-        is_registered = await database_sync_to_async(is_user_registered_for_auction)(
-            self.user.id,
-            self.auction_id,
-        )
-        if not is_registered:
-            print(f"❌ User {self.user.id} not registered for auction {self.auction_id}")
-            await self.close(code=4403)
-            return
-        else:
-            print(f"✅ User {self.user.id} registered for auction {self.auction_id}")
+            is_registered = await database_sync_to_async(is_user_registered_for_auction)(
+                self.user.id,
+                self.auction_id,
+            )
+            if is_registered:
+                self.can_bid = True
+                print(f"✅ User {self.user.id} registered for auction {self.auction_id}")
+            else:
+                print(f"ℹ️ User {self.user.id} not registered for auction {self.auction_id}; read-only")
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
@@ -69,6 +67,14 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
         action = content.get("type")
         if action != "place_bid":
             await self.send_json({"type": "error", "message": "Unknown action"})
+            return
+
+        if not self.user:
+            await self.send_json({"type": "error", "message": "Login required to place bids"})
+            return
+
+        if not self.can_bid:
+            await self.send_json({"type": "error", "message": "Register for this auction to place bids"})
             return
 
         amount = content.get("amount")

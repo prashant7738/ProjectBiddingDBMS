@@ -314,7 +314,7 @@ const AuctionPage = () => {
     };
 
     useEffect(() => {
-        if (!activeAuction?.id || !user?.id || !isRegistered) {
+        if (!activeAuction?.id) {
             if (wsRef.current) {
                 wsRef.current.close();
                 wsRef.current = null;
@@ -326,7 +326,7 @@ const AuctionPage = () => {
             return;
         }
 
-        console.log('[WS] Attempting connection for user:', user.id, 'auction:', activeAuction.id);
+        console.log('[WS] Attempting connection for user:', user?.id ?? 'guest', 'auction:', activeAuction.id);
         let didUnmount = false;
 
         const handleBidUpdate = (payload, options = {}) => {
@@ -770,53 +770,51 @@ const AuctionPage = () => {
                         </div>
 
                         {/* Bid History */}
-                        {isRegistered && (
-                            <div className="bg-white rounded-xl shadow-lg p-8">
-                                <div 
-                                    className="flex items-center justify-between cursor-pointer mb-4"
-                                    onClick={() => setIsBidHistoryExpanded(!isBidHistoryExpanded)}
+                        <div className="bg-white rounded-xl shadow-lg p-8">
+                            <div 
+                                className="flex items-center justify-between cursor-pointer mb-4"
+                                onClick={() => setIsBidHistoryExpanded(!isBidHistoryExpanded)}
+                            >
+                                <h3 className="text-xl font-semibold">Bid History</h3>
+                                <svg 
+                                    className={`w-6 h-6 transition-transform duration-200 ${
+                                        isBidHistoryExpanded ? 'rotate-180' : ''
+                                    }`}
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
                                 >
-                                    <h3 className="text-xl font-semibold">Bid History</h3>
-                                    <svg 
-                                        className={`w-6 h-6 transition-transform duration-200 ${
-                                            isBidHistoryExpanded ? 'rotate-180' : ''
-                                        }`}
-                                        fill="none" 
-                                        stroke="currentColor" 
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path 
-                                            strokeLinecap="round" 
-                                            strokeLinejoin="round" 
-                                            strokeWidth={2} 
-                                            d="M19 9l-7 7-7-7" 
-                                        />
-                                    </svg>
-                                </div>
-                                {isBidHistoryExpanded && (
-                                    <div className="space-y-3">
-                                        {bidHistory.length > 0 ? (
-                                            bidHistory.map((bid, index) => (
-                                                <div
-                                                    key={index}
-                                                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                                                >
-                                                    <div>
-                                                        <p className="font-semibold text-gray-900">{bid.bidder}</p>
-                                                        <p className="text-sm text-gray-500">{bid.time}</p>
-                                                    </div>
-                                                    <p className="text-lg font-bold text-purple-600">
-                                                        {formatCurrency(bid.amount)}
-                                                    </p>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <p className="text-gray-500 text-center py-4">No bids yet. Be the first!</p>
-                                        )}
-                                    </div>
-                                )}
+                                    <path 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round" 
+                                        strokeWidth={2} 
+                                        d="M19 9l-7 7-7-7" 
+                                    />
+                                </svg>
                             </div>
-                        )}
+                            {isBidHistoryExpanded && (
+                                <div className="space-y-3">
+                                    {bidHistory.length > 0 ? (
+                                        bidHistory.map((bid, index) => (
+                                            <div
+                                                key={index}
+                                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                                            >
+                                                <div>
+                                                    <p className="font-semibold text-gray-900">{bid.bidder}</p>
+                                                    <p className="text-sm text-gray-500">{bid.time}</p>
+                                                </div>
+                                                <p className="text-lg font-bold text-purple-600">
+                                                    {formatCurrency(bid.amount)}
+                                                </p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-gray-500 text-center py-4">No bids yet. Be the first!</p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
