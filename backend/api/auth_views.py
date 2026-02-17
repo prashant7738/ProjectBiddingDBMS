@@ -219,6 +219,7 @@ class RegisterView(APIView):
             )
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class LogoutView(APIView):
     def post(self, request):
         response = Response(
