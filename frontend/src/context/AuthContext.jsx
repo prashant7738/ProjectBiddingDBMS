@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from 'react';
-import { getProfile, logoutUser } from '../api/auth.js';
+import { getProfile, logoutUser, refreshToken } from '../api/auth.js';
 
 export const AuthContext = createContext();
 
@@ -17,7 +17,20 @@ export default function AuthProvider({ children }) {
       setUser(res.data);
       return true;
     } catch (err) {
-      console.error('Failed to fetch profile:', err.response?.status, err.message);
+      const status = err.response?.status;
+      if (status === 401) {
+        try {
+          await refreshToken();
+          const retry = await getProfile();
+          setUser(retry.data);
+          return true;
+        } catch (refreshErr) {
+          console.error('Token refresh failed:', refreshErr.response?.status, refreshErr.message);
+          setUser(null);
+          return false;
+        }
+      }
+      console.error('Failed to fetch profile:', status, err.message);
       console.error('Error details:', err.response?.data);
       setUser(null);
       return false;

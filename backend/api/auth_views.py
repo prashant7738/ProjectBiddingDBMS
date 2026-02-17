@@ -39,7 +39,7 @@ class TokenRefreshView(APIView):
             response.set_cookie(
                 key='access_token',
                 value=str(refresh.access_token),
-                max_age=3600,  # 1 hour
+                max_age=1200,  # 20 minutes
                 httponly=True,
                 secure=settings.SESSION_COOKIE_SECURE,
                 samesite=settings.SESSION_COOKIE_SAMESITE,
@@ -51,7 +51,7 @@ class TokenRefreshView(APIView):
             response.set_cookie(
                 key='refresh_token',
                 value=str(refresh),
-                max_age=604800,  # 7 days
+                max_age=864000,  # 10 days
                 httponly=True,
                 secure=settings.SESSION_COOKIE_SECURE,
                 samesite=settings.SESSION_COOKIE_SAMESITE,
@@ -92,8 +92,8 @@ class LoginView(APIView):
             })
             
             # Token lifetimes
-            access_token_lifetime = 3600  # 1 hour in seconds
-            refresh_token_lifetime = 604800  # 7 days in seconds
+            access_token_lifetime = 1200  # 20 minutes in seconds
+            refresh_token_lifetime = 864000  # 10 days in seconds
             
             # Set tokens in cookies (HttpOnly for security)
             response.set_cookie(
@@ -145,8 +145,8 @@ class AdminLoginView(APIView):
             'user': {'id': user['id'], 'email': user['email'], 'name': user['name'], 'role': 'admin'}
         })
 
-        access_token_lifetime = 3600
-        refresh_token_lifetime = 604800
+        access_token_lifetime = 1200
+        refresh_token_lifetime = 864000
 
         response.set_cookie(
             key='access_token',

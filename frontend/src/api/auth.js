@@ -29,6 +29,7 @@ export const registerUser = (data) => client.post('/register/', data);  // { nam
 export const loginUser = (data) => client.post('/login/', data);        // { email, password }
 export const logoutUser = () => client.post('/logout/');                 // Clears cookies
 export const loginAdmin = (data) => client.post('/admin/login/', data);
+export const refreshToken = () => client.post('/token/refresh/');
 
 // Protected endpoints (cookies sent automatically)
 export const getProfile = () => client.get('/profile/');
