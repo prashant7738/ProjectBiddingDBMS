@@ -104,9 +104,30 @@ const Header = () => {
                                         </div>
                                         <div className="max-h-60 sm:max-h-96 overflow-y-auto">
                                             {notifications.map(notif => (
-                                                <div key={notif.id} className={`p-4 border-b border-gray-100 hover:bg-gradient-to-r hover:from-purple-50 hover:to-transparent transition-all cursor-pointer ${!notif.read ? 'bg-blue-50 border-l-4 border-l-purple-500' : ''}`}>
+                                                <div
+                                                    key={notif.id}
+                                                    onClick={() => {
+                                                        if (notif.auctionId) {
+                                                            setShowNotifications(false);
+                                                            navigate(`/auctionPage/${notif.auctionId}`);
+                                                        }
+                                                        // Mark as read on click
+                                                        setNotifications(notifications.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                                                    }}
+                                                    className={`p-4 border-b border-gray-100 hover:bg-gradient-to-r hover:from-purple-50 hover:to-transparent transition-all ${notif.auctionId ? 'cursor-pointer' : 'cursor-default'} ${!notif.read ? 'bg-blue-50 border-l-4 border-l-purple-500' : ''}`}
+                                                >
                                                     <p className="text-xs sm:text-sm text-gray-800 font-medium">{notif.message}</p>
-                                                    <p className="text-[10px] text-gray-500 mt-1.5 font-medium">{notif.time}</p>
+                                                    <div className="flex items-center justify-between mt-1.5">
+                                                        <p className="text-[10px] text-gray-500 font-medium">{notif.time}</p>
+                                                        {notif.auctionId && (
+                                                            <span className="text-[10px] text-purple-500 font-semibold flex items-center gap-0.5">
+                                                                View auction
+                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                                                                </svg>
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>

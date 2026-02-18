@@ -707,7 +707,38 @@ const AuctionPage = () => {
                                 </div>
                             )}
 
-                            {!isRegistered ? (
+                            {/* If auction has ended, show result to everyone regardless of registration */}
+                            {(activeAuction.endTime && new Date(activeAuction.endTime) <= new Date()) ? (
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <h3 className="font-semibold text-gray-900">Auction Ended</h3>
+                                    </div>
+                                    <div className="space-y-3">
+                                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                                            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Final Bid</p>
+                                            <p className="text-2xl font-bold text-purple-600">{formatCurrency(currentBid)}</p>
+                                        </div>
+                                        <div className="bg-white rounded-lg p-3 border border-gray-100">
+                                            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Winner</p>
+                                            <p className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                                {activeAuction.winnerName ? (
+                                                    <>
+                                                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-purple-100 text-purple-700 text-sm font-bold">
+                                                            {activeAuction.winnerName.charAt(0).toUpperCase()}
+                                                        </span>
+                                                        {activeAuction.winnerName}
+                                                    </>
+                                                ) : (
+                                                    <span className="text-gray-400 italic text-sm">No bids placed</span>
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : !isRegistered ? (
                                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
                                     <h3 className="font-semibold text-gray-900 mb-2">Registration Required</h3>
                                     <p className="text-sm text-gray-600 mb-4">
@@ -747,24 +778,12 @@ const AuctionPage = () => {
                                     )}
                                 </div>
                             ) : (
-                                (activeAuction.endTime && new Date(activeAuction.endTime) <= new Date()) ? (
-                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                                        <h3 className="font-semibold text-gray-900 mb-2">Auction Ended</h3>
-                                        <p className="text-sm text-gray-600">
-                                            This auction has ended. Bidding is closed.
-                                        </p>
-                                        <p className="text-sm text-gray-700 mt-2">
-                                            Winner: <span className="font-semibold">{activeAuction.winnerName || 'No bids'}</span>
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                                        <h3 className="font-semibold text-gray-900 mb-2">Auction Starting Soon</h3>
-                                        <p className="text-sm text-gray-600">
-                                            You are registered. The auction will begin shortly.
-                                        </p>
-                                    </div>
-                                )
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                                    <h3 className="font-semibold text-gray-900 mb-2">Auction Starting Soon</h3>
+                                    <p className="text-sm text-gray-600">
+                                        You are registered. The auction will begin shortly.
+                                    </p>
+                                </div>
                             )}
                         </div>
 
