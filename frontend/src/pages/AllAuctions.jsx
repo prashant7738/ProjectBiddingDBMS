@@ -135,7 +135,7 @@ const AllAuctions = () => {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Filters */}
-            <div className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div className="bg-white rounded-xl shadow-md p-6 mb-8 font-outfit">
                 <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Auctions</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Status Filter */}
@@ -173,7 +173,7 @@ const AllAuctions = () => {
 
             {/* Results */}
             <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold font-outfit text-gray-900">
                     {filteredAuctions.length} Auctions Found
                 </h2>
             </div>
