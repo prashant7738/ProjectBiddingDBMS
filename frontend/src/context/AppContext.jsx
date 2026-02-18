@@ -42,7 +42,25 @@ export const AppProvider = ({ children }) => {
                         if (list.length) {
                             setNotifications((prev) => {
                                 const existing = new Set(prev.map((n) => n.id));
-                                const incoming = list.filter((n) => !existing.has(n.id));
+                                const incoming = list
+                                    .filter((n) => !existing.has(n.id))
+                                    .filter((n) => {
+                                        // Suppress outbid notifications sent to the auction's own seller.
+                                        // The backend incorrectly notifies the creator when someone bids.
+                                        const isOutbid =
+                                            n.type === 'outbid' ||
+                                            n.notification_type === 'outbid' ||
+                                            (typeof n.message === 'string' &&
+                                                /outbid|you('ve| have) been outbid/i.test(n.message));
+                                        const userIsSeller =
+                                            // backend may send seller_id directly on the notification
+                                            (n.seller_id && String(n.seller_id) === String(user.id)) ||
+                                            (n.auction_seller_id && String(n.auction_seller_id) === String(user.id));
+                                        // Drop it if it looks like an outbid notice AND we can confirm
+                                        // the user is the seller. If seller info is absent we keep it
+                                        // so we don't accidentally hide real alerts for actual bidders.
+                                        return !(isOutbid && userIsSeller);
+                                    });
                                 return [...incoming, ...prev];
                             });
                         }
@@ -82,4 +100,3 @@ export const AppProvider = ({ children }) => {
                 </AppContext.Provider>
             );
         };
-

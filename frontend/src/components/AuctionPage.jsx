@@ -26,7 +26,8 @@ const normalizeAuction = (raw) => {
     const registered = raw?.registered ?? false;
     const winnerName = raw?.winner_name ?? raw?.winnerName ?? raw?.winner?.name ?? '';
     const id = raw?.id ?? raw?.auction_id;
-    const sellerName = raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? '';  
+    const sellerName = raw?.seller_name ?? raw?.sellerName ?? raw?.seller?.name ?? '';
+    const sellerId = raw?.seller_id ?? raw?.sellerId ?? raw?.seller?.id ?? null;
 
     return {
         id,
@@ -42,7 +43,8 @@ const normalizeAuction = (raw) => {
         bidCount,
         registered,
         winnerName,
-        sellerName
+        sellerName,
+        sellerId
     };
 };
 
@@ -68,7 +70,6 @@ const AuctionPage = () => {
     const [bidHistory, setBidHistory] = useState([]);
     const [bidError, setBidError] = useState('');
     const [registering, setRegistering] = useState(false);
-    const [isBidHistoryExpanded, setIsBidHistoryExpanded] = useState(false);
     const [bidAlert, setBidAlert] = useState('');
     const wsRef = useRef(null);
     const reconnectRef = useRef(null);
@@ -629,12 +630,11 @@ const AuctionPage = () => {
             {activeAuction && (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
                     {/* Image Section */}
-                    <div className="bg-white rounded-xl shadow-lg overflow-hidden max-h-[600px]">
-                        <div className="relative h-96 lg:h-full">
+                    <div className="rounded-xl shadow-lg overflow-hidden h-[420px] relative">
                             <img
                                 src={activeAuction.image}
                                 alt={activeAuction.name}
-                                className="item-image"
+                                className="w-full h-full object-cover"
                             />
                             {(() => {
                                 console.log('Rendering badge. isLive:', activeAuction.isLive, 'startTime:', activeAuction.startTime, 'now:', new Date());
@@ -667,7 +667,6 @@ const AuctionPage = () => {
                                 }
                                 return null;
                             })()}
-                        </div>
                     </div>
 
                     {/* Details Section */}
@@ -738,6 +737,29 @@ const AuctionPage = () => {
                                         </div>
                                     </div>
                                 </div>
+                            ) : user && activeAuction.sellerId && String(user.id) === String(activeAuction.sellerId) ? (
+                                /* Creator view — no register button, read-only info */
+                                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6 mb-6">
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                        </svg>
+                                        <h3 className="font-semibold text-indigo-800">Your Auction</h3>
+                                    </div>
+                                    <p className="text-sm text-indigo-700">
+                                        You are the seller of this auction. Bidding is open to registered participants.
+                                    </p>
+                                    <div className="mt-4 grid grid-cols-2 gap-3">
+                                        <div className="bg-white rounded-lg p-3 border border-indigo-100 text-center">
+                                            <p className="text-xs text-gray-500 mb-1">Starting Bid</p>
+                                            <p className="font-bold text-gray-900">{formatCurrency(activeAuction.startingBid)}</p>
+                                        </div>
+                                        <div className="bg-white rounded-lg p-3 border border-indigo-100 text-center">
+                                            <p className="text-xs text-gray-500 mb-1">Current Bid</p>
+                                            <p className="font-bold text-purple-600">{formatCurrency(currentBid)}</p>
+                                        </div>
+                                    </div>
+                                </div>
                             ) : !isRegistered ? (
                                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
                                     <h3 className="font-semibold text-gray-900 mb-2">Registration Required</h3>
@@ -787,51 +809,49 @@ const AuctionPage = () => {
                             )}
                         </div>
 
-                        {/* Bid History */}
-                        <div className="bg-white rounded-xl shadow-lg p-8">
-                            <div 
-                                className="flex items-center justify-between cursor-pointer mb-4"
-                                onClick={() => setIsBidHistoryExpanded(!isBidHistoryExpanded)}
-                            >
-                                <h3 className="text-xl font-semibold">Bid History</h3>
-                                <svg 
-                                    className={`w-6 h-6 transition-transform duration-200 ${
-                                        isBidHistoryExpanded ? 'rotate-180' : ''
-                                    }`}
-                                    fill="none" 
-                                    stroke="currentColor" 
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path 
-                                        strokeLinecap="round" 
-                                        strokeLinejoin="round" 
-                                        strokeWidth={2} 
-                                        d="M19 9l-7 7-7-7" 
-                                    />
-                                </svg>
+                        {/* Bid History — always visible, scrollable */}
+                        <div className="bg-white rounded-xl shadow-lg p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-xl font-semibold text-gray-900">Bid History</h3>
+                                <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">
+                                    {bidHistory.length} {bidHistory.length === 1 ? 'bid' : 'bids'}
+                                </span>
                             </div>
-                            {isBidHistoryExpanded && (
-                                <div className="space-y-3">
-                                    {bidHistory.length > 0 ? (
-                                        bidHistory.map((bid, index) => (
-                                            <div
-                                                key={index}
-                                                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                                            >
-                                                <div>
-                                                    <p className="font-semibold text-gray-900">{bid.bidder}</p>
-                                                    <p className="text-sm text-gray-500">{bid.time}</p>
+                            <div className="overflow-y-auto max-h-64 space-y-2 pr-1 scrollbar-thin scrollbar-thumb-purple-200 scrollbar-track-transparent">
+                                {bidHistory.length > 0 ? (
+                                    bidHistory.map((bid, index) => (
+                                        <div
+                                            key={index}
+                                            className={`flex items-center justify-between p-3 rounded-lg border ${index === 0 ? 'bg-purple-50 border-purple-200' : 'bg-gray-50 border-gray-100'}`}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${index === 0 ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                                    {bid.bidder?.charAt(0)?.toUpperCase() || '?'}
                                                 </div>
-                                                <p className="text-lg font-bold text-purple-600">
+                                                <div>
+                                                    <p className="font-semibold text-gray-900 text-sm leading-tight">{bid.bidder}</p>
+                                                    <p className="text-xs text-gray-400">{bid.time}</p>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className={`font-bold ${index === 0 ? 'text-purple-600' : 'text-gray-700'}`}>
                                                     {formatCurrency(bid.amount)}
                                                 </p>
+                                                {index === 0 && (
+                                                    <span className="text-[10px] font-semibold text-purple-400 uppercase tracking-wide">Highest</span>
+                                                )}
                                             </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-gray-500 text-center py-4">No bids yet. Be the first!</p>
-                                    )}
-                                </div>
-                            )}
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-8 text-gray-400">
+                                        <svg className="w-10 h-10 mx-auto mb-2 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                        <p className="text-sm">No bids yet. Be the first!</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
