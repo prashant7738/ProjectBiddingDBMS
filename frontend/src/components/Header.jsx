@@ -39,7 +39,7 @@ const Header = () => {
                     </div>
 
                     {/* Search Bar */}
-                    <div className={`hidden md:flex flex-1 max-w-5xl mx-4 ${location.pathname === "/upcoming" ? 'md:block' : 'md:hidden'}`}>
+                    <div className={`hidden md:flex flex-1 max-w-5xl mx-4 ${location.pathname === "/all-auctions" ? 'md:block' : 'md:hidden'}`}>
                         <div className="left-10 relative w-1/2">
                             <input
                                 type="text"
