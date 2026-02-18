@@ -16,7 +16,7 @@ const NavigationTabs = () => {
     ];
 
     return (
-        <div className="bg-white shadow-md font-Roboto sticky top-19 md:top-24 z-40 border-b-2 border-gray-100 font-orbitron font-bold ">
+        <div className="bg-white shadow-md sticky top-19 md:top-24 z-40 border-b-2 border-gray-100 font-outfit  font-bold ">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Scrollable Container for Mobile */}
                 <div className="flex space-x-2 md:space-x-6 overflow-x-auto no-scrollbar whitespace-nowrap">
@@ -31,7 +31,7 @@ const NavigationTabs = () => {
                             <svg className="nav-icon w-5 h-5 md:w-6 md:h-6 flex-shrink-0 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={tab.icon} />
                             </svg>
-                            <span className="nav-label font-semibold text-sm md:text-base">{tab.label}</span>
+                            <span className="nav-label font-semibold text-base md:text-xl">{tab.label}</span>
                         </NavLink>
                     ))}
                 </div>
