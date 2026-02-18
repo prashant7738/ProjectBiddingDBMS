@@ -42,17 +42,7 @@ export default function AuthProvider({ children }) {
   useEffect(() => {
     refreshProfile();
   }, []);
-  // ADD THIS: Polling interval to refresh user data every 30 seconds
-  useEffect(() => {
-    if (!user) return; // Don't poll if user not logged in
-    
-    const interval = setInterval(() => {
-      console.log('🔄 Polling: Refreshing user profile...');
-      refreshProfile();
-    }, 3000); // 30 seconds
-    
-    return () => clearInterval(interval);
-  }, [user]); // Re-run if user changes (login/logout)
+
 
   const logout = async () => {
     try {
