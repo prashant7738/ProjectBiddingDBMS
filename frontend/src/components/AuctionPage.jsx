@@ -492,7 +492,7 @@ const AuctionPage = () => {
         setRegistering(true);
         setBidError('');
         try {
-            await registerForAuction(activeAuction.id, user.id);
+            await registerForAuction(activeAuction.id);
             setIsRegistered(true);
             setSelectedItem((prev) => (prev && prev.id === activeAuction.id ? { ...prev, registered: true } : prev));
             setAuctions((prev) => prev.map((a) => (a.id === activeAuction.id ? { ...a, registered: true } : a)));
@@ -531,7 +531,6 @@ const AuctionPage = () => {
         // Fallback to HTTP API - WAIT FOR RESPONSE before updating UI
         try {
             const res = await placeBid({
-                bidder_id: user.id,
                 auction_id: activeAuction.id,
                 amount: bidAmount,
             });

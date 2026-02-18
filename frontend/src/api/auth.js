@@ -50,10 +50,10 @@ export const updateAdminUserBalance = (userId, balance) => client.patch(`/admin/
 export const deleteAdminUser = (userId) => client.delete(`/admin/users/${userId}/`);
 
 // Bid endpoints (protected - requires login)
-export const placeBid = (data) => client.post('/bids/place/', data);    // { bidder_id, auction_id, amount }
+export const placeBid = (data) => client.post('/bids/place/', data);    // { auction_id, amount }
 
 // Auction Registration endpoints
-export const registerForAuction = (auctionId, userId) => client.post(`/auctions/${auctionId}/register/`, { user_id: userId });
+export const registerForAuction = (auctionId) => client.post(`/auctions/${auctionId}/register/`, {});
 export const getRegisteredUsers = (auctionId) => client.get(`/auctions/${auctionId}/registered-users/`);
 
 // User's bid for specific auction

@@ -16,7 +16,7 @@ import PrivateRoute from './components/PrivateRoute';
 import AuctionPage from './components/AuctionPage';
 import WonItems from './pages/WonItems';
 import MyItems from './pages/MyItems'
-import Results from './pages/Results';
+import MyBids from './pages/MyBids';
 import PriceResults from './pages/PriceResults';
 import MyAuctions from './pages/MyAuctions';
 
@@ -91,7 +91,7 @@ function App() {
             path="/my-bids"
             element={
               <PrivateRoute>
-                <MyItems />
+                <MyBids />
               </PrivateRoute>
             }
           />

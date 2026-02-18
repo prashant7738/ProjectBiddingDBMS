@@ -2,13 +2,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from core_db.auction_ops import get_active_auctions , get_ended_auctions, get_auctions_by_seller, create_auction, register_user_for_auction, is_user_registered_for_auction, get_auction_registrations, get_auction_by_id, get_all_auctions_admin, delete_auction, update_auction, close_expired_auctions
 from core_db.user_ops import get_all_users, update_user_balance, delete_user_by_id
-from .serializers import AuctionSerializer ,BidSerializer, AdminAuctionSerializer, UserSerializer
+from .serializers import AuctionSerializer ,AdminAuctionSerializer, UserSerializer
 from rest_framework import status
 from django.conf import settings
 from django.core.files.storage import default_storage
 import os
 import uuid
 import cloudinary.uploader
+from decimal import Decimal, InvalidOperation
+from datetime import datetime
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from core_db.bid_ops import place_bid, get_user_bidding_history, get_won_items, get_user_notifications
 
 # for pagination
@@ -18,8 +22,60 @@ from .paginations import StandardResultsSetPagination
 # for authentication 
 from .authenticate import SQLAlchemyJWTAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from .permissions import IsAdminUser
+
+
+def error_response(message, http_status, code=None):
+    payload = {"error": message}
+    if code:
+        payload["code"] = code
+    return Response(payload, status=http_status)
+
+
+def parse_positive_int(value, field_name):
+    try:
+        parsed = int(value)
+    except (TypeError, ValueError):
+        raise ValueError(f"Invalid {field_name}")
+    if parsed <= 0:
+        raise ValueError(f"{field_name} must be greater than 0")
+    return parsed
+
+
+def parse_positive_decimal(value, field_name):
+    try:
+        parsed = Decimal(str(value))
+    except (InvalidOperation, TypeError, ValueError):
+        raise ValueError(f"Invalid {field_name}")
+    if parsed <= 0:
+        raise ValueError(f"{field_name} must be greater than 0")
+    return parsed
+
+
+def parse_iso_datetime(value, field_name):
+    if value is None or value == "":
+        raise ValueError(f"Missing {field_name}")
+
+    if isinstance(value, datetime):
+        parsed = value
+    else:
+        normalized = value.replace('Z', '+00:00') if isinstance(value, str) else value
+        parsed = parse_datetime(normalized) if isinstance(normalized, str) else None
+        if parsed is None:
+            try:
+                parsed = datetime.fromisoformat(normalized)
+            except (TypeError, ValueError):
+                raise ValueError(f"Invalid {field_name}")
+
+    if timezone.is_naive(parsed):
+        parsed = timezone.make_aware(parsed, timezone.get_current_timezone())
+    return parsed
+
+
+def ensure_same_user(request, route_user_id):
+    if getattr(request.user, 'id', None) != route_user_id:
+        return error_response("Unauthorized", status.HTTP_403_FORBIDDEN, "FORBIDDEN_USER_SCOPE")
+    return None
 
 
 # To create Auction
@@ -29,46 +85,39 @@ class CreateAuction(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        seller_id = request.data.get('seller_id')
-        title = request.data.get('title')
-        description = request.data.get('description')
+        seller_id = getattr(request.user, 'id', None)
+        title = (request.data.get('title') or '').strip()
+        description = (request.data.get('description') or '').strip()
         category_id = request.data.get('category_id')
         starting_price = request.data.get('starting_price')
         start_time = request.data.get('start_time')
         end_time = request.data.get('end_time')
         image = request.FILES.get('image')
 
-        if not all([seller_id , title , description, category_id, starting_price , end_time]):
-            return Response(
-                {"error": "Missing information"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        if not seller_id:
+            return error_response("Unauthorized", status.HTTP_401_UNAUTHORIZED, "AUTH_REQUIRED")
+
+        if not all([title, description, category_id, starting_price, end_time]):
+            return error_response("Missing information", status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
+
+        try:
+            category_id = parse_positive_int(category_id, "category_id")
+            starting_price = parse_positive_decimal(starting_price, "starting_price")
+        except ValueError as exc:
+            return error_response(str(exc), status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
 
         # Validate start_time and end_time
-        from datetime import datetime
-        from django.utils import timezone
         try:
             if start_time:
-                start_dt = datetime.fromisoformat(start_time.replace('Z', '+00:00'))
+                start_dt = parse_iso_datetime(start_time, "start_time")
             else:
                 start_dt = timezone.now()
-            
-            end_dt = datetime.fromisoformat(end_time.replace('Z', '+00:00'))
-            if timezone.is_naive(start_dt):
-                start_dt = timezone.make_aware(start_dt, timezone.get_current_timezone())
-            if timezone.is_naive(end_dt):
-                end_dt = timezone.make_aware(end_dt, timezone.get_current_timezone())
+            end_dt = parse_iso_datetime(end_time, "end_time")
             
             if start_dt >= end_dt:
-                return Response(
-                    {"error": "Start time must be before end time"}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-        except (ValueError, AttributeError) as e:
-            return Response(
-                {"error": "Invalid date/time format"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+                return error_response("Start time must be before end time", status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
+        except ValueError as exc:
+            return error_response(str(exc), status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
 
         image_url = None
         if image:
@@ -81,10 +130,7 @@ class CreateAuction(APIView):
                     saved_path = default_storage.save(relative_path, image)
                     image_url = default_storage.url(saved_path)
                 except Exception:
-                    return Response(
-                        {"error": "Image upload failed"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    return error_response("Image upload failed", status.HTTP_400_BAD_REQUEST, "IMAGE_UPLOAD_FAILED")
             else:
                 cloudinary_config = settings.CLOUDINARY_STORAGE or {}
                 if not all([
@@ -92,10 +138,7 @@ class CreateAuction(APIView):
                     cloudinary_config.get('API_KEY'),
                     cloudinary_config.get('API_SECRET')
                 ]):
-                    return Response(
-                        {"error": "Cloudinary is not configured"},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                    )
+                    return error_response("Cloudinary is not configured", status.HTTP_500_INTERNAL_SERVER_ERROR, "SERVER_MISCONFIGURED")
                 try:
                     upload_result = cloudinary.uploader.upload(
                         image,
@@ -104,12 +147,9 @@ class CreateAuction(APIView):
                     )
                     image_url = upload_result.get("secure_url") or upload_result.get("url")
                 except Exception:
-                    return Response(
-                        {"error": "Image upload failed"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                    return error_response("Image upload failed", status.HTTP_400_BAD_REQUEST, "IMAGE_UPLOAD_FAILED")
 
-        result = create_auction(seller_id , title , description, category_id, starting_price , end_time, start_time, image_url)
+        result = create_auction(seller_id, title, description, category_id, float(starting_price), end_dt, start_dt, image_url)
 
         return Response({"message": result, "image_url": image_url} , status=status.HTTP_201_CREATED)
 
@@ -129,7 +169,7 @@ class KeepAliveView(APIView):
         header_value = request.headers.get("X-Cron-Key", "")
 
         if not secret or header_value != secret:
-            return Response({"error": "Unauthorized"}, status=status.HTTP_401_UNAUTHORIZED)
+            return error_response("Unauthorized", status.HTTP_401_UNAUTHORIZED, "INVALID_CRON_SECRET")
 
         closed_count = close_expired_auctions()
         return Response(
@@ -170,10 +210,7 @@ class AuctionDetailView(APIView):
         auction = get_auction_by_id(auction_id)
         
         if not auction:
-            return Response(
-                {"error": "Auction not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return error_response("Auction not found", status.HTTP_404_NOT_FOUND, "NOT_FOUND")
         
         serializer = AuctionSerializer(auction)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -186,27 +223,27 @@ class PlaceBidView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self , request):
-        # get data of bidder (now it is getting from token not raw json)
-        bidder_id = request.data.get('bidder_id')
-        auction_id = request.data.get('auction_id')
-        amount = request.data.get('amount')
-        
-        # 2. Basic validation
-        if not all([bidder_id, auction_id, amount]):
-            return Response(
-                {"error": "Missing bidder_id, auction_id, or amount"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        
+        bidder_id = getattr(request.user, 'id', None)
+        auction_id_raw = request.data.get('auction_id')
+        amount_raw = request.data.get('amount')
+
+        if not bidder_id:
+            return error_response("Unauthorized", status.HTTP_401_UNAUTHORIZED, "AUTH_REQUIRED")
+
+        try:
+            auction_id = parse_positive_int(auction_id_raw, "auction_id")
+            amount = parse_positive_decimal(amount_raw, "amount")
+        except ValueError as exc:
+            return error_response(str(exc), status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
+
         # Call sqlalchemy logic
-        result = place_bid(bidder_id , auction_id , amount)
+        result = place_bid(bidder_id, auction_id, amount)
         
         # 4. Handle the response
         if "Success" in result:
             return Response({"message": result}, status=status.HTTP_201_CREATED)
         else:
-            return Response({"error": result}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(result, status.HTTP_400_BAD_REQUEST, "BID_REJECTED")
         
 
 # view to see all the auction conducted by seller
@@ -216,6 +253,9 @@ class MyAuctionView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self , request , user_id):
+        unauthorized = ensure_same_user(request, user_id)
+        if unauthorized:
+            return unauthorized
         
         data = get_auctions_by_seller(user_id)
         
@@ -225,38 +265,48 @@ class MyAuctionView(APIView):
     
     def delete(self, request, user_id):
         """Delete a specific auction by auction_id passed in request body"""
-        auction_id = request.data.get('auction_id')
-        
-        if not auction_id:
-            return Response({"error": "auction_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        unauthorized = ensure_same_user(request, user_id)
+        if unauthorized:
+            return unauthorized
+
+        auction_id_raw = request.data.get('auction_id')
+        try:
+            auction_id = parse_positive_int(auction_id_raw, "auction_id")
+        except ValueError as exc:
+            return error_response(str(exc), status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
         
         # Verify the auction belongs to this seller
         auction = get_auction_by_id(auction_id)
         if not auction:
-            return Response({"error": "Auction not found"}, status=status.HTTP_404_NOT_FOUND)
+            return error_response("Auction not found", status.HTTP_404_NOT_FOUND, "NOT_FOUND")
         
         if auction['seller_id'] != user_id:
-            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            return error_response("Unauthorized", status.HTTP_403_FORBIDDEN, "FORBIDDEN_USER_SCOPE")
         
         deleted = delete_auction(auction_id)
         if deleted:
             return Response({"message": "Auction deleted successfully"}, status=status.HTTP_200_OK)
-        return Response({"error": "Failed to delete auction"}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response("Failed to delete auction", status.HTTP_400_BAD_REQUEST, "DELETE_FAILED")
     
     def patch(self, request, user_id):
         """Update auction details"""
-        auction_id = request.data.get('auction_id')
-        
-        if not auction_id:
-            return Response({"error": "auction_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        unauthorized = ensure_same_user(request, user_id)
+        if unauthorized:
+            return unauthorized
+
+        auction_id_raw = request.data.get('auction_id')
+        try:
+            auction_id = parse_positive_int(auction_id_raw, "auction_id")
+        except ValueError as exc:
+            return error_response(str(exc), status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
         
         # Verify the auction belongs to this seller
         auction = get_auction_by_id(auction_id)
         if not auction:
-            return Response({"error": "Auction not found"}, status=status.HTTP_404_NOT_FOUND)
+            return error_response("Auction not found", status.HTTP_404_NOT_FOUND, "NOT_FOUND")
         
         if auction['seller_id'] != user_id:
-            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+            return error_response("Unauthorized", status.HTTP_403_FORBIDDEN, "FORBIDDEN_USER_SCOPE")
         
         # Prepare update data
         update_data = {}
@@ -265,48 +315,40 @@ class MyAuctionView(APIView):
         if 'description' in request.data:
             update_data['description'] = request.data['description']
         if 'category_id' in request.data:
-            update_data['category_id'] = request.data['category_id']
+            try:
+                update_data['category_id'] = parse_positive_int(request.data['category_id'], "category_id")
+            except ValueError as exc:
+                return error_response(str(exc), status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
         if 'starting_price' in request.data:
-            update_data['starting_price'] = request.data['starting_price']
+            try:
+                update_data['starting_price'] = float(parse_positive_decimal(request.data['starting_price'], "starting_price"))
+            except ValueError as exc:
+                return error_response(str(exc), status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
         if 'end_time' in request.data:
             update_data['end_time'] = request.data['end_time']
         if 'start_time' in request.data:
             update_data['start_time'] = request.data['start_time']
         
         # Validate start_time and end_time if both are being updated
-        from datetime import datetime
         try:
             start_time_str = update_data.get('start_time') or auction.get('start_time')
             end_time_str = update_data.get('end_time') or auction.get('end_time')
             
             if start_time_str and end_time_str:
-                if isinstance(start_time_str, str):
-                    start_dt = datetime.fromisoformat(start_time_str.replace('Z', '+00:00'))
-                else:
-                    start_dt = start_time_str
-                    
-                if isinstance(end_time_str, str):
-                    end_dt = datetime.fromisoformat(end_time_str.replace('Z', '+00:00'))
-                else:
-                    end_dt = end_time_str
+                start_dt = parse_iso_datetime(start_time_str, "start_time")
+                end_dt = parse_iso_datetime(end_time_str, "end_time")
                 
                 if start_dt >= end_dt:
-                    return Response(
-                        {"error": "Start time must be before end time"}, 
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-        except (ValueError, AttributeError) as e:
-            return Response(
-                {"error": "Invalid date/time format"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+                    return error_response("Start time must be before end time", status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
+        except ValueError as exc:
+            return error_response(str(exc), status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
         
         updated_auction = update_auction(auction_id, **update_data)
         if updated_auction:
             serializer = AuctionSerializer(updated_auction)
             return Response(serializer.data, status=status.HTTP_200_OK)
         
-        return Response({"error": "Failed to update auction"}, status=status.HTTP_400_BAD_REQUEST)
+        return error_response("Failed to update auction", status.HTTP_400_BAD_REQUEST, "UPDATE_FAILED")
     
 # view to see all the bids that a user once bidded in a lifetime
 class MyBidsView(APIView):
@@ -315,6 +357,9 @@ class MyBidsView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self , request , user_id):
+        unauthorized = ensure_same_user(request, user_id)
+        if unauthorized:
+            return unauthorized
         
         data = get_user_bidding_history(user_id)
         
@@ -329,6 +374,9 @@ class WonItemsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
+        unauthorized = ensure_same_user(request, user_id)
+        if unauthorized:
+            return unauthorized
         data = get_won_items(user_id)
         serializer = AuctionSerializer(data, many=True)
         return Response(serializer.data)
@@ -356,33 +404,28 @@ class RegisterForAuctionView(APIView):
     permission_classes = [IsAuthenticated]
     
     def post(self, request, auction_id):
-        user_id = request.data.get('user_id')
-        
+        user_id = getattr(request.user, 'id', None)
         if not user_id:
-            return Response(
-                {"error": "Missing user_id"}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return error_response("Unauthorized", status.HTTP_401_UNAUTHORIZED, "AUTH_REQUIRED")
+
+        try:
+            auction_id = parse_positive_int(auction_id, "auction_id")
+        except ValueError as exc:
+            return error_response(str(exc), status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
         
         auction = get_auction_by_id(auction_id)
         if not auction:
-            return Response(
-                {"error": "Auction not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return error_response("Auction not found", status.HTTP_404_NOT_FOUND, "NOT_FOUND")
 
         if str(auction.get('seller_id')) == str(user_id):
-            return Response(
-                {"error": "Sellers cannot register for their own auctions"},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return error_response("Sellers cannot register for their own auctions", status.HTTP_403_FORBIDDEN, "FORBIDDEN_ACTION")
 
         result = register_user_for_auction(user_id, auction_id)
         
         if "Success" in result:
             return Response({"message": result}, status=status.HTTP_201_CREATED)
         else:
-            return Response({"error": result}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response(result, status.HTTP_400_BAD_REQUEST, "REGISTRATION_FAILED")
 
 
 # Access auction details - only registered users can access
@@ -395,12 +438,13 @@ class AuctionAccessView(APIView):
         """
         Get user's highest bid for a specific auction.
         """
+        unauthorized = ensure_same_user(request, user_id)
+        if unauthorized:
+            return unauthorized
+
         # Check if user is registered for this auction
         if not is_user_registered_for_auction(user_id, auction_id):
-            return Response(
-                {"error": "You are not registered for this auction"}, 
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return error_response("You are not registered for this auction", status.HTTP_403_FORBIDDEN, "FORBIDDEN_ACTION")
         
         from core_db.bid_ops import get_user_bid_for_auction
         
@@ -409,10 +453,7 @@ class AuctionAccessView(APIView):
         if user_bid:
             return Response(user_bid, status=status.HTTP_200_OK)
         else:
-            return Response(
-                {"error": "No bid found for this user on this auction"}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return error_response("No bid found for this user on this auction", status.HTTP_404_NOT_FOUND, "NOT_FOUND")
 
 
 # Get all registered users for an auction
@@ -461,7 +502,7 @@ class AdminAuctionDeleteView(APIView):
         deleted = delete_auction(auction_id)
         if deleted:
             return Response({"message": "Auction deleted"}, status=status.HTTP_200_OK)
-        return Response({"error": "Auction not found"}, status=status.HTTP_404_NOT_FOUND)
+        return error_response("Auction not found", status.HTTP_404_NOT_FOUND, "NOT_FOUND")
 
 
 class AdminCloseExpiredAuctionsView(APIView):
@@ -493,29 +534,29 @@ class AdminUserUpdateView(APIView):
         new_balance = request.data.get('balance')
         
         if new_balance is None:
-            return Response({"error": "Balance is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response("Balance is required", status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
         
         try:
             new_balance = float(new_balance)
             if new_balance < 0:
-                return Response({"error": "Balance cannot be negative"}, status=status.HTTP_400_BAD_REQUEST)
+                return error_response("Balance cannot be negative", status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
         except (ValueError, TypeError):
-            return Response({"error": "Invalid balance value"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response("Invalid balance value", status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
         
         user = update_user_balance(user_id, new_balance)
         if not user:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            return error_response("User not found", status.HTTP_404_NOT_FOUND, "NOT_FOUND")
         
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, user_id):
         if getattr(request.user, 'id', None) == user_id:
-            return Response({"error": "Admin cannot delete their own account"}, status=status.HTTP_400_BAD_REQUEST)
+            return error_response("Admin cannot delete their own account", status.HTTP_400_BAD_REQUEST, "VALIDATION_ERROR")
 
         deleted = delete_user_by_id(user_id)
         if not deleted:
-            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+            return error_response("User not found", status.HTTP_404_NOT_FOUND, "NOT_FOUND")
 
         return Response({"message": "User deleted"}, status=status.HTTP_200_OK)
 
@@ -526,7 +567,10 @@ class NotificationsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, user_id):
-        from django.utils.dateparse import parse_datetime
+        unauthorized = ensure_same_user(request, user_id)
+        if unauthorized:
+            return unauthorized
+
         since = request.query_params.get('since')
         since_dt = parse_datetime(since) if since else None
 

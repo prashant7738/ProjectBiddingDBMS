@@ -185,15 +185,26 @@ CORS_ALLOW_CREDENTIALS = True
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 BACKEND_URL = os.getenv("BACKEND_URL")
 
+if not DEBUG:
+    missing_vars = []
+    if not FRONTEND_URL:
+        missing_vars.append("FRONTEND_URL")
+    if not BACKEND_URL:
+        missing_vars.append("BACKEND_URL")
+    if not os.getenv("ALLOWED_HOSTS", "").strip():
+        missing_vars.append("ALLOWED_HOSTS")
+    if missing_vars:
+        raise ValueError(f"Missing required production env vars: {', '.join(missing_vars)}")
+
 # CORS Allowed Origins - only include production URLs
-CORS_ALLOWED_ORIGINS = [FRONTEND_URL]
+CORS_ALLOWED_ORIGINS = [origin for origin in [FRONTEND_URL] if origin]
 
 # Add localhost only in development mode
 if DEBUG:
     CORS_ALLOWED_ORIGINS.append("http://localhost:5173")
 
 # CSRF Trusted Origins
-CSRF_TRUSTED_ORIGINS = [FRONTEND_URL, BACKEND_URL]
+CSRF_TRUSTED_ORIGINS = [origin for origin in [FRONTEND_URL, BACKEND_URL] if origin]
 
 if DEBUG:
     CSRF_TRUSTED_ORIGINS.append("http://localhost:5173")

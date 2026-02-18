@@ -19,7 +19,6 @@ export default function Login() {
     setError('');
     try {
       const res = await loginUser(form);
-      console.log('Login response:', res.data);
       await new Promise((r) => setTimeout(r, 120));
       const ok = await refreshProfile();
       if (!ok) {
@@ -28,7 +27,6 @@ export default function Login() {
       }
       navigate('/');
     } catch (err) {
-      console.error('Login error:', err);
       setError(err.response?.data?.error || 'Invalid credentials');
     } finally {
       setSubmitting(false);
