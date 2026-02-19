@@ -517,7 +517,7 @@ export default function AdminDashboard() {
                         {getStatusBadge(auction)}
                       </td>
                       <td className="px-6 py-4">
-                        <p className="text-white font-bold text-lg">₹{auction.currentBid.toLocaleString()}</p>
+                        <p className="text-white font-bold text-lg">Rs.{auction.currentBid.toLocaleString()}</p>
                       </td>
                       <td className="px-6 py-4">
                         <p className="text-white font-semibold">{auction.bidCount}</p>
@@ -633,7 +633,7 @@ export default function AdminDashboard() {
                             <p className="text-purple-300">{user.email}</p>
                           </td>
                           <td className="px-6 py-4">
-                            <p className="text-green-400 font-bold text-lg">₹{Number(user.balance || 0).toLocaleString()}</p>
+                            <p className="text-green-400 font-bold text-lg">Rs.{Number(user.balance || 0).toLocaleString()}</p>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex space-x-2">
@@ -752,16 +752,16 @@ export default function AdminDashboard() {
                   <p className="text-purple-300 text-xs">ID: {selectedAuction.sellerId}</p>
                   <p className="text-purple-300 text-xs">Email: {selectedAuction.sellerEmail}</p>
                   {selectedAuction.sellerBalance !== null && (
-                    <p className="text-purple-300 text-xs">Balance: ₹{Number(selectedAuction.sellerBalance).toLocaleString()}</p>
+                    <p className="text-purple-300 text-xs">Balance: Rs.{Number(selectedAuction.sellerBalance).toLocaleString()}</p>
                   )}
                 </div>
                 <div className="bg-slate-700/50 p-4 rounded-xl border border-purple-500/20">
                   <p className="text-purple-300 text-sm font-bold mb-1">Current Bid</p>
-                  <p className="text-white font-bold text-xl">₹{selectedAuction.currentBid.toLocaleString()}</p>
+                  <p className="text-white font-bold text-xl">Rs.{selectedAuction.currentBid.toLocaleString()}</p>
                 </div>
                 <div className="bg-slate-700/50 p-4 rounded-xl border border-purple-500/20">
                   <p className="text-purple-300 text-sm font-bold mb-1">Starting Price</p>
-                  <p className="text-white font-semibold">₹{selectedAuction.startingPrice.toLocaleString()}</p>
+                  <p className="text-white font-semibold">Rs.{selectedAuction.startingPrice.toLocaleString()}</p>
                 </div>
                 <div className="bg-slate-700/50 p-4 rounded-xl border border-purple-500/20">
                   <p className="text-purple-300 text-sm font-bold mb-1">Total Bids</p>
@@ -830,11 +830,11 @@ export default function AdminDashboard() {
 
                 <div className="bg-slate-700/50 p-4 rounded-xl border border-purple-500/20">
                   <p className="text-purple-300 text-sm mb-1">Current Balance</p>
-                  <p className="text-green-400 font-bold text-2xl">₹{Number(selectedUser.balance || 0).toLocaleString()}</p>
+                  <p className="text-green-400 font-bold text-2xl">Rs.{Number(selectedUser.balance || 0).toLocaleString()}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-purple-300 mb-2">New Balance (₹)</label>
+                  <label className="block text-sm font-bold text-purple-300 mb-2">New Balance (Rs.)</label>
                   <input
                     type="number"
                     min="0"

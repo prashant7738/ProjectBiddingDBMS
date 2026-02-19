@@ -43,7 +43,7 @@ export default function Profile() {
 
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">Account Balance</label>
-          <p className="text-2xl font-bold text-green-600">₹{Number(balance).toLocaleString()}</p>
+          <p className="text-2xl font-bold text-green-600">Rs.{Number(balance).toLocaleString()}</p>
           <p className="text-sm text-gray-500 mt-1">Available for bidding</p>
         </div>
 

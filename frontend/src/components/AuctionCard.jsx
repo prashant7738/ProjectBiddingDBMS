@@ -156,7 +156,7 @@ const AuctionCard = ({ auction, onClick }) => {
                         <div className="price-tag">
                             <p className="text-xs text-gray-500 mb-1 uppercase tracking-wide font-semibold">Current Bid</p>
                             <p className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
-                                ₹{currentBidValue.toLocaleString()}
+                                Rs.{currentBidValue.toLocaleString()}
                             </p>
                         </div>
                         <div className="text-right">

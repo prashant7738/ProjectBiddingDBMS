@@ -148,7 +148,7 @@ export default function MyAuctions() {
           <h1 className="text-4xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
             My Auctions
           </h1>
-          <p className="text-gray-600 mt-2 font-semibold">Manage your auction listings</p>
+          <p className="text-gray-600 mt-2 font-semibold text-xl">Manage your auction listings</p>
         </div>
 
         {error && (
@@ -198,7 +198,7 @@ export default function MyAuctions() {
                     </div>
                     <div>
                       <p className="text-gray-500">Starting Price</p>
-                      <p className="font-bold text-purple-600">₹{Number(auction.starting_price || 0).toLocaleString()}</p>
+                      <p className="font-bold text-purple-600">Rs.{Number(auction.starting_price || 0).toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">
@@ -212,7 +212,7 @@ export default function MyAuctions() {
                         })()}
                       </p>
                       <p className="font-bold text-green-600">
-                        ₹{Number(auction.current_highest_bid || 0).toLocaleString()}
+                        Rs.{Number(auction.current_highest_bid || 0).toLocaleString()}
                       </p>
                     </div>
                     <div>
@@ -366,7 +366,7 @@ export default function MyAuctions() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Starting Price (₹)</label>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Starting Price (Rs.)</label>
                   <input
                     type="number"
                     min="0"

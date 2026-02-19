@@ -11,7 +11,6 @@ export const CATEGORIES = {
     4: 'Others'
 };
 
-// ── Skeleton ──────────────────────────────────────────────────────────────────
 const AuctionCardSkeleton = () => (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden animate-pulse">
         <div className="h-48 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200" />
@@ -33,7 +32,7 @@ const AuctionCardSkeleton = () => (
         </div>
     </div>
 );
-// ─────────────────────────────────────────────────────────────────────────────
+
 
 const normalizeAuction = (raw) => {
     const startTime = raw?.start_time ? new Date(raw.start_time) : new Date();
@@ -109,7 +108,7 @@ const AllAuctions = () => {
         };
         loadAuctions();
         return () => { isMounted = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+ 
     }, []);
 
     useEffect(() => {
@@ -131,10 +130,10 @@ const AllAuctions = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Filters */}
             <div className="bg-white rounded-xl shadow-md p-6 mb-8 font-outfit">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800">Filter Auctions</h3>
+                <h3 className="font-semibold mb-4 text-gray-800 text-2xl">Filter Auctions</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <label className="block  font-medium text-gray-700 mb-2 text-xl">Status</label>
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
@@ -147,7 +146,7 @@ const AllAuctions = () => {
                         </select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                        <label className="block text-xl font-medium text-gray-700 mb-2">Category</label>
                         <select
                             value={selectedCategory}
                             onChange={(e) => setSelectedCategory(Number(e.target.value))}

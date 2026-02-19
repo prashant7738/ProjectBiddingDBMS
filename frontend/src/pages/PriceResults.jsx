@@ -84,7 +84,7 @@ const PriceResults = () => {
             {/* Header */}
             <div className="mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Price Results</h2>
-                <p className="text-gray-600">View final prices from completed auctions</p>
+                <p className="text-gray-600 text-xl">View final prices from completed auctions</p>
             </div>
 
             {/* Search and Sort Bar */}
@@ -180,7 +180,7 @@ const PriceResults = () => {
                                 <div className="col-span-1 md:col-span-2 md:text-right">
                                     <div className="text-sm text-gray-500 md:hidden">Estimated:</div>
                                     <div className="font-semibold text-gray-700">
-                                        ₹{result.estimatedPrice.toLocaleString()}
+                                        Rs.{result.estimatedPrice.toLocaleString()}
                                     </div>
                                 </div>
 
@@ -188,7 +188,7 @@ const PriceResults = () => {
                                 <div className="col-span-1 md:col-span-2 md:text-right">
                                     <div className="text-sm text-gray-500 md:hidden">Final Price:</div>
                                     <div className="font-bold text-green-600 text-lg">
-                                        ₹{result.finalPrice.toLocaleString()}
+                                        Rs.{result.finalPrice.toLocaleString()}
                                     </div>
                                 </div>
 

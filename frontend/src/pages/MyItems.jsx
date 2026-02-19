@@ -77,8 +77,8 @@ const MyItems = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">My Items</h2>
-        <p className="text-gray-600">Items you're currently bidding on</p>
+        <h2 className="text-3xl font-bold text-gray-900 mb-2 font-outfit">My Items</h2>
+        <p className="text-gray-600 font-outfit text-xl">Items you're currently bidding on</p>
       </div>
 
       {error && (

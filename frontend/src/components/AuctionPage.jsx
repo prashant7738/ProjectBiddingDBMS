@@ -52,10 +52,10 @@ const normalizeAuction = (raw) => {
 const formatCurrency = (amount) => {
     if (typeof amount !== 'number') {
         const num = parseFloat(amount);
-        if (isNaN(num)) return '₹0.00';
-        return `₹${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        if (isNaN(num)) return 'Rs.0.00';
+        return `Rs.${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
-    return `₹${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    return `Rs.${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
 const AuctionPage = () => {
@@ -589,7 +589,7 @@ const AuctionPage = () => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 font-outfit">
             {bidAlert && (
                 <div className="fixed top-24 left-[45vw] z-50 animate-bid-notification">
                     <div className="bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 text-white px-8 py-4 rounded-2xl shadow-2xl border-2 border-white/30 backdrop-blur-sm">
@@ -624,7 +624,7 @@ const AuctionPage = () => {
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
                 </svg>
-                Back to Auctions
+                 <p className="font-bold font-outfit text-xl">Back to Auctions</p>
             </Link>
 
             {activeAuction && (

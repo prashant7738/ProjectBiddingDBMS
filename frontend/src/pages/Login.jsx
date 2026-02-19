@@ -34,7 +34,7 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-[calc(125vh)] flex items-center justify-center px-4 py-10 bg-gradient-to-br from-purple-50 via-white to-indigo-50 relative overflow-hidden">
+    <div className="min-h-[calc(125vh)] flex items-center justify-center px-4 py-10 bg-gradient-to-br from-purple-50 via-white to-indigo-50 relative overflow-hidden font-outfit">
       {/* Floating Background Bubbles */}
       <div className="floating-bubble bubble-1"></div>
       <div className="floating-bubble bubble-2"></div>
