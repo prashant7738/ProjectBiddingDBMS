@@ -87,14 +87,14 @@ const WonItems = () => {
             )}
 
             {items.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-md p-12 text-center">
+                <div className="bg-white rounded-xl shadow-md p-12 text-center font-outfit">
                     <div className="text-6xl mb-4">🏆</div>
                     <h3 className="text-2xl font-semibold text-gray-900 mb-2">No Won Items Yet</h3>
                     <p className="text-gray-600 mb-6">
                         Start bidding on auctions to see your won items here
                     </p>
                     <Link
-                        to={'/upcoming'}
+                        to={'/all-auctions'}
                         className="gradient-bg text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-all"
                     >
                         Browse Auctions

@@ -145,7 +145,7 @@ export default function MyAuctions() {
     <div className="min-h-[calc(100vh-80px)] py-10 px-4 font-outfit">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-4xl font-black bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-black">
             My Auctions
           </h1>
           <p className="text-gray-600 mt-2 font-semibold text-xl">Manage your auction listings</p>
@@ -205,10 +205,7 @@ export default function MyAuctions() {
                         {(() => {
                           const now = new Date();
                           const endTime = new Date(auction.end_time);
-                          if (now > endTime || !auction.is_active) {
-                            return "Final Bid";
-                          }
-                          return "Current Bid";
+                          return (now > endTime || !auction.is_active) ? 'Final Bid' : 'Current Bid';
                         })()}
                       </p>
                       <p className="font-bold text-green-600">
@@ -231,7 +228,6 @@ export default function MyAuctions() {
                       </svg>
                       Users
                     </button>
-                    {/* View Auction button for ended auctions */}
                     {(() => {
                       const now = new Date();
                       const endTime = new Date(auction.end_time);
@@ -251,12 +247,9 @@ export default function MyAuctions() {
                       }
                       return null;
                     })()}
-                    {/* Only show Edit and Delete if auction is upcoming (now < startTime) */}
                     {(() => {
                       const now = new Date();
                       const startTime = new Date(auction.start_time);
-                      const endTime = new Date(auction.end_time);
-                      // Only show Edit and Delete if auction is upcoming (now < startTime)
                       if (now < startTime && auction.is_active) {
                         return (
                           <>
@@ -294,7 +287,6 @@ export default function MyAuctions() {
         )}
       </div>
 
-      {/* Delete Modal */}
       {showDeleteModal && selectedAuction && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
@@ -323,7 +315,6 @@ export default function MyAuctions() {
         </div>
       )}
 
-      {/* Edit Modal */}
       {showEditModal && selectedAuction && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
           <div className="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl my-8">
@@ -410,7 +401,6 @@ export default function MyAuctions() {
         </div>
       )}
 
-      {/* Registered Users Modal */}
       {showUsersModal && selectedAuction && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl p-8 max-w-2xl w-full shadow-2xl max-h-[80vh] overflow-y-auto">
@@ -429,7 +419,6 @@ export default function MyAuctions() {
                       <p className="font-bold text-gray-900">{user.name}</p>
                       <p className="text-sm text-gray-600">{user.email}</p>
                     </div>
-                    {/* Balance hidden */}
                   </div>
                 ))}
               </div>

@@ -3,15 +3,12 @@ import { AuthContext } from '../context/AuthContext';
 
 export default function Profile() {
   const { user, loading, refreshProfile } = useContext(AuthContext);
-  const [error, setError] = useState('');
   const [balance, setBalance] = useState(0);
 
-  // Sync balance when user changes
   useEffect(() => {
     if (user?.balance !== undefined) {
       setBalance(user.balance);
     }
-    console.log('User data updated:', user);  
   }, [user?.balance]);
 
   if (loading) {
@@ -54,8 +51,6 @@ export default function Profile() {
           Refresh Balance
         </button>
       </div>
-
-      {error && <p className="text-red-600 mt-4">{error}</p>}
     </div>
   );
 }

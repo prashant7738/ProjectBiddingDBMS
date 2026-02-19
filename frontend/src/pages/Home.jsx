@@ -69,9 +69,8 @@ const normalizeAuction = (raw) => {
 };
 
 const Home = () => {
-    const { setSelectedItem, selectedCategory, setSelectedCategory, auctionCache, updateActiveCache } = useContext(AppContext);
+    const { setSelectedItem, selectedCategory, auctionCache, updateActiveCache } = useContext(AppContext);
 
-    // If we have cached data, show it straight away — no blank screen on revisit
     const [auctions, setAuctions]   = useState(auctionCache.active);
     const [firstLoad, setFirstLoad] = useState(auctionCache.active.length === 0);
     const [error, setError]         = useState('');
@@ -79,7 +78,6 @@ const Home = () => {
     useEffect(() => {
         let isMounted = true;
         const loadAuctions = async () => {
-            // Only show skeleton on true first load (cache is empty)
             if (auctionCache.active.length === 0) setFirstLoad(true);
             setError('');
             try {
@@ -92,7 +90,7 @@ const Home = () => {
                 const normalized = list.map(normalizeAuction);
                 if (isMounted) {
                     setAuctions(normalized);
-                    updateActiveCache(normalized);   // save for next visit
+                    updateActiveCache(normalized);
                 }
             } catch (err) {
                 if (isMounted) setError(err.response?.data?.error || 'Failed to load auctions.');
@@ -121,7 +119,6 @@ const Home = () => {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-            {/* ── Hot Auctions ─────────────────────────────────────────────── */}
             <section className="mb-12">
                 <div className="section-header flex items-center justify-between mb-8">
                     <h2 className="text-4xl md:text-5xl font-black text-gray-900 flex items-center">
@@ -158,7 +155,6 @@ const Home = () => {
                 )}
             </section>
 
-            {/* ── Ending Soon ───────────────────────────────────────────────── */}
             {(firstLoad || endingSoon.length > 0) && (
                 <section className="mb-12">
                     <div className="section-header flex items-center justify-between mb-8">
@@ -189,7 +185,6 @@ const Home = () => {
                 </section>
             )}
 
-            {/* ── Explore More ──────────────────────────────────────────────── */}
             <section className="mb-12">
                 <div className="section-header mb-8">
                     <h2 className="text-3xl md:text-4xl font-black text-gray-900 flex items-center">

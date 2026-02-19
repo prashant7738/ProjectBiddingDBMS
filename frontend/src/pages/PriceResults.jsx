@@ -8,7 +8,7 @@ const PriceResults = () => {
     const [filteredResults, setFilteredResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [sortBy, setSortBy] = useState('date'); // date, price, percentage
+    const [sortBy, setSortBy] = useState('date');
 
     const normalizeAuction = (raw) => {
         const finalPrice = raw?.current_highest_bid ?? raw?.winning_bid ?? raw?.final_price ?? 0;
@@ -25,7 +25,6 @@ const PriceResults = () => {
             estimatedPrice: estimatedPrice,
             finalPrice: finalPrice,
             percentageChange: parseFloat(percentageChange),
-            winner: raw?.winner_name ?? raw?.winner?.name ?? 'Unknown',
             soldDate: raw?.end_time ?? raw?.sold_date ?? new Date(),
             bidCount: raw?.bid_count ?? 0,
         };
@@ -67,7 +66,6 @@ const PriceResults = () => {
             item.name.toLowerCase().includes(priceSearchQuery.toLowerCase())
         );
 
-        // Sort results
         if (sortBy === 'price') {
             filtered = filtered.sort((a, b) => b.finalPrice - a.finalPrice);
         } else if (sortBy === 'percentage') {
@@ -81,13 +79,11 @@ const PriceResults = () => {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 font-outfit">
-            {/* Header */}
             <div className="mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Price Results</h2>
                 <p className="text-gray-600 text-xl">View final prices from completed auctions</p>
             </div>
 
-            {/* Search and Sort Bar */}
             <div className="mb-6 flex flex-col md:flex-row gap-4">
                 <div className="flex-1">
                     <div className="relative">
@@ -116,7 +112,6 @@ const PriceResults = () => {
                 </div>
             </div>
 
-            {/* Results Count */}
             <div className="mb-4">
                 <p className="text-gray-600 font-medium">
                     {filteredResults.length} {filteredResults.length === 1 ? 'result' : 'results'} found
@@ -140,7 +135,6 @@ const PriceResults = () => {
                 </div>
             ) : (
                 <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                    {/* Table Header */}
                     <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 font-semibold text-gray-700">
                         <div className="col-span-5">Item</div>
                         <div className="col-span-2 text-right">Estimated</div>
@@ -149,14 +143,12 @@ const PriceResults = () => {
                         <div className="col-span-1 text-right">Bids</div>
                     </div>
 
-                    {/* Table Body */}
                     <div className="divide-y divide-gray-200">
                         {filteredResults.map((result) => (
                             <div
                                 key={result.id}
                                 className="result-row grid grid-cols-1 md:grid-cols-12 gap-4 px-6 py-4 items-center hover:bg-gray-50 transition-all"
                             >
-                                {/* Item Info */}
                                 <div className="col-span-1 md:col-span-5 flex items-center gap-4">
                                     <img
                                         src={result.image || '/placeholder-image.jpg'}
@@ -176,7 +168,6 @@ const PriceResults = () => {
                                     </div>
                                 </div>
 
-                                {/* Estimated Price */}
                                 <div className="col-span-1 md:col-span-2 md:text-right">
                                     <div className="text-sm text-gray-500 md:hidden">Estimated:</div>
                                     <div className="font-semibold text-gray-700">
@@ -184,7 +175,6 @@ const PriceResults = () => {
                                     </div>
                                 </div>
 
-                                {/* Final Price */}
                                 <div className="col-span-1 md:col-span-2 md:text-right">
                                     <div className="text-sm text-gray-500 md:hidden">Final Price:</div>
                                     <div className="font-bold text-green-600 text-lg">
@@ -192,7 +182,6 @@ const PriceResults = () => {
                                     </div>
                                 </div>
 
-                                {/* Percentage Change */}
                                 <div className="col-span-1 md:col-span-2 md:text-right">
                                     <div className="text-sm text-gray-500 md:hidden">Change:</div>
                                     <div className={`inline-flex items-center gap-1 px-3 py-1 rounded-full font-bold ${
@@ -216,7 +205,6 @@ const PriceResults = () => {
                                     </div>
                                 </div>
 
-                                {/* Bid Count */}
                                 <div className="col-span-1 md:col-span-1 md:text-right">
                                     <div className="text-sm text-gray-500 md:hidden">Bids:</div>
                                     <div className="inline-flex items-center gap-1 text-purple-600 font-semibold">

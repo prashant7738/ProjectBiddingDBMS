@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { assets } from '../assets/assets';
 import { loginAdmin } from '../api/auth';
 
 export default function AdminLogin() {
@@ -15,7 +14,7 @@ export default function AdminLogin() {
     e.preventDefault();
     setSubmitting(true);
     setError('');
-    
+
     try {
       const res = await loginAdmin(form);
       const adminUser = res.data?.user || { email: form.email, name: 'Admin', role: 'admin' };
