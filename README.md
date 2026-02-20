@@ -32,7 +32,7 @@
 - 💻 **Freelancers** browse open projects and submit competitive bids
 - ✅ **Clients** review bids and accept the best one
 
-The project demonstrates core DBMS concepts including relational schema design, normalization, transactions, and complex SQL queries using **PostgreSQL** with **SQLAlchemy ORM** inside a **Django** backend.
+The project demonstrates core DBMS concepts including relational schema design, normalization, transactions, and complex SQL queries using **PostgreSQL** with **SQLAlchemy Core** (raw SQL — no ORM) inside a **Django** backend.
 
 ---
 
@@ -43,7 +43,7 @@ The project demonstrates core DBMS concepts including relational schema design, 
 |-------|-----------|
 | Language | Python 3.8+ |
 | Web Framework | Django |
-| ORM | SQLAlchemy |
+| DB Interface | SQLAlchemy Core (raw SQL, no ORM) |
 | Database | PostgreSQL |
 | Auth | Django Sessions / JWT |
 | API | Django REST Framework |
@@ -95,11 +95,11 @@ The project demonstrates core DBMS concepts including relational schema design, 
 ProjectBiddingDBMS/
 ├── backend/
 │   ├── app/
-│   │   ├── models.py         # SQLAlchemy models
+│   │   ├── db.py             # SQLAlchemy engine & connection setup
+│   │   ├── queries.py        # Raw SQL query functions
 │   │   ├── views.py          # Django views / API handlers
 │   │   ├── urls.py           # URL routing
-│   │   ├── serializers.py    # DRF serializers
-│   │   └── admin.py          # Django admin config
+│   │   └── serializers.py    # DRF serializers
 │   ├── config/
 │   │   ├── settings.py       # Django settings
 │   │   ├── urls.py           # Root URL config
@@ -121,7 +121,7 @@ ProjectBiddingDBMS/
 
 ## 🗄️ Database Schema
 
-The application uses **PostgreSQL** with **SQLAlchemy** ORM. Here are the core tables:
+The application uses **PostgreSQL** with **SQLAlchemy Core** — all queries are written as raw SQL executed through SQLAlchemy's `engine.connect()`. No ORM models are used. Here are the core tables:
 
 ### `users`
 | Column | Type | Constraint |
@@ -157,6 +157,35 @@ The application uses **PostgreSQL** with **SQLAlchemy** ORM. Here are the core t
 | `proposal` | TEXT | NOT NULL |
 | `status` | VARCHAR(20) | DEFAULT `pending` |
 | `created_at` | TIMESTAMP | DEFAULT NOW() |
+
+### SQLAlchemy Core — How Queries Are Written
+
+Instead of ORM models, raw SQL is executed directly using SQLAlchemy's engine:
+
+```python
+from sqlalchemy import create_engine, text
+
+engine = create_engine("postgresql://user:password@localhost/project_bidding")
+
+# Example: Fetch all open projects
+with engine.connect() as conn:
+    result = conn.execute(text("SELECT * FROM projects WHERE status = 'open'"))
+    projects = result.fetchall()
+
+# Example: Insert a new bid
+with engine.connect() as conn:
+    conn.execute(text("""
+        INSERT INTO bids (project_id, freelancer_id, bid_amount, delivery_days, proposal)
+        VALUES (:project_id, :freelancer_id, :bid_amount, :delivery_days, :proposal)
+    """), {
+        "project_id": 1,
+        "freelancer_id": 5,
+        "bid_amount": 500.00,
+        "delivery_days": 14,
+        "proposal": "I can deliver this in 2 weeks..."
+    })
+    conn.commit()
+```
 
 ### Entity Relationships
 ```
@@ -336,10 +365,10 @@ gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4
 This project was built as part of the **6th Semester DBMS course** to demonstrate:
 
 - Relational database design & normalization
-- SQLAlchemy ORM with PostgreSQL
+- Raw SQL queries via SQLAlchemy Core (no ORM)
+- PostgreSQL as the production database
 - Django REST Framework API development
 - Full-stack web development & deployment
 
 ---
 
-<p align="center">Made with ❤️ as a DBMS project</p>
