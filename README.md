@@ -251,12 +251,12 @@ gunicorn project_main.wsgi:application --bind 0.0.0.0:8000 --workers 4
 | Name     | GitHub                       |
 | -------- | ---------------------------- |
 | Prashant | [@prashant7738](https://github.com/prashant7738) |
-
+| Roshan   | [ros4n]         (https://github.com/ros4n        |
 ---
 
 ## 🎓 Academic Context
 
-Built for 6th Semester DBMS course:
+Built for 5th Semester DBMS course:
 - Relational DB design & normalization
 - Raw SQL via SQLAlchemy Core
 - PostgreSQL production DB
