@@ -24,8 +24,8 @@
 ## 📖 Overview
 
 **Live Bid** is a web app where:
-- Clients post projects with description, budget, and deadline
-- Freelancers browse projects and submit bids
+- Clients post projects/auctions with description, budget, and deadline
+- Freelancers/bidders browse auctions and submit bids
 - Clients review and accept bids
 
 ---
@@ -40,12 +40,12 @@
 
 ## ✨ Features
 
-- User registration/login (Client/Freelancer)
+- User registration/login
 - Role-based access control
-- Clients: post/edit/delete projects
-- Freelancers: submit bids, track bids
+- Clients: post/edit/delete auctions
+- Freelancers: submit bids, track bids, register for auctions
 - Dashboard for both roles
-- Only one accepted bid per project
+- Only one accepted bid per auction
 
 ---
 
@@ -74,48 +74,63 @@ ProjectBiddingDBMS/
 
 ## 🗄️ Database Schema
 
-**PostgreSQL** with **SQLAlchemy Core** (raw SQL):
+Your project uses **five main tables**:
 
 ### `users`
-| Column         | Type         | Constraint                  |
-| -------------- | ------------ | --------------------------- |
-| user_id        | SERIAL       | PRIMARY KEY                 |
-| username       | VARCHAR(50)  | NOT NULL, UNIQUE            |
-| email          | VARCHAR(100) | NOT NULL, UNIQUE            |
-| password_hash  | VARCHAR(255) | NOT NULL                    |
-| role           | VARCHAR(20)  | NOT NULL (client/freelancer)|
-| created_at     | TIMESTAMP    | DEFAULT NOW()               |
+| Column    | Type         | Constraint                    |
+|-----------|--------------|------------------------------|
+| id        | Integer      | PRIMARY KEY                  |
+| name      | String(50)   | NOT NULL                     |
+| email     | String(100)  | UNIQUE, NOT NULL             |
+| password  | String(200)  | NOT NULL                     |
+| balance   | Numeric(10,2)| DEFAULT 0.00, >= 0           |
 
-### `projects`
-| Column        | Type           | Constraint                  |
-| ------------- | -------------- | --------------------------- |
-| project_id    | SERIAL         | PRIMARY KEY                 |
-| client_id     | INTEGER        | FOREIGN KEY → users         |
-| title         | VARCHAR(200)   | NOT NULL                    |
-| description   | TEXT           | NOT NULL                    |
-| budget_min    | DECIMAL(10,2)  | NOT NULL                    |
-| budget_max    | DECIMAL(10,2)  | NOT NULL                    |
-| deadline      | DATE           | NOT NULL                    |
-| status        | VARCHAR(20)    | DEFAULT 'open'              |
-| created_at    | TIMESTAMP      | DEFAULT NOW()               |
+### `categories`
+| Column    | Type         | Constraint                    |
+|-----------|--------------|------------------------------|
+| id        | Integer      | PRIMARY KEY                  |
+| name      | String(100)  | UNIQUE, NOT NULL             |
+
+### `auctions`
+| Column              | Type           | Constraint                        |
+|---------------------|----------------|-----------------------------------|
+| id                  | Integer        | PRIMARY KEY                       |
+| seller_id           | Integer        | FK → users(id), NOT NULL          |
+| title               | String(255)    | NOT NULL                          |
+| description         | String(500)    |                                   |
+| image_url           | String(500)    |                                   |
+| category_id         | Integer        | FK → categories(id), nullable     |
+| starting_price      | Numeric(12,2)  | NOT NULL                          |
+| current_highest_bid | Numeric(12,2)  |                                   |
+| start_time          | DateTime       | NOT NULL                          |
+| end_time            | DateTime       | NOT NULL                          |
+| is_active           | Boolean        | DEFAULT true                      |
 
 ### `bids`
-| Column        | Type           | Constraint                  |
-| ------------- | -------------- | --------------------------- |
-| bid_id        | SERIAL         | PRIMARY KEY                 |
-| project_id    | INTEGER        | FOREIGN KEY → projects      |
-| freelancer_id | INTEGER        | FOREIGN KEY → users         |
-| bid_amount    | DECIMAL(10,2)  | NOT NULL                    |
-| delivery_days | INTEGER        | NOT NULL                    |
-| proposal      | TEXT           | NOT NULL                    |
-| status        | VARCHAR(20)    | DEFAULT 'pending'           |
-| created_at    | TIMESTAMP      | DEFAULT NOW()               |
+| Column    | Type           | Constraint                        |
+|-----------|----------------|-----------------------------------|
+| id        | Integer        | PRIMARY KEY                       |
+| auction_id| Integer        | FK → auctions(id), NOT NULL       |
+| bidder_id | Integer        | FK → users(id), NOT NULL          |
+| amount    | Numeric(12,2)  | NOT NULL                          |
+| bid_time  | DateTime       | DEFAULT now()                     |
+
+### `auction_registrations`
+| Column        | Type      | Constraint                        |
+|---------------|-----------|-----------------------------------|
+| id            | Integer   | PRIMARY KEY                       |
+| auction_id    | Integer   | FK → auctions(id), NOT NULL       |
+| user_id       | Integer   | FK → users(id), NOT NULL          |
+| registered_at | DateTime  | DEFAULT now()                     |
 
 **Entity Relationships:**
 ```
-users (client)    ──< projects
-users (freelancer) ──< bids
-projects           ──< bids
+users ──< auctions
+users ──< bids
+users ──< auction_registrations
+categories ──< auctions
+auctions ──< bids
+auctions ──< auction_registrations
 ```
 
 ---
@@ -132,23 +147,34 @@ All endpoints return JSON. Auth required for some routes.
 | POST   | /api/auth/logout      | Yes  | Logout                |
 | GET    | /api/auth/profile     | Yes  | Get user profile      |
 
-### Projects
+### Auctions
 | Method | Endpoint              | Auth         | Description         |
 | ------ | --------------------- | ------------ | ------------------- |
-| GET    | /api/projects/        | No           | List open projects  |
-| GET    | /api/projects/:id/    | No           | Project details     |
-| POST   | /api/projects/        | Yes (Client) | Create project      |
-| PUT    | /api/projects/:id/    | Yes (Owner)  | Update project      |
-| DELETE | /api/projects/:id/    | Yes (Owner)  | Delete project      |
+| GET    | /api/auctions/        | No           | List open auctions  |
+| GET    | /api/auctions/:id/    | No           | Auction details     |
+| POST   | /api/auctions/        | Yes (Seller) | Create auction      |
+| PUT    | /api/auctions/:id/    | Yes (Owner)  | Update auction      |
+| DELETE | /api/auctions/:id/    | Yes (Owner)  | Delete auction      |
 
 ### Bids
 | Method | Endpoint                      | Auth           | Description           |
 | ------ | ----------------------------- | -------------- | --------------------- |
-| GET    | /api/projects/:id/bids/       | Yes            | Get bids for project  |
-| POST   | /api/projects/:id/bids/       | Yes (Freelancer)| Submit bid           |
-| PUT    | /api/bids/:id/accept/         | Yes (Client)   | Accept bid            |
-| PUT    | /api/bids/:id/reject/         | Yes (Client)   | Reject bid            |
-| GET    | /api/bids/my/                 | Yes (Freelancer)| My submitted bids    |
+| GET    | /api/auctions/:id/bids/       | Yes            | Get bids for auction  |
+| POST   | /api/auctions/:id/bids/       | Yes (Bidder)   | Submit bid            |
+| PUT    | /api/bids/:id/accept/         | Yes (Seller)   | Accept bid            |
+| PUT    | /api/bids/:id/reject/         | Yes (Seller)   | Reject bid            |
+| GET    | /api/bids/my/                 | Yes (Bidder)   | My submitted bids     |
+
+### Categories
+| Method | Endpoint              | Auth | Description           |
+| ------ | --------------------- | ---- | --------------------- |
+| GET    | /api/categories/      | No   | List categories       |
+
+### Auction Registrations
+| Method | Endpoint                              | Auth         | Description                |
+| ------ | ------------------------------------- | ------------ | -------------------------- |
+| POST   | /api/auctions/:id/register/           | Yes (User)   | Register for auction       |
+| GET    | /api/auctions/:id/registrations/      | Yes (Seller) | List registered users      |
 
 ---
 
@@ -236,4 +262,6 @@ Built for 6th Semester DBMS course:
 - PostgreSQL production DB
 - Django REST API
 - Full-stack web development
+
+---
 
