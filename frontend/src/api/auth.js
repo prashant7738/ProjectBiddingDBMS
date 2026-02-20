@@ -24,6 +24,46 @@ client.interceptors.response.use(
     }
 );
 
+const isPaginatedPayload = (payload) => {
+    return Boolean(
+        payload &&
+        typeof payload === 'object' &&
+        Array.isArray(payload.results) &&
+        (Object.prototype.hasOwnProperty.call(payload, 'next') ||
+            Object.prototype.hasOwnProperty.call(payload, 'count'))
+    );
+};
+
+const getAllPaginated = async (url, config = {}) => {
+    let requestUrl = url;
+    let pageIndex = 0;
+    let finalResponse = null;
+    let mergedResults = [];
+
+    while (requestUrl) {
+        const response = await client.get(requestUrl, pageIndex === 0 ? config : undefined);
+        finalResponse = response;
+        const payload = response.data;
+
+        if (!isPaginatedPayload(payload)) {
+            return response;
+        }
+
+        mergedResults = mergedResults.concat(payload.results);
+        requestUrl = payload.next || null;
+        pageIndex += 1;
+
+        if (pageIndex > 500) {
+            throw new Error('Pagination limit exceeded while fetching API results.');
+        }
+    }
+
+    return {
+        ...finalResponse,
+        data: mergedResults,
+    };
+};
+
 // Auth endpoints
 export const registerUser = (data) => client.post('/register/', data);  // { name, email, password }
 export const loginUser = (data) => client.post('/login/', data);        // { email, password }
@@ -35,17 +75,17 @@ export const refreshToken = () => client.post('/token/refresh/');
 export const getProfile = () => client.get('/profile/');
 
 // Auction endpoints (public)
-export const getAuctions = () => client.get('/auctions/');
+export const getAuctions = () => getAllPaginated('/auctions/', { params: { page_size: 100 } });
 export const getAuctionById = (id) => client.get(`/auctions/${id}/`);
-export const getEndedAuctions = () => client.get('/auctions/ended/');
+export const getEndedAuctions = () => getAllPaginated('/auctions/ended/', { params: { page_size: 100 } });
 
 // Admin auction endpoints (protected)
-export const getAdminAuctions = () => client.get('/admin/auctions/');
+export const getAdminAuctions = () => getAllPaginated('/admin/auctions/', { params: { page_size: 100 } });
 export const deleteAdminAuction = (id) => client.delete(`/admin/auctions/${id}/`);
 export const closeExpiredAuctions = () => client.post('/admin/auctions/close-expired/');
 
 // Admin user endpoints (protected)
-export const getAdminUsers = () => client.get('/admin/users/?page_size=100');
+export const getAdminUsers = () => getAllPaginated('/admin/users/', { params: { page_size: 100 } });
 export const updateAdminUserBalance = (userId, balance) => client.patch(`/admin/users/${userId}/`, { balance });
 export const deleteAdminUser = (userId) => client.delete(`/admin/users/${userId}/`);
 
@@ -68,15 +108,15 @@ export const createAuction = (formData) => client.post('/create-auction/', formD
 });
 
 // MyBids
-export const myBids = (id) => client.get(`/my-bids/${id}/`);
+export const myBids = (id) => getAllPaginated(`/my-bids/${id}/`, { params: { page_size: 100 } });
 
 // My Auctions (seller's auctions)
-export const myAuctions = (id) => client.get(`/my-auctions/${id}/`);
+export const myAuctions = (id) => getAllPaginated(`/my-auctions/${id}/`, { params: { page_size: 100 } });
 export const deleteMyAuction = (userId, auctionId) => client.delete(`/my-auctions/${userId}/`, { data: { auction_id: auctionId } });
 export const updateMyAuction = (userId, auctionId, data) => client.patch(`/my-auctions/${userId}/`, { auction_id: auctionId, ...data });
 
 // Won Items
-export const winItems = (id) => client.get(`/win-items/${id}/`);
+export const winItems = (id) => getAllPaginated(`/win-items/${id}/`, { params: { page_size: 100 } });
 
 // Notifications
 export const getNotifications = (id, since) => {
