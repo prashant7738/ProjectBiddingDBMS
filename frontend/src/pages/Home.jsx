@@ -195,7 +195,7 @@ const Home = () => {
                     </h2>
                 </div>
 
-                <div className="overflow-x-auto explore-scroll pb-4">
+                <div className="overflow-x-auto scrollbar pb-4">
                     {firstLoad ? (
                         <SkeletonGrid count={5} horizontal />
                     ) : (
