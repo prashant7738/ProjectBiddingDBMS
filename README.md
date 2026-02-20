@@ -1,9 +1,8 @@
 # 🏷️ Live Bid — Real-Time Online Auction Platform
 
 > A full-stack real-time auction platform where users can create auctions, place competitive bids, and win items. Built with Django, SQLAlchemy Core, PostgreSQL, React, and WebSockets.
-
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://project-bidding-dbms.vercel.app)
-
+>
+> Hosted URL : https://project-bidding-dbms.vercel.app
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.1.4-green)](https://www.djangoproject.com/)
