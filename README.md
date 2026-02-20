@@ -1054,9 +1054,9 @@ This project is developed for educational purposes as part of academic coursewor
 ## 🙏 Acknowledgments
 
 - **Course**: Database Management Systems (DBMS)
-- **Institution**: [Your University Name]
-- **Semester**: 6th Semester
-- **Instructor**: [Instructor Name]
+- **Institution**: Thapathali Campus
+- **Semester**: 5th Semester
+- **Instructor**: Rajad Shakya
 
 ---
 
@@ -1070,5 +1070,5 @@ For questions or support, reach out to:
 
 <div align="center">
   <p>Built with ❤️ for learning and excellence</p>
-  <p>© 2024 Live Bid Platform. All rights reserved.</p>
+  <p>© 2025 Live Bid Platform. All rights reserved.</p>
 </div>
