@@ -3,6 +3,8 @@
 > A full-stack real-time auction platform where users can create auctions, place competitive bids, and win items. Built with Django, SQLAlchemy Core, PostgreSQL, React, and WebSockets.
 
 [![Live Demo](https://img.shields.io/badge/demo-live-success)](https://project-bidding-dbms.vercel.app)
+
+
 [![Python](https://img.shields.io/badge/Python-3.8+-blue)](https://www.python.org/)
 [![Django](https://img.shields.io/badge/Django-5.1.4-green)](https://www.djangoproject.com/)
 [![React](https://img.shields.io/badge/React-19.0.0-61dafb)](https://reactjs.org/)
@@ -17,8 +19,8 @@
 - [Tech Stack](#tech-stack)
 - [Project Architecture](#project-architecture)
 - [Database Schema](#database-schema)
-- [API Documentation](#api-documentation)
 - [Installation & Setup](#installation--setup)
+- [API Documentation](#api-documentation)
 - [Running the Application](#running-the-application)
 - [Deployment](#deployment)
 - [Project Structure](#project-structure)
