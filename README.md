@@ -1,4 +1,4 @@
-# BiddingDBMS — Real-Time Auction Platform
+# LIVE BIDDING NP — Real-Time Auction Platform
 
 A full-stack auction system with live bidding, cookie-based JWT auth, role-aware admin controls, and SQL-first data access.
 
