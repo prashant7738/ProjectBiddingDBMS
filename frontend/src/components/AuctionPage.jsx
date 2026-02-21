@@ -48,6 +48,25 @@ const normalizeAuction = (raw) => {
     };
 };
 
+// Helper function to format time in Nepal Time (UTC+5:45) with AM/PM
+const formatNepalTime = (timeStr) => {
+    if (!timeStr) return '';
+    try {
+        const date = new Date(timeStr);
+        if (isNaN(date.getTime())) return String(timeStr);
+        return date.toLocaleString('en-US', {
+            timeZone: 'Asia/Kathmandu',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+        }) ;
+    } catch {
+        return String(timeStr);
+    }
+};
+
 // Helper function to format currency consistently with 2 decimal places
 const formatCurrency = (amount) => {
     if (typeof amount !== 'number') {
@@ -65,6 +84,7 @@ const AuctionPage = () => {
     const [loading, setLoading] = useState(false);
     const [loadError, setLoadError] = useState('');
     const [isRegistered, setIsRegistered] = useState(false);
+    const [registrationChecking, setRegistrationChecking] = useState(true);
     const [currentBid, setCurrentBid] = useState(0);
     const [userCurrentBid, setUserCurrentBid] = useState(null);
     const [bidHistory, setBidHistory] = useState([]);
@@ -74,6 +94,7 @@ const AuctionPage = () => {
     const wsRef = useRef(null);
     const reconnectRef = useRef(null);
     const alertTimeoutRef = useRef(null);
+    const failedAttemptsRef = useRef(0);
     const { id } = useParams();
     const navigate = useNavigate();
 
@@ -208,7 +229,7 @@ const AuctionPage = () => {
                     const history = res.data.map((bid) => ({
                         bidder: bid.bidder_name || `Bidder #${bid.bidder_id}`,
                         amount: bid.amount ?? 0,
-                        time: bid.bid_time || 'Just now',
+                        time: bid.bid_time || new Date().toISOString(),
                     }));
                     console.log('Formatted bid history:', history);
                     setBidHistory(history);
@@ -260,8 +281,12 @@ const AuctionPage = () => {
     }, [activeAuction?.id]);
 
     useEffect(() => {
-        if (!activeAuction?.id || !user?.id) return;
+        if (!activeAuction?.id || !user?.id) {
+            setRegistrationChecking(false);
+            return;
+        }
         let isMounted = true;
+        setRegistrationChecking(true);
         const checkRegistration = async () => {
             try {
                 const res = await getRegisteredUsers(activeAuction.id);
@@ -295,6 +320,8 @@ const AuctionPage = () => {
                 }
             } catch {
                 // If lookup fails, keep current registration state
+            } finally {
+                if (isMounted) setRegistrationChecking(false);
             }
         };
         checkRegistration();
@@ -329,6 +356,7 @@ const AuctionPage = () => {
 
         console.log('[WS] Attempting connection for user:', user?.id ?? 'guest', 'auction:', activeAuction.id);
         let didUnmount = false;
+        failedAttemptsRef.current = 0;
 
         const handleBidUpdate = (payload, options = {}) => {
             const rawAmount = payload?.current_highest_bid
@@ -357,7 +385,7 @@ const AuctionPage = () => {
                 const history = payload.bids.map((bid) => ({
                     bidder: bid.username || bid.bidder_name || bid.bidder || (bid.bidder_id ? `Bidder #${bid.bidder_id}` : 'Bidder'),
                     amount: bid.amount ?? 0,
-                    time: bid.time || bid.created_at || 'Just now',
+                    time: bid.time || bid.created_at || new Date().toISOString(),
                 }));
                 setBidHistory(history);
                 return;
@@ -367,7 +395,7 @@ const AuctionPage = () => {
                 const bidAmount = payload?.amount ?? payload?.bid?.amount ?? payload?.data?.bid?.amount;
                 const bidderId = payload?.bidder_id ?? payload?.bid?.bidder_id ?? payload?.data?.bid?.bidder_id;
                 const bidderName = payload?.username || payload?.bidder_name || (bidderId ? `Bidder #${bidderId}` : 'Bidder');
-                const bidTime = payload?.time || payload?.created_at || payload?.bid?.time || payload?.bid?.created_at || 'Just now';
+                const bidTime = payload?.time || payload?.created_at || payload?.bid?.time || payload?.bid?.created_at || new Date().toISOString();
                 
                 // Update userCurrentBid if this bid is from the current user
                 if (user?.id && bidderId === user.id) {
@@ -408,6 +436,7 @@ const AuctionPage = () => {
 
             socket.onopen = () => {
                 console.info('[WS] Connected to auction channel', activeAuction.id);
+                failedAttemptsRef.current = 0;
                 setBidError('');
             };
 
@@ -449,8 +478,13 @@ const AuctionPage = () => {
             socket.onclose = (event) => {
                 console.warn('[WS] Disconnected from auction channel', activeAuction.id, 'Code:', event.code, 'Reason:', event.reason);
                 if (event.code === 1006) {
-                    console.error('[WS] Abnormal closure - backend likely rejected connection (auth issue?)');
-                    setBidError('Connection failed. Please ensure you are logged in.');
+                    failedAttemptsRef.current += 1;
+                    console.error('[WS] Abnormal closure - attempt', failedAttemptsRef.current);
+                    // Only show error after 2+ failures AND user is not logged in
+                    // This prevents false alarms on initial load when auth is still resolving
+                    if (failedAttemptsRef.current >= 2 && !user?.id) {
+                        setBidError('Please login to place bids on this auction.');
+                    }
                 }
                 if (!didUnmount && event.code !== 1000) {
                     reconnectRef.current = setTimeout(connect, 3000);
@@ -540,13 +574,13 @@ const AuctionPage = () => {
             const updatedBid = res.data?.amount ?? bidAmount;
             setUserCurrentBid({
                 amount: updatedBid,
-                time: 'Just now'
+                time: new Date().toISOString()
             });
             setBidHistory((prev) => [
                 {
                     bidder: user.name || 'You',
                     amount: updatedBid,
-                    time: 'Just now',
+                    time: new Date().toISOString(),
                 },
                 ...prev,
             ]);
@@ -654,12 +688,7 @@ const AuctionPage = () => {
                                                 </svg>
                                                 <div>
                                                     <div className="text-xs opacity-90">Starts</div>
-                                                    <div className="font-bold">{new Date(activeAuction.startTime).toLocaleString('en-US', { 
-                                                        month: 'short', 
-                                                        day: 'numeric', 
-                                                        hour: '2-digit', 
-                                                        minute: '2-digit'
-                                                    })}</div>
+                                                    <div className="font-bold">{formatNepalTime(activeAuction.startTime)}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -760,6 +789,12 @@ const AuctionPage = () => {
                                         </div>
                                     </div>
                                 </div>
+                            ) : registrationChecking ? (
+                                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 mb-6 animate-pulse">
+                                    <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"></div>
+                                    <div className="h-3 bg-gray-200 rounded w-2/3 mb-4"></div>
+                                    <div className="h-10 bg-gray-200 rounded w-full"></div>
+                                </div>
                             ) : !isRegistered ? (
                                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
                                     <h3 className="font-semibold text-gray-900 mb-2">Registration Required</h3>
@@ -830,7 +865,7 @@ const AuctionPage = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-semibold text-gray-900 text-sm leading-tight">{bid.bidder}</p>
-                                                    <p className="text-xs text-gray-400">{bid.time}</p>
+                                                    <p className="text-xs text-gray-400">{formatNepalTime(bid.time)}</p>
                                                 </div>
                                             </div>
                                             <div className="text-right">

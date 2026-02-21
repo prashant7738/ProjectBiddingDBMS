@@ -4,6 +4,24 @@ import { assets } from '../assets/assets';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
+const formatNepalTime = (timeStr) => {
+    if (!timeStr) return '';
+    try {
+        const date = new Date(timeStr);
+        if (isNaN(date.getTime())) return String(timeStr);
+        return date.toLocaleString('en-US', {
+            timeZone: 'Asia/Kathmandu',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true,
+        }) ;
+    } catch {
+        return String(timeStr);
+    }
+};
+
 const Header = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -118,7 +136,7 @@ const Header = () => {
                                                 >
                                                     <p className="text-xs sm:text-sm text-gray-800 font-medium">{notif.message}</p>
                                                     <div className="flex items-center justify-between mt-1.5">
-                                                        <p className="text-[10px] text-gray-500 font-medium">{notif.time}</p>
+                                                        <p className="text-[10px] text-gray-500 font-medium">{formatNepalTime(notif.time)}</p>
                                                         {notif.auctionId && (
                                                             <span className="text-[10px] text-purple-500 font-semibold flex items-center gap-0.5">
                                                                 View auction
