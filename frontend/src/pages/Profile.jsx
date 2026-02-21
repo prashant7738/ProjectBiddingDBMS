@@ -20,7 +20,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="p-8 max-w-2xl mx-auto">
+    <div className="p-8 max-w-2xl mx-auto font-outfit">
       <h1 className="text-3xl font-bold mb-6">User Profile</h1>
       
       <div className="bg-gray-100 p-6 rounded-lg">
