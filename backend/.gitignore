@@ -1,8 +1,22 @@
-.venv
 .env
+.venv/
+venv/
+
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.vscode
+
+.vscode/
+.idea/
+
+# Local databases and caches
+*.sqlite3
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Django generated assets
+media/
+staticfiles/
 

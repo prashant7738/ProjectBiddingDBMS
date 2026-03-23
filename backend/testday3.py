@@ -94,11 +94,9 @@ def run_day_4():
     
 
   
-# seed_categories()  
-# run_day3_test()
-
-# run_day_4()
-
-seed_categories()
-# close_expired_auctions()
+if __name__ == "__main__":
+    seed_categories()
+    # run_day3_test()
+    # run_day_4()
+    # close_expired_auctions()
 
