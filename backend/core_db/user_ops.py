@@ -1,6 +1,7 @@
 # This is where all User Work are done.
 
-from sqlalchemy import insert , select, delete
+from sqlalchemy import insert, select, delete
+from sqlalchemy.exc import IntegrityError
 from passlib.hash import pbkdf2_sha256  # Professional hashing algorithm
 from .engine import engine
 from .schemas import users
@@ -16,6 +17,18 @@ def register_user(name , email , raw_password , initial_balance = 0.0):
     hashed_psw = hash_password(raw_password)
     
     with engine.connect() as conn:
+        existing = conn.execute(
+            select(users.c.id, users.c.name, users.c.email).where(
+                (users.c.email == email) | (users.c.name == name)
+            )
+        ).first()
+
+        if existing:
+            if existing.email == email:
+                raise ValueError("This email is already registered")
+            if existing.name == name:
+                raise ValueError("This username is already taken")
+
         stmt = insert(users).values(
             name = name,
             email = email,
@@ -23,10 +36,19 @@ def register_user(name , email , raw_password , initial_balance = 0.0):
             balance = initial_balance
             
         )
-        
-        result = conn.execute(stmt)
-        conn.commit()
-        return result.inserted_primary_key[0]
+
+        try:
+            result = conn.execute(stmt)
+            conn.commit()
+            return result.inserted_primary_key[0]
+        except IntegrityError as exc:
+            conn.rollback()
+            message = str(exc).lower()
+            if 'email' in message:
+                raise ValueError("This email is already registered")
+            if 'name' in message:
+                raise ValueError("This username is already taken")
+            raise ValueError("Registration failed. Please try again.") from exc
 
 
 def authenticate_user(email , typed_pass):

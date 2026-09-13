@@ -202,22 +202,12 @@ class RegisterView(APIView):
                 "email": email
             }, status=status.HTTP_201_CREATED)
             
-        except Exception as e:
-            error_msg = str(e)
-            # Check for duplicate email/username errors
-            if "unique constraint" in error_msg.lower() or "duplicate" in error_msg.lower():
-                if "email" in error_msg.lower():
-                    return Response(
-                        {"error": "This email is already registered"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                elif "name" in error_msg.lower():
-                    return Response(
-                        {"error": "This username is already taken"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            
-            # Generic error for other issues
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception:
             return Response(
                 {"error": "Registration failed. Please try again."},
                 status=status.HTTP_400_BAD_REQUEST
