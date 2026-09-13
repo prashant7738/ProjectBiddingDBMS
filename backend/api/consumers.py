@@ -17,20 +17,14 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
         self.user = None
         self.can_bid = False
 
-        # Try cookie first, then query parameter as fallback
+        # Cookie only — a token in the query string would leak into server
+        # and proxy access logs, and the frontend never sends one that way.
         token = self._get_token_from_cookies()
-        if not token:
-            token = self._get_token_from_query()
-        
-        if not token:
-            print("ℹ️ No token found; allowing read-only connection")
-        else:
-            print(f"✅ Token found: {token[:20]}...")
+
+        if token:
             try:
                 self.user = await self._get_user_from_token(token)
-                print(f"✅ User authenticated: {self.user.id}")
             except exceptions.AuthenticationFailed:
-                print("❌ Token validation failed")
                 await self.close(code=4401)
                 return
 
@@ -40,9 +34,6 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
             )
             if is_registered:
                 self.can_bid = True
-                print(f"✅ User {self.user.id} registered for auction {self.auction_id}")
-            else:
-                print(f"ℹ️ User {self.user.id} not registered for auction {self.auction_id}; read-only")
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
@@ -114,9 +105,7 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
                 self.group_name,
                 {"type": "broadcast_bid", "payload": payload},
             )
-            print(f"✅ Bid placed successfully by user {self.user.id} ({self.user.name}): ${amount}")
         else:
-            print(f"❌ Bid rejected for user {self.user.id}: {result}")
             # Send error with current auction state so client can correct UI
             auction = await database_sync_to_async(get_auction_by_id)(self.auction_id)
             await self.send_json({
@@ -127,15 +116,6 @@ class AuctionBidConsumer(AsyncJsonWebsocketConsumer):
 
     async def broadcast_bid(self, event):
         await self.send_json(event["payload"])
-
-    def _get_token_from_query(self):
-        query_string = self.scope.get("query_string", b"").decode()
-        if not query_string:
-            return None
-        from urllib.parse import parse_qs
-        query = parse_qs(query_string)
-        token_values = query.get("token")
-        return token_values[0] if token_values else None
 
     def _get_token_from_cookies(self):
         headers = dict(self.scope.get("headers", []))

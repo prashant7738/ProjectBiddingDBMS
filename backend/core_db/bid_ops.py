@@ -1,10 +1,24 @@
 from sqlalchemy import insert , select , and_ , update
 from decimal import Decimal
-from datetime import timedelta
+from datetime import timedelta, timezone as dt_timezone
 from django.utils import timezone
 from sqlalchemy.sql import func
-from .engine import engine 
+from .engine import engine
 from .schemas import bids , auctions , users, auction_registrations
+
+
+def _aware(dt):
+    """
+    Normalize a datetime just read back from the DB to timezone-aware UTC.
+    Postgres round-trips DateTime(timezone=True) columns as aware datetimes,
+    but SQLite (e.g. local dev) has no native tz-aware timestamp type and
+    always hands back naive ones — comparing that against timezone.now()
+    raises TypeError. This keeps those comparisons safe on both backends.
+    """
+    if dt is not None and timezone.is_naive(dt):
+        return timezone.make_aware(dt, dt_timezone.utc)
+    return dt
+
 
 def place_bid(bidder_id , auction_id , bid_amount):
     # Convert bid_amount to Decimal for precise comparison
@@ -44,11 +58,11 @@ def place_bid(bidder_id , auction_id , bid_amount):
                 return "Error: You are not registered for this auction. Please register first."
             
             # to check if auction is started or not (now comparing timezone-aware datetimes)
-            if current_time < auction.start_time:
+            if current_time < _aware(auction.start_time):
                 return "ERROR : the time is not started"
-            
+
             # Check if auction is still open
-            if current_time >= auction.end_time:
+            if current_time >= _aware(auction.end_time):
                 return "ERROR : the time is finished"
             
             # Check if bid is high enough - Convert current_highest_bid to Decimal for comparison
@@ -286,22 +300,24 @@ def get_user_notifications(user_id, since=None):
         ).select_from(reg_join).where(auction_registrations.c.user_id == user_id)
 
         for row in conn.execute(reg_query):
-            if row.start_time and since_time < row.start_time <= now:
+            start_time = _aware(row.start_time)
+            end_time = _aware(row.end_time)
+            if start_time and since_time < start_time <= now:
                 notifications.append({
-                    'id': f"start:{row.auction_id}:{int(row.start_time.timestamp())}",
+                    'id': f"start:{row.auction_id}:{int(start_time.timestamp())}",
                     'type': 'auction_started',
                     'auction_id': row.auction_id,
                     'message': f"Auction started: {row.title}",
-                    'time': row.start_time.isoformat(),
+                    'time': start_time.isoformat(),
                     'read': False,
                 })
-            if row.end_time and since_time < row.end_time <= now:
+            if end_time and since_time < end_time <= now:
                 notifications.append({
-                    'id': f"end:{row.auction_id}:{int(row.end_time.timestamp())}",
+                    'id': f"end:{row.auction_id}:{int(end_time.timestamp())}",
                     'type': 'auction_ended',
                     'auction_id': row.auction_id,
                     'message': f"Auction ended: {row.title}",
-                    'time': row.end_time.isoformat(),
+                    'time': end_time.isoformat(),
                     'read': False,
                 })
 

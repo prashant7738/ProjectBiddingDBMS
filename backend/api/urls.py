@@ -1,8 +1,9 @@
 from django.urls import path
 from .views import (AuctionListView, EndedAuctionListView, PlaceBidView, MyAuctionView, MyBidsView, CreateAuction, KeepAliveView,
-                   ProfileView, RegisterForAuctionView, AuctionAccessView, AuctionRegisteredUsersView, 
-                   AuctionDetailView, AuctionBidHistoryView, WonItemsView, NotificationsView, 
-                   AdminAuctionListView, AdminAuctionDeleteView, AdminCloseExpiredAuctionsView, AdminUserListView, AdminUserUpdateView)
+                   ProfileView, RegisterForAuctionView, AuctionAccessView, AuctionRegisteredUsersView,
+                   AuctionDetailView, AuctionBidHistoryView, WonItemsView, NotificationsView,
+                   AdminAuctionListView, AdminAuctionDeleteView, AdminCloseExpiredAuctionsView, AdminUserListView, AdminUserUpdateView,
+                   AuctionWatchView, UserWatchlistView, AdminStatsView)
 from .auth_views import LoginView, RegisterView, LogoutView, TokenRefreshView, AdminLoginView
 
 urlpatterns = [
@@ -15,6 +16,8 @@ urlpatterns = [
     path('auctions/<int:auction_id>/registered-users/', AuctionRegisteredUsersView.as_view(), name='auction-registered-users'),
     path('auctions/<int:auction_id>/bids/', AuctionBidHistoryView.as_view(), name='auction-bid-history'),
     path('auctions/<int:auction_id>/register/', RegisterForAuctionView.as_view(), name='register-auction'),
+    path('auctions/<int:auction_id>/watch/', AuctionWatchView.as_view(), name='auction-watch'),
+    path('users/<int:user_id>/watchlist/', UserWatchlistView.as_view(), name='user-watchlist'),
     path('bids/place/', PlaceBidView.as_view(), name='place-bid'),
     path('my-auctions/<int:user_id>/', MyAuctionView.as_view(), name='auction-view'),
     path('my-bids/<int:user_id>/', MyBidsView.as_view(), name='bid-view'),
@@ -31,4 +34,5 @@ urlpatterns = [
     path('admin/auctions/<int:auction_id>/', AdminAuctionDeleteView.as_view(), name='admin-auction-delete'),
     path('admin/users/', AdminUserListView.as_view(), name='admin-user-list'),
     path('admin/users/<int:user_id>/', AdminUserUpdateView.as_view(), name='admin-user-update'),
+    path('admin/stats/', AdminStatsView.as_view(), name='admin-stats'),
 ]

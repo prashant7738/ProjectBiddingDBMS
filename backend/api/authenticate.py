@@ -1,5 +1,7 @@
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.authentication import SessionAuthentication
 from rest_framework import exceptions
+from django.middleware.csrf import get_token
 import json
 
 class MockUser:
@@ -23,6 +25,18 @@ class SQLAlchemyJWTAuthentication(JWTAuthentication):
             raise exceptions.AuthenticationFailed('Invalid or expired access token') from e
 
         user = self.get_user(validated_token)
+
+        # Cookie-based JWT auth bypasses DRF's usual csrf_exempt handling for
+        # APIView, so without an explicit check any cross-site page could
+        # ride the browser's auto-sent cookies straight into place-bid,
+        # create-auction, admin delete, etc. get_token() guarantees a fresh
+        # CSRF cookie is issued on every authenticated response (so the next
+        # request already has one to send back); enforce_csrf then requires
+        # a matching X-CSRFToken header on unsafe methods (GET/HEAD/OPTIONS
+        # are left untouched by Django's CSRF check).
+        get_token(request)
+        SessionAuthentication().enforce_csrf(request)
+
         return (user, validated_token)
 
     def get_user(self, validated_token):

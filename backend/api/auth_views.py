@@ -7,6 +7,7 @@ from rest_framework import status
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.conf import settings
+from django.middleware.csrf import get_token
 
 from core_db.user_ops import authenticate_user, register_user
 from .admin_utils import is_admin_user
@@ -88,7 +89,10 @@ class LoginView(APIView):
             refresh['name'] = user['name']
             
             response = Response({
-                'user' : {'id':user['id'] , 'email':user['email'], 'name': user['name']}
+                'user' : {'id':user['id'] , 'email':user['email'], 'name': user['name']},
+                # See ProfileView.get — the frontend is cross-origin and
+                # can't read this cookie itself, so hand it over directly.
+                'csrf_token': get_token(request),
             })
             
             # Token lifetimes
@@ -142,7 +146,8 @@ class AdminLoginView(APIView):
         refresh['name'] = user['name']
 
         response = Response({
-            'user': {'id': user['id'], 'email': user['email'], 'name': user['name'], 'role': 'admin'}
+            'user': {'id': user['id'], 'email': user['email'], 'name': user['name'], 'role': 'admin'},
+            'csrf_token': get_token(request),
         })
 
         access_token_lifetime = 1200

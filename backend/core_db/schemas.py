@@ -1,6 +1,6 @@
 # this is where all database table are created
 
-from sqlalchemy import MetaData , Table , Column, Integer, String, Numeric, ForeignKey, DateTime, Boolean, CheckConstraint
+from sqlalchemy import MetaData , Table , Column, Integer, String, Numeric, ForeignKey, DateTime, Boolean, CheckConstraint, UniqueConstraint
 from sqlalchemy.sql import func
 
 
@@ -39,15 +39,15 @@ auctions = Table(
     Column("starting_price", Numeric(12, 2), nullable=False),
     Column("current_highest_bid", Numeric(12, 2)), # Helps track price easily
     Column("start_time", DateTime(timezone=True), nullable = False),
-    Column("end_time", DateTime(timezone=True), nullable=False),
-    Column("is_active", Boolean, server_default="true"), # To mark finished auctions
+    Column("end_time", DateTime(timezone=True), nullable=False, index=True), # Queried constantly for active/ended filtering
+    Column("is_active", Boolean, server_default="true", index=True), # To mark finished auctions
 )
 
 bids = Table(
     "bids", metadata,
     Column("id", Integer, primary_key=True),
-    Column("auction_id", ForeignKey("auctions.id", ondelete="CASCADE"), nullable=False),
-    Column("bidder_id", ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+    Column("auction_id", ForeignKey("auctions.id", ondelete="CASCADE"), nullable=False, index=True),
+    Column("bidder_id", ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True),
     Column("amount", Numeric(12, 2), nullable=False),
     Column("bid_time", DateTime(timezone=True), server_default=func.now()), # Records exactly when bid was placed
 )
@@ -55,7 +55,16 @@ bids = Table(
 auction_registrations = Table(
     "auction_registrations", metadata,
     Column("id", Integer, primary_key=True),
-    Column("auction_id", ForeignKey("auctions.id", ondelete="CASCADE"), nullable=False),
-    Column("user_id", ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+    Column("auction_id", ForeignKey("auctions.id", ondelete="CASCADE"), nullable=False, index=True),
+    Column("user_id", ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True),
     Column("registered_at", DateTime(timezone=True), server_default=func.now()),
+)
+
+auction_watchlist = Table(
+    "auction_watchlist", metadata,
+    Column("id", Integer, primary_key=True),
+    Column("auction_id", ForeignKey("auctions.id", ondelete="CASCADE"), nullable=False, index=True),
+    Column("user_id", ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True),
+    Column("created_at", DateTime(timezone=True), server_default=func.now()),
+    UniqueConstraint("auction_id", "user_id", name="uq_watchlist_auction_user"),
 )

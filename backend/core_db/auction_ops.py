@@ -84,9 +84,37 @@ def create_auction(seller_id , title , description, category_id, starting_price 
     
     
     
-def get_active_auctions():
+def _apply_auction_filters(query, category_id=None, search=None, ordering=None):
+    """
+    Shared optional filters for the public auction list endpoints — status
+    (active/ended) is decided by the caller's base WHERE clause, this only
+    layers category/search/sort on top so All Auctions / Price Results don't
+    have to fetch everything and filter client-side.
+    """
+    if category_id:
+        query = query.where(auctions.c.category_id == category_id)
+    if search:
+        query = query.where(auctions.c.title.ilike(f"%{search}%"))
+
+    order_columns = {
+        'ending_soon': auctions.c.end_time.asc(),
+        'newest': auctions.c.start_time.desc(),
+        'price_low': auctions.c.current_highest_bid.asc(),
+        'price_high': auctions.c.current_highest_bid.desc(),
+    }
+    if ordering in order_columns:
+        query = query.order_by(order_columns[ordering])
+
+    return query
+
+
+def get_active_auctions(category_id=None, search=None, ordering=None, status=None):
     """
     SQL: SELECT * FROM auctions WHERE end_time > NOW() AND is_active = true
+
+    `status` optionally narrows further: 'live' (already started) or
+    'upcoming' (start_time in the future) — both are "active" auctions, the
+    distinction the All Auctions filter UI wants isn't otherwise in the data.
     """
     with engine.connect() as conn:
         now = timezone.now()
@@ -119,11 +147,16 @@ def get_active_auctions():
                 )
             )
         )
+        if status == 'live':
+            query = query.where(auctions.c.start_time <= now)
+        elif status == 'upcoming':
+            query = query.where(auctions.c.start_time > now)
+        query = _apply_auction_filters(query, category_id, search, ordering)
         result = conn.execute(query)
         return [dict(row._mapping) for row in result]
 
 
-def get_ended_auctions():
+def get_ended_auctions(category_id=None, search=None, ordering=None):
     """
     SQL: SELECT * FROM auctions WHERE end_time <= NOW()
     """
@@ -159,6 +192,7 @@ def get_ended_auctions():
             .select_from(j)
             .where(auctions.c.end_time <= now)
         )
+        query = _apply_auction_filters(query, category_id, search, ordering)
         result = conn.execute(query)
         return [dict(row._mapping) for row in result]
     
@@ -426,11 +460,16 @@ def is_user_registered_for_auction(user_id, auction_id):
 def get_auction_registrations(auction_id):
     """
     Get all users registered for a specific auction.
+
+    Only returns id/name/email — never select(users) here, since that table
+    also holds password hashes and balances that this list must not expose.
     """
     with engine.connect() as conn:
-        query = select(users).select_from(
+        query = select(
+            users.c.id, users.c.name, users.c.email
+        ).select_from(
             auction_registrations.join(users, auction_registrations.c.user_id == users.c.id)
         ).where(auction_registrations.c.auction_id == auction_id)
-        
+
         result = conn.execute(query)
-        return [dict(row._mapping) for row in result] 
+        return [dict(row._mapping) for row in result]

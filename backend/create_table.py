@@ -5,7 +5,7 @@ from sqlalchemy import inspect
 
 from core_db.engine import engine
 from core_db.schemas import metadata
-from testday3 import seed_categories
+from core_db.seed import seed_categories
 
 
 def _managed_table_names():
