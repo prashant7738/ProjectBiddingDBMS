@@ -1,0 +1,43 @@
+databases:
+  - name: livebid-db
+    databaseName: livebid
+    user: livebid
+
+services:
+  - type: web
+    name: livebid-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python create_table.py && daphne -b 0.0.0.0 -p $PORT project_main.asgi:application
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: livebid-db
+          property: connectionString
+      - key: SECRET_KEY
+        sync: false
+      - key: DEBUG
+        value: "False"
+      - key: FRONTEND_URL
+        sync: false
+      - key: FRONTEND_URLS
+        sync: false
+      - key: BACKEND_URL
+        value: https://livebid-backend.onrender.com
+      - key: ALLOWED_HOSTS
+        value: livebid-backend.onrender.com,localhost,127.0.0.1
+      - key: CRON_SECRET
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: ADMIN_USER_IDS
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: CLOUDINARY_UPLOAD_FOLDER
+        value: auctions
