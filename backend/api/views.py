@@ -13,7 +13,9 @@ from decimal import Decimal, InvalidOperation
 from datetime import datetime
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from django.middleware.csrf import get_token
 from core_db.bid_ops import place_bid, get_user_bidding_history, get_won_items, get_user_notifications
+from core_db.watchlist_ops import add_to_watchlist, remove_from_watchlist, get_user_watchlist
 
 # for pagination
 from .paginations import StandardResultsSetPagination
@@ -167,8 +169,10 @@ class KeepAliveView(APIView):
     def get(self, request):
         secret = settings.CRON_SECRET
         header_value = request.headers.get("X-Cron-Key", "")
+        query_value = request.query_params.get("key") or request.query_params.get("secret") or ""
+        provided_secret = header_value or query_value
 
-        if not secret or header_value != secret:
+        if not secret or provided_secret != secret:
             return error_response("Unauthorized", status.HTTP_401_UNAUTHORIZED, "INVALID_CRON_SECRET")
 
         closed_count = close_expired_auctions()
@@ -179,26 +183,41 @@ class KeepAliveView(APIView):
 
 
 
+def _parse_auction_query_params(request):
+    category_id = request.query_params.get('category_id')
+    try:
+        category_id = int(category_id) if category_id else None
+    except (TypeError, ValueError):
+        category_id = None
+    search = request.query_params.get('search') or None
+    ordering = request.query_params.get('ordering') or None
+    status_param = request.query_params.get('status') or None
+    return category_id, search, ordering, status_param
+
+
 # To see all the auctions
 class AuctionListView(APIView):
     def get(self, request):
-        
+        category_id, search, ordering, status_param = _parse_auction_query_params(request)
+
         paginator = StandardResultsSetPagination()
         # Call from SQLAlchemy
-        data = get_active_auctions()
-        
-        
+        data = get_active_auctions(category_id=category_id, search=search, ordering=ordering, status=status_param)
+
+
         result_page = paginator.paginate_queryset(data , request)
         serializer = AuctionSerializer(result_page, many=True)
-        
+
         return paginator.get_paginated_response(serializer.data)
 
 
 # To see all ended auctions
 class EndedAuctionListView(APIView):
     def get(self, request):
+        category_id, search, ordering, _status_param = _parse_auction_query_params(request)
+
         paginator = StandardResultsSetPagination()
-        data = get_ended_auctions()
+        data = get_ended_auctions(category_id=category_id, search=search, ordering=ordering)
         result_page = paginator.paginate_queryset(data, request)
         serializer = AuctionSerializer(result_page, many=True)
         return paginator.get_paginated_response(serializer.data)
@@ -390,10 +409,14 @@ class ProfileView(APIView):
         from core_db.user_ops import get_user_balance
         balance = get_user_balance(request.user.id)
         return Response({
-            'id': request.user.id, 
-            'email': request.user.email, 
+            'id': request.user.id,
+            'email': request.user.email,
             'name': request.user.name,
-            'balance': balance
+            'balance': balance,
+            # The frontend runs on a different origin, so it cannot read the
+            # csrftoken cookie via document.cookie — hand it the value
+            # directly so it can echo it back as X-CSRFToken on writes.
+            'csrf_token': get_token(request),
         })
 
 
@@ -464,10 +487,55 @@ class AuctionRegisteredUsersView(APIView):
     
     def get(self, request, auction_id):
         """
-        Get all registered users for a specific auction.
+        Sellers get the full registrant roster (name/email) for their own
+        auction. Anyone else only learns whether *they* are registered —
+        the roster must not be exposed to arbitrary authenticated users.
         """
-        users = get_auction_registrations(auction_id)
-        return Response(users, status=status.HTTP_200_OK)
+        auction = get_auction_by_id(auction_id)
+        if not auction:
+            return error_response("Auction not found", status.HTTP_404_NOT_FOUND, "NOT_FOUND")
+
+        is_seller = str(auction.get("seller_id")) == str(request.user.id)
+        registrations = get_auction_registrations(auction_id)
+
+        if is_seller:
+            return Response(registrations, status=status.HTTP_200_OK)
+
+        registered = any(str(u.get("id")) == str(request.user.id) for u in registrations)
+        return Response({"registered": registered}, status=status.HTTP_200_OK)
+
+
+# Save/unsave an auction to the current user's watchlist
+class AuctionWatchView(APIView):
+
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, auction_id):
+        if not get_auction_by_id(auction_id):
+            return error_response("Auction not found", status.HTTP_404_NOT_FOUND, "NOT_FOUND")
+        add_to_watchlist(request.user.id, auction_id)
+        return Response({"message": "Auction saved"}, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, auction_id):
+        remove_from_watchlist(request.user.id, auction_id)
+        return Response({"message": "Auction removed"}, status=status.HTTP_200_OK)
+
+
+# List the current user's saved auctions
+class UserWatchlistView(APIView):
+
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, user_id):
+        unauthorized = ensure_same_user(request, user_id)
+        if unauthorized:
+            return unauthorized
+
+        data = get_user_watchlist(user_id)
+        serializer = AuctionSerializer(data, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # Get bid history for a specific auction
@@ -491,7 +559,12 @@ class AdminAuctionListView(APIView):
         data = get_all_auctions_admin()
         result_page = paginator.paginate_queryset(data, request)
         serializer = AdminAuctionSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        response = paginator.get_paginated_response(serializer.data)
+        # AdminDashboard never calls /profile/, so this is the admin
+        # session's first chance to receive a CSRF token for later
+        # delete/patch actions (see ProfileView.get for the full rationale).
+        response.data['csrf_token'] = get_token(request)
+        return response
 
 
 class AdminAuctionDeleteView(APIView):
@@ -523,7 +596,21 @@ class AdminUserListView(APIView):
         data = get_all_users()
         result_page = paginator.paginate_queryset(data, request)
         serializer = UserSerializer(result_page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        response = paginator.get_paginated_response(serializer.data)
+        response.data['csrf_token'] = get_token(request)
+        return response
+
+
+class AdminStatsView(APIView):
+    authentication_classes = [SQLAlchemyJWTAuthentication]
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        from core_db.reports import get_system_stats, get_daily_activity
+
+        data = get_system_stats()
+        data.update(get_daily_activity())
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class AdminUserUpdateView(APIView):

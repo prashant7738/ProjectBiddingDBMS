@@ -2,12 +2,12 @@ SECRET_KEY=your-secret-key-here
 ADMIN_EMAILS=admin@example.com,admin2@example.com
 ADMIN_USER_IDS=1,2
 
-ALLOWED_HOSTS=yourdomain.com,www.yourdomain.com,localhost,127.0.0.1
+ALLOWED_HOSTS=projectbiddingdbms.onrender.com,localhost,127.0.0.1
 
 DATABASE_URL=postgresql://user:password@host:port/dbname
 
 # Frontend and Backend URLs
-FRONTEND_URL=https://your-frontend-domain.vercel.app
-BACKEND_URL=https://your-backend-domain.onrender.com
+FRONTEND_URL=https://project-bidding-dbms.vercel.app
+BACKEND_URL=https://projectbiddingdbms.onrender.com
 
 DEBUG=False 

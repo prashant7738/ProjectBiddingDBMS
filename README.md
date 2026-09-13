@@ -309,6 +309,11 @@ CLOUDINARY_UPLOAD_FOLDER=auctions
 VITE_API_URL=http://localhost:8000/api/
 ```
 
+### Frontend production override (`frontend/.env.production`)
+```dotenv
+VITE_API_URL=https://projectbiddingdbms.onrender.com/api/
+```
+
 ---
 
 ## Deployment Notes
@@ -318,13 +323,26 @@ VITE_API_URL=http://localhost:8000/api/
 - Frontend is configured for SPA rewrites in `frontend/vercel.json`
 - Backend process command in `backend/Procfile`:
   - `web: daphne -b 0.0.0.0 -p $PORT project_main.asgi:application`
-- Keep-alive workflow: `.github/workflows/keep_alive.yml` pings:
-  - `GET /api/keep-alive/` with `X-Cron-Key: $CRON_SECRET`
+- Keep-alive options:
+  - GitHub Actions workflow: `.github/workflows/keep_alive.yml` pings `GET /api/keep-alive/` with `X-Cron-Key: $CRON_SECRET`
+  - UptimeRobot monitor: ping `GET https://projectbiddingdbms.onrender.com/api/keep-alive/?key=<CRON_SECRET>` every 5 minutes
 
 For production (`DEBUG=False`), ensure:
 - `FRONTEND_URL`, `BACKEND_URL`, and `ALLOWED_HOSTS` are set
 - CORS/CSRF origins match deployed domains
 - Secure cookie behavior is preserved (`SameSite=None`, `Secure=True`)
+
+### UptimeRobot setup
+
+Use this if you want the app to stay warm without relying only on the GitHub Action:
+
+1. Create an HTTPS monitor.
+2. Set the URL to `https://projectbiddingdbms.onrender.com/api/keep-alive/?key=<CRON_SECRET>`.
+3. Keep the method as `GET`.
+4. Set the interval to 5 minutes.
+5. Reuse the same `CRON_SECRET` value from the backend environment.
+
+The keep-alive endpoint also closes expired auctions on each ping, so it doubles as a maintenance tick.
 
 ---
 
