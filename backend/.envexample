@@ -8,6 +8,7 @@ DATABASE_URL=postgresql://user:password@host:port/dbname
 
 # Frontend and Backend URLs
 FRONTEND_URL=https://project-bidding-dbms.vercel.app
+FRONTEND_URLS=https://project-bidding-dbms.vercel.app,https://live-bid-flax.vercel.app
 BACKEND_URL=https://projectbiddingdbms.onrender.com
 
 DEBUG=False 

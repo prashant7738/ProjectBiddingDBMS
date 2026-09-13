@@ -181,9 +181,18 @@ CSRF_COOKIE_SECURE = not DEBUG
 # 3. Explicitly allow credentials in CORS
 CORS_ALLOW_CREDENTIALS = True
 
-# 4. Use the specific frontend URL (Do NOT use '*')
+# 4. Use the specific frontend URL(s) (Do NOT use '*')
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 BACKEND_URL = os.getenv("BACKEND_URL")
+
+FRONTEND_URLS = [
+    origin.strip()
+    for origin in (
+        os.getenv("FRONTEND_URLS")
+        or ",".join(filter(None, [FRONTEND_URL, "https://live-bid-flax.vercel.app"]))
+    ).split(",")
+    if origin.strip()
+]
 
 if not DEBUG:
     missing_vars = []
@@ -197,14 +206,14 @@ if not DEBUG:
         raise ValueError(f"Missing required production env vars: {', '.join(missing_vars)}")
 
 # CORS Allowed Origins - only include production URLs
-CORS_ALLOWED_ORIGINS = [origin for origin in [FRONTEND_URL] if origin]
+CORS_ALLOWED_ORIGINS = [origin for origin in FRONTEND_URLS if origin]
 
 # Add localhost only in development mode
 if DEBUG:
     CORS_ALLOWED_ORIGINS.append("http://localhost:5173")
 
 # CSRF Trusted Origins
-CSRF_TRUSTED_ORIGINS = [origin for origin in [FRONTEND_URL, BACKEND_URL] if origin]
+CSRF_TRUSTED_ORIGINS = [origin for origin in [*FRONTEND_URLS, BACKEND_URL] if origin]
 
 if DEBUG:
     CSRF_TRUSTED_ORIGINS.append("http://localhost:5173")

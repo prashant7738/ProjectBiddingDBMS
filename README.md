@@ -328,7 +328,7 @@ VITE_API_URL=https://projectbiddingdbms.onrender.com/api/
   - UptimeRobot monitor: ping `GET https://projectbiddingdbms.onrender.com/api/keep-alive/?key=<CRON_SECRET>` every 5 minutes
 
 For production (`DEBUG=False`), ensure:
-- `FRONTEND_URL`, `BACKEND_URL`, and `ALLOWED_HOSTS` are set
+- `FRONTEND_URL` or `FRONTEND_URLS`, `BACKEND_URL`, and `ALLOWED_HOSTS` are set
 - CORS/CSRF origins match deployed domains
 - Secure cookie behavior is preserved (`SameSite=None`, `Secure=True`)
 
