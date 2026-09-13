@@ -322,7 +322,7 @@ VITE_API_URL=https://projectbiddingdbms.onrender.com/api/
 - Ensure SSL is enabled in DB connection (`sslmode=require`).
 - Frontend is configured for SPA rewrites in `frontend/vercel.json`
 - Backend process command in `backend/Procfile`:
-  - `web: daphne -b 0.0.0.0 -p $PORT project_main.asgi:application`
+  - `web: python create_table.py && daphne -b 0.0.0.0 -p $PORT project_main.asgi:application`
 - Keep-alive options:
   - GitHub Actions workflow: `.github/workflows/keep_alive.yml` pings `GET /api/keep-alive/` with `X-Cron-Key: $CRON_SECRET`
   - UptimeRobot monitor: ping `GET https://projectbiddingdbms.onrender.com/api/keep-alive/?key=<CRON_SECRET>` every 5 minutes
