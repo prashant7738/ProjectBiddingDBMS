@@ -11,10 +11,32 @@ const client = axios.create({
     },
 });
 
+// CSRF double-submit token. The backend sets a csrftoken cookie and rejects
+// unsafe methods (POST/PUT/PATCH/DELETE) that don't echo it back in the
+// X-CSRFToken header - but the frontend and backend are different origins,
+// so JS here can never read that cookie via document.cookie. The backend
+// hands the value over directly in login/profile response bodies instead;
+// we cache it in memory (cleared on reload, like the JWT itself) and attach
+// it to every state-changing request.
+let csrfToken = null;
+
+client.interceptors.request.use((config) => {
+    const method = (config.method || 'get').toLowerCase();
+    if (['post', 'put', 'patch', 'delete'].includes(method) && csrfToken) {
+        config.headers['X-CSRFToken'] = csrfToken;
+    }
+    return config;
+});
+
 // Centralized 401 handling - treat as "not logged in"
 // Can be extended later to retry with /refresh/ endpoint
 client.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        if (response.data?.csrf_token) {
+            csrfToken = response.data.csrf_token;
+        }
+        return response;
+    },
     (error) => {
         if (error.response?.status === 401) {
             // User is not authenticated - let calling code handle redirect
@@ -75,14 +97,16 @@ export const refreshToken = () => client.post('/token/refresh/');
 export const getProfile = () => client.get('/profile/');
 
 // Auction endpoints (public)
-export const getAuctions = () => getAllPaginated('/auctions/', { params: { page_size: 100 } });
+// `filters` maps directly to backend query params: category_id, search, ordering, status (active list only)
+export const getAuctions = (filters = {}) => getAllPaginated('/auctions/', { params: { page_size: 100, ...filters } });
 export const getAuctionById = (id) => client.get(`/auctions/${id}/`);
-export const getEndedAuctions = () => getAllPaginated('/auctions/ended/', { params: { page_size: 100 } });
+export const getEndedAuctions = (filters = {}) => getAllPaginated('/auctions/ended/', { params: { page_size: 100, ...filters } });
 
 // Admin auction endpoints (protected)
 export const getAdminAuctions = () => getAllPaginated('/admin/auctions/', { params: { page_size: 100 } });
 export const deleteAdminAuction = (id) => client.delete(`/admin/auctions/${id}/`);
 export const closeExpiredAuctions = () => client.post('/admin/auctions/close-expired/');
+export const getAdminStats = () => client.get('/admin/stats/');
 
 // Admin user endpoints (protected)
 export const getAdminUsers = () => getAllPaginated('/admin/users/', { params: { page_size: 100 } });
@@ -117,6 +141,11 @@ export const updateMyAuction = (userId, auctionId, data) => client.patch(`/my-au
 
 // Won Items
 export const winItems = (id) => getAllPaginated(`/win-items/${id}/`, { params: { page_size: 100 } });
+
+// Watchlist ("Saved" auctions)
+export const getWatchlist = (userId) => getAllPaginated(`/users/${userId}/watchlist/`, { params: { page_size: 100 } });
+export const addToWatchlist = (auctionId) => client.post(`/auctions/${auctionId}/watch/`);
+export const removeFromWatchlist = (auctionId) => client.delete(`/auctions/${auctionId}/watch/`);
 
 // Notifications
 export const getNotifications = (id, since) => {
